@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hover Animation Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen bg-gray-100">
+        <div class="trigger-box  overflow-hidden w-24 h-8 relative bg-white rounded border-2 flex justify-center items-center">
+            <!-- 这里有个插槽 -->
+            <div class="moving-box absolute">
+                <div class="moving-box-top bg-black" style="border-top-left-radius: 50% 50%; border-top-right-radius: 50% 50%;">上</div>
+                <div class="moving-box-bottom bg-black" style="border-bottom-left-radius: 50% 50%; border-bottom-right-radius: 50% 50%;">下</div>
+            </div>
+        </div>
+        
+
+    <script>
+        const triggerBox = document.querySelector('.trigger-box');
+        const movingBox = document.querySelector('.moving-box');
+        const movingBoxTop = document.querySelector('.moving-box-top');
+        const movingBoxBottom = document.querySelector('.moving-box-bottom');
+        movingBox.style.pointerEvents = 'none';
+        movingBox.style.transition = 'transform 0.3s ease-out';
+        movingBoxTop.style.height = triggerBox.offsetHeight + 'px';
+        movingBoxTop.style.width = triggerBox.offsetWidth + 'px';
+        movingBoxBottom.style.height = triggerBox.offsetHeight + 'px';
+        movingBoxBottom.style.width = triggerBox.offsetWidth + 'px';
+
+        let isHovering = false;
+
+        // 计算元素尺寸
+        const triggerHeight = triggerBox.offsetHeight;
+        const movingHeight = movingBox.offsetHeight;
+
+        // 设置初始位置
+        function resetPosition() {
+            movingBox.style.transition = 'none';
+            movingBox.style.transform = `translate(0px, ${(triggerHeight+movingHeight)/2}px)`;
+            // 强制重绘
+            movingBox.offsetHeight;
+            movingBox.style.transition = 'transform 0.3s ease';
+        }
+
+        // 初始化
+        resetPosition();
+
+        triggerBox.addEventListener('mouseenter', () => {
+            if (isHovering) return;
+            isHovering = true;
+            
+            // 重置到初始位置
+            resetPosition();
+            
+            // 计算中心点对齐的位置
+            const centerOffset = (triggerHeight + movingHeight) / 2;
+            
+            setTimeout(() => {
+                movingBox.style.transform = `translate(0px, 0px)`;
+            }, 50);
+        });
+
+        triggerBox.addEventListener('mouseleave', () => {
+            if (!isHovering) return;
+            isHovering = false;
+            
+            // 计算底部对齐到顶部的位置
+            movingBox.style.transform = `translate(0px, -${(movingHeight+triggerHeight)/2}px)`;
+            
+            // 动画结束后重置位置
+            setTimeout(() => {
+                resetPosition();
+            }, 300);
+        });
+    </script>
+</body>
+</html>

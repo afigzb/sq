@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户头部</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<style>
+    /* 定义抖动动画 */
+    @keyframes shake {
+        0% { transform: translateY(0); }
+        25% { transform: translateY(-4px); }
+        50% { transform: translateY(0); }
+        75% { transform: translateY(2px); }
+        100% { transform: translateY(0); }
+    }
+
+    /* 当鼠标悬停时应用抖动动画 */
+    .hover\:animate-shake:hover {
+        animation: shake 0.5s ease-in-out;
+    }
+</style>
+<body class="bg-gray-50">
+    <!-- 头部 -->
+    <div class="bg-white shadow-md fixed top-0 left-0 right-0 p-4" x-data="{hover: '', hoverIn: ''}">
+        <div class="container mx-auto flex items-center justify-between">
+            <!-- 普通导航按钮 -->
+            <nav class="flex items-center space-x-6">
+                <button class="text-gray-700 hover:animate-shake">抖动</button>
+                <button class="text-gray-700 hover:text-blue-500 px-4 py-2 rounded transition duration-300 ease-in-out">变色</button>
+                <button class="text-gray-700 hover:bg-gray-200 px-4 py-2 rounded transition duration-300 ease-in-out">变底色</button>
+                <button class="text-gray-700 hover:bg-black hover:text-white px-4 py-2 rounded transition duration-300 ease-in-out">底色字体都变</button>
+            </nav>
+            <!-- 输入框 -->
+            <div x-data="{ showInput: false, placeholder: '搜索内容...', isFocused: false, searchHistory: ['历史搜索1', '历史搜索2', '历史搜索3'] }" 
+            class="relative w-64 h-10 flex items-center border px-2 py-1 rounded bg-gray-50 hover:bg-white"
+            @click="showInput = true; $nextTick(() => $refs.input.focus())"  
+            @cQlick.away="showInput = false">
+                <!-- 输入框容器 -->
+                <div class="flex-1">
+                    <input 
+                        x-ref="input"  
+                        x-if="showInput"
+                        type="text"
+                        x-bind:placeholder="placeholder"
+                        x-on:focus="isFocused = true; placeholder = ''"
+                        x-on:blur="isFocused = false; placeholder = '搜索内容...'"
+                        class="px-2 bg-gray-50 py-1 w-full rounded focus:outline-none focus:ring-0"
+                        :class="{ 'bg-gray-200': isFocused }"
+                    />
+                </div>
+                <!-- 问号图标 -->
+                <div class="ml-2 hover:bg-gray-200 rounded p-1 transition duration-500 ease-in-out">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24">
+                        <path fill="#666666" d="M9.539 15.23q-2.398 0-4.065-1.666Q3.808 11.899 3.808 9.5t1.666-4.065T9.539 3.77t4.064 1.666T15.269 9.5q0 1.042-.369 2.017t-.97 1.668l5.909 5.907q.14.14.15.345q.009.203-.15.363q-.16.16-.354.16t-.354-.16l-5.908-5.908q-.75.639-1.725.989t-1.96.35m0-1q1.99 0 3.361-1.37q1.37-1.37 1.37-3.361T12.9 6.14T9.54 4.77q-1.991 0-3.361 1.37T4.808 9.5t1.37 3.36t3.36 1.37"/>
+                    </svg>
+                </div>
+                <!-- 下拉历史搜索列表 -->
+                <div x-show="isFocused && searchHistory.length > 0" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+                    class="absolute top-full left-0 w-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                    <ul>
+                        <template x-for="(item, index) in searchHistory" :key="index">
+                            <li class="px-4 py-2 cursor-pointer hover:bg-gray-100" x-text="item" @click="showInput = false; $nextTick(() => $refs.input.focus())"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+            <!-- 悬停展示 该悬停有外层和内层，外侧区域进入无效果，退出会清空hover和hoverIn，内层区域进入后hover指向当前区域，切换后会切换区域 -->
+            <div class="p-2 flex items-center space-x-4"
+            @mouseleave="hover = ''; hoverIn = ''">
+                <div @mouseenter=" hover = 'hover1'; hoverIn = 'hover1'"
+                        @mouseleave="hover = hoverIn"
+                        class="relative ">
+                    <button class="text-gray-700 hover:text-blue-500 hover:animate-shake">悬停查看1</button>
+                    <!-- 悬停展示容器 -->
+                    <div x-show="hover === 'hover1'"
+                            class="absolute -translate-x-1/4 left-0 p-4 mt-2 w-48 shadow-md rounded bg-gray-100 overflow-hidden">
+                        <p class="text-gray-700 text-sm">这是一个悬停展示的容器。</p>
+                    </div>
+                </div>
+                <!-- 第二个 -->
+                <div @mouseenter="hover = 'hover2'; hoverIn = 'hover2'"
+                        @mouseleave="hover = hoverIn"
+                        class="relative ">
+                    <button class="text-gray-700 hover:text-blue-500 hover:animate-shake">悬停查看2</button>   
+                    <div x-show="hover === 'hover2'"
+                            class="absolute -translate-x-1/4 left-0 p-4 mt-2 w-48 shadow-md rounded bg-gray-100 overflow-hidden">
+                        <p class="text-gray-700 text-sm">这是另一个悬停展示的容器。</p>
+                    </div>
+                </div>
+            </div>
+   
+            <!-- 用户头像 -->
+            <div x-data="{ open: false }" class="relative flex items-center justify-center ml-4">
+                <!-- 用户头像 -->
+                <div 
+                    @mouseenter="open = true" 
+                    @mouseleave="open = false"
+                    class="relative z-10"> <!-- 确保头像在弹窗上面 -->
+                    <img 
+                        src="https://via.placeholder.com/40" 
+                        alt="头像" 
+                        class="w-10 h-10 rounded-full transition-all duration-300 transform" 
+                        :class="open ? 'scale-150 translate-y-6 -translate-x-1/2 ' : 'scale-100 translate-y-0'" 
+                    >
+                </div>
+            
+                <!-- 折叠内容 -->
+                <div 
+                    x-show="open" 
+                    class="absolute translate-x-[30%] right-0 top-full w-48 p-4 bg-white shadow-lg rounded-md border border-gray-200 z-0"
+                >
+                    <!-- 用户数据内容 -->
+                    <div class="space-y-2 mt-6">
+                        <p><strong>用户名:</strong> 用户123</p>
+                        <p><strong>邮箱:</strong> user@example.com</p>
+                        <p><strong>积分:</strong> 1500</p>
+                        <!-- 其他用户数据 -->
+                    </div>
+                </div>
+            </div>
+        
+            <!-- 消息通知 -->
+            <div class="relative">
+                <!-- 图标 -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="#000000" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm8-7L4 8v10h16V8zm0-2l8-5H4zM4 8V6v12z"/>
+                </svg>
+                
+                <!-- 消息提示 -->
+                <div 
+                    x-data="{ count: 25 }" 
+                    x-show="count > 0"
+                    class="absolute -top-1 -right-1 px-2.5 flex items-center justify-center w-4 h-4 text-[8px] font-bold text-white bg-red-400 rounded-full">
+                    <span x-text="count"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 正文区域 -->
+    <div class="container mx-auto mt-20 p-4">
+        <div class="bg-white rounded p-4 mb-4 h-screen">
+            <h2 class="text-xl font-semibold mb-4">用户和导航</h2>
+            <p class="text-gray-700">想写什么写什么</p>
+            <ul class="mt-4">
+                <li class="text-gray-700 mb-2">用户1</li>
+                <li class="text-gray-700 mb-2">用户2</li>
+                <li class="text-gray-700 mb-2">用户3</li>
+            </ul>
+        </div>
+        <div class="bg-white rounded p-4 mb-4 h-screen">
+            <h2 class="text-xl font-semibold mb-4">用户和导航</h2>
+            <p class="text-gray-700">想写什么写什么</p>
+            <ul class="mt-4">
+                <li class="text-gray-700 mb-2">用户1</li>
+                <li class="text-gray-700 mb-2">用户2</li>
+                <li class="text-gray-700 mb-2">用户3</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

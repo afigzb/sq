@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滑动删除</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div x-data="{
+        model: {
+            car: [
+                { Id: 1, Code: '粤A12345', Type: 'SUV', Color: '红色', IsDefault: 1 },
+                { Id: 2, Code: '粤B67890', Type: '轿车', Color: '蓝色', IsDefault: 0 },
+            ]
+        },
+        deleteCar(index) {
+            this.model.car.splice(index, 1);
+        }
+    }" class="mt-14 h-screen bg-slate-100 pt-4">
+        <div class="w-full bg-white">
+            <div class="flex justify-between px-3 py-4 border-b-2">
+                <span>车辆信息</span>
+            </div>
+            <!-- 车辆信息 -->
+            <template x-for="(car, index) in model.car" :key="car.Id">
+                <div x-data="{ isOpen: false }" class="relative overflow-hidden">
+                    <div class="flex transition-transform duration-300 ease-in-out"
+                        :class="{ 'translate-x-[-64px]': isOpen, 'translate-x-0': !isOpen }">
+                        <!-- 内容区域 -->
+                        <div class="flex items-center justify-between px-3 py-4 w-full border-b bg-white">
+                            <div class="flex items-center">
+                                <span class="text-xl" x-text="car.Code + ','"></span>
+                                <div class="text-sm ml-1">
+                                    <div x-show="car.Type !== -1" x-text="car.Type"></div>
+                                    <div class="flex items-center">
+                                        <span x-show="car.Color !== '未选'" x-text="car.Color"></span>
+                                        <div x-show="car.Color !== '未选'" class="ml-1 w-5 h-5 rounded-full"
+                                            :class="car.Color === '红色' ? 'bg-red-500' : 'bg-blue-500'">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 删除按钮 -->
+                        <div class="absolute right-0 translate-x-full flex items-center justify-center bg-red-600 text-white w-16 h-full cursor-pointer"
+                            @click="deleteCar(index)">
+                            删除
+                        </div>
+                    </div>
+                    <div class="absolute w-[90%] h-full top-0 left-0 touch-pan-y"
+                        @touchstart="
+                            startX = $event.touches[0].clientX;
+                            startY = $event.touches[0].clientY;
+                            isSwiped = false;" 
+                        @touchmove="
+                            const currentX = $event.touches[0].clientX;
+                            const currentY = $event.touches[0].clientY;
+                            if (Math.abs(currentX - startX) > Math.abs(currentY - startY)>10) {
+                                $event.preventDefault(); 
+                            }" 
+                        @touchend="
+                            const endX = $event.changedTouches[0].clientX;
+                            if (Math.abs(startX - endX) > 50) {
+                                isOpen = (startX - endX) > 0; 
+                            }">
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</body>
+</html>
+

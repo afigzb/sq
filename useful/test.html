@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动滚动</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<div class="max-w-md mx-auto my-8 p-6 bg-gray-50 rounded-2xl shadow-xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">实时资讯播报</h2>
+    <div  x-data="
+    {
+        originalData: [
+            { 
+                title: '行业动态：最新技术突破', 
+                content: '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                time: '5分钟前'
+            },
+            { 
+                title: '行业动态：最新技术突破', 
+                content: '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                time: '4分钟前'
+            },
+            { 
+                title: '行业动态：最新技术突破', 
+                content: '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                time: '3分钟前'
+            },
+            { 
+                title: '行业动态：最新技术突破', 
+                content: '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                time: '2分钟前'
+            },
+            { 
+                title: '行业动态：最新技术突破', 
+                content: '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                time: '1分钟前'
+            }
+        ],
+    
+    }">
+        <div class="flex w-full p-4">
+            <div class="w-1/3">111</div>
+            <div class="w-1/2">222</div>
+            <div class="w-1/6">333</div>
+        </div>
+        <div x-data="verticalInfiniteScroll({ 
+            originalData,
+            scrollSpeed: 0.15
+        })"
+        x-ref="container"
+        x-init="initVerticalInfiniteScroll" 
+        class="relative h-96 overflow-hidden rounded-xl bg-white shadow-inner"
+        @mouseenter.passive="pauseAutoScroll" 
+        @mouseleave.passive="resumeAutoScroll"
+        @wheel.prevent="handleWheel">
+            <div class="absolute inset-0" 
+                :style="`transform: translateY(${virtualPosition}px)`"
+                @mousedown.prevent="startDrag($event)"
+                @touchstart.passive="startDrag($event)">
+                <template x-for="(item, index) in mirroredData" :key="index">
+                    <div class="flex items-center p-4 scroll-item">
+                        <div class="w-1/3" x-text="item.title"></div>
+                        <div class="w-1/2" x-text="item.content"></div>
+                        <div class="w-1/6" x-text="item.time"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<script>
+function verticalInfiniteScroll(config = {}) {
+    // 配置参数解构
+    const { 
+        originalData = [],
+        scrollSpeed: originalSpeed = 0.5,
+        itemHeight = null
+    } = config;
+
+    return {
+        // 状态初始化
+        originalData,
+        originalSpeed,
+        itemHeight,
+        containerHeight: 0,
+        shouldScroll: false,
+        mirroredData: [],
+        virtualPosition: 0,
+        targetPosition: 0,
+        isDragging: false,
+        lastDragY: 0,
+
+        visibleItems: [],
+        totalHeight: 0,
+        
+        // 主初始化流程
+        async initVerticalInfiniteScroll() {
+            await this.initializeContainer();
+            await this.measureItemHeight();
+            this.determineScrollBehavior();
+            this.setupScrollData();
+            this.shouldScroll && this.autoScroll();
+            this.shouldScroll && this.setupWheelListener();
+        },
+
+        /* ========== 核心逻辑模块 ========== */
+        // 容器初始化
+        async initializeContainer() {
+            this.containerHeight = this.$refs.container.offsetHeight;
+        },
+
+        getVisibleItems() {
+            if (!this.itemHeight) return [];
+            
+            const startIdx = Math.floor(-this.virtualPosition / this.itemHeight);
+            const visibleCount = Math.ceil(this.containerHeight / this.itemHeight) + 2;
+            const endIdx = startIdx + visibleCount;
+            
+            return Array.from({ length: endIdx - startIdx }, (_, i) => ({
+                ...this.originalData[(startIdx + i) % this.originalData.length],
+                index: startIdx + i
+            }));
+        },
+
+        // 动态测量元素高度
+        async measureItemHeight() {
+            if (this.itemHeight !== null) return;
+            
+            this.mirroredData = [...this.originalData];
+            await this.$nextTick();
+            
+            const element = this.$el.querySelector('.scroll-item');
+            this.itemHeight = element?.offsetHeight || 0;
+        },
+
+        // 判断是否需要滚动
+        determineScrollBehavior() {
+            this.totalHeight = this.originalData.length * this.itemHeight;
+            this.shouldScroll = this.totalHeight > this.containerHeight;
+        },
+
+        // 数据初始化
+        setupScrollData() {
+            this.mirroredData = this.shouldScroll 
+                ? [...this.originalData, ...this.originalData]
+                : [...this.originalData];
+            this.scrollSpeed = this.shouldScroll ? this.originalSpeed : 0;
+        },
+
+        /* ========== 滚动控制模块 ========== */
+        autoScroll() {
+            const animate = () => {
+                if (!this.shouldScroll) return;
+                
+                this.updateScrollPosition();
+                this.applySmoothScrolling();
+                requestAnimationFrame(animate.bind(this));
+            };
+            animate();
+        },
+
+        updateScrollPosition() {
+            if (!this.isDragging) {
+                this.targetPosition -= this.scrollSpeed;
+                this.checkBoundary();
+            }
+        },
+
+        applySmoothScrolling() {
+            this.virtualPosition += (this.targetPosition - this.virtualPosition) * 0.1;
+        },
+
+        checkBoundary() {
+            if (!this.shouldScroll) return;
+            
+            // 优化后的边界检测
+            const maxScroll = -this.totalHeight;
+            if (this.targetPosition <= maxScroll) {
+                this.targetPosition += this.totalHeight;
+                this.virtualPosition += this.totalHeight;
+            }
+            else if (this.targetPosition > 0) {
+                this.targetPosition -= this.totalHeight;
+                this.virtualPosition -= this.totalHeight;
+            }
+        },
+
+        adjustScrollPosition() {
+            const adjustment = this.originalData.length * this.itemHeight;
+            // 根据方向判断调整量符号
+            const direction = this.targetPosition < 0 ? 1 : -1;
+            this.targetPosition += adjustment * direction;
+            this.virtualPosition += adjustment * direction;
+        },
+
+        /* ========== 拖拽事件模块 ========== */
+        startDrag(e) {
+            if (!this.shouldScroll) return;
+            
+            this.isDragging = true;
+            this.lastDragY = this.getClientY(e);
+            this.bindDragEvents();
+        },
+
+        handleDrag(e) {
+            if (!this.isDragging) return;
+            
+            e.preventDefault();
+            const deltaY = this.calculateDeltaY(e);
+            this.updateDragPosition(deltaY);
+        },
+
+        endDrag() {
+            this.isDragging = false;
+            this.unbindDragEvents();
+        },
+
+        // 事件辅助方法
+        getClientY(e) {
+            return e.clientY || e.touches[0].clientY;
+        },
+
+        calculateDeltaY(e) {
+            const currentY = this.getClientY(e);
+            const delta = currentY - this.lastDragY;
+            this.lastDragY = currentY;
+            return delta;
+        },
+
+        updateDragPosition(deltaY) {
+            this.targetPosition += deltaY;
+        },
+
+        /* ========== 事件管理模块 ========== */
+        bindDragEvents() {
+            const events = [
+                ['mousemove', this.handleDrag],
+                ['mouseup', this.endDrag],
+                ['touchmove', this.handleDrag],
+                ['touchend', this.endDrag]
+            ];
+            
+            events.forEach(([event, handler]) => {
+                document.addEventListener(event, handler.bind(this), { passive: false });
+            });
+        },
+
+        unbindDragEvents() {
+            const events = ['mousemove', 'mouseup', 'touchmove', 'touchend'];
+            events.forEach(event => {
+                document.removeEventListener(event, this.handleDrag);
+                document.removeEventListener(event, this.endDrag);
+            });
+        },
+
+        setupWheelListener() {
+            this.$refs.container.addEventListener('wheel', this.handleWheel.bind(this), { 
+                passive: false 
+            });
+        },
+
+        /* ========== 滚轮事件处理 ========== */
+        handleWheel(e) {
+            if (!this.shouldScroll) return;
+
+            e.preventDefault();
+            const scrollMultiplier = 0.1; // 滚动速度系数
+
+            // 同时支持触控板滑动和传统滚轮
+            const deltaY = e.deltaY || e.wheelDeltaY * -1;
+            const deltaMode = e.deltaMode; // 0: 像素 1: 行 2: 页
+
+            let scrollAmount = deltaY;
+            if (deltaMode === 1) scrollAmount *= 24; // 行模式转换
+            if (deltaMode === 2) scrollAmount *= 100; // 页模式转换
+
+            // 调整滚动方向，确保 deltaY 正确表示向下滚动，负值表示向上滚动
+            this.applyWheelScroll(-scrollAmount * scrollMultiplier);
+        },
+
+        applyWheelScroll(delta) {
+            // 在自动滚动时暂停并接管
+            if (this.scrollSpeed > 0) {
+                this.pauseAutoScroll();
+                this.resumeAfterInteraction();
+            }
+
+            // 自然滚动方向调整
+            this.targetPosition += delta;
+            this.checkBoundary(); // 检查边界条件
+            this.smoothScrolling();
+        },
+
+        smoothScrolling() {
+            // 增加惯性滚动效果
+            this.virtualPosition += (this.targetPosition - this.virtualPosition) * 0.2;
+        },
+
+        resumeAfterInteraction() {
+            clearTimeout(this.resumeTimer);
+            this.resumeTimer = setTimeout(() => {
+                if (!this.isDragging) this.resumeAutoScroll();
+            }, 3000); // 3秒无操作后恢复自动滚动
+        },
+
+        /* ========== 滚动控制接口 ========== */
+        pauseAutoScroll() {
+            this.scrollSpeed = 0;
+        },
+
+        resumeAutoScroll() {
+            this.scrollSpeed = this.originalSpeed;
+        }
+    };
+}
+
+</script>
+</body>
+</html>

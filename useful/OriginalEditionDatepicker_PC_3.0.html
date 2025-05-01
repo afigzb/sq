@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OriginalEditionDatepicker_PC_3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50/30 p-8" x-data="createCalendar()">
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl shadow-blue-100/40 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-200/60 ">
+      <!-- 控制栏 -->
+      <div class="flex flex-row justify-between items-center mb-8 gap-6">
+          <!-- 导航按钮组 -->
+          <div class="flex items-center gap-1.5">
+              <button @click="navigate(-1)" class="p-3 hover:bg-purple-100/40 rounded-xl text-purple-600 hover:text-purple-800 transition-all transform hover:-translate-x-1 active:scale-95">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7"/>
+                  </svg>
+              </button>
+              <button @click="navigate(1)" class="p-3 hover:bg-blue-100/40 rounded-xl text-blue-600 hover:text-blue-800 transition-all transform hover:translate-x-1 active:scale-95">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7"/>
+                  </svg>
+              </button>
+          </div>
+          
+          <!-- 当前视图标题 -->
+          <h2 class="translate-x-1/4 text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent px-4 py-1.5 rounded-lg border border-purple-100/50 shadow-inner shadow-purple-100/30">
+              <template x-if="viewMode === 'year'">
+                  <span x-text="`${calendarData.years[0].year} – ${calendarData.years[calendarData.years.length - 1].year}`"></span>
+              </template>
+              <template x-if="viewMode === 'month'">
+                  <span x-text="`${formatDate(currentTimestamp, 'year')}年`"></span>
+              </template>
+              <template x-if="['day', 'week'].includes(viewMode)">
+                  <span x-text="`${formatDate(currentTimestamp, 'month')} ${currentDate().getFullYear()}`"></span>
+              </template>
+          </h2>
+
+          <!-- 视图切换 -->
+          <div class="flex gap-1 bg-gray-100/80 p-1.5 rounded-xl border border-gray-200/50 shadow-inner shadow-gray-100/50">
+              <template x-for="mode in ['day', 'week', 'month', 'year']">
+                  <button @click="switchView(mode)" 
+                          :class="{
+                              'bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-md': viewMode === mode,
+                              'text-gray-600 hover:bg-gray-200/60': viewMode !== mode
+                          }"
+                          class="px-4 py-2 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 hover:scale-105 active:scale-95">
+                      <span x-text="mode === 'day' ? '日' : mode === 'week' ? '周' : mode === 'month' ? '月' : '年'"></span>
+                  </button>
+              </template>
+          </div>
+      </div>
+
+      <!-- 日/周视图 -->
+      <template x-if="['day', 'week'].includes(viewMode)">
+          <div class="grid grid-cols-7 gap-2 mb-4">
+              <template x-for="day in calendarData.days" :key="day.timestamp">
+                  <button @click="selectDate(day.timestamp)"
+                          :class="{
+                            'text-gray-400/90': !day.isCurrentMonth,
+                            'bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-lg': day.isSelected,
+                            'ring-2 ring-purple-200/80 ring-inset': viewMode === 'week' && day.isInWeek,
+                            'hover:bg-purple-50/60': day.isCurrentMonth && !day.isSelected,
+                            'font-semibold text-blue-600 relative': day.isToday
+                          }"
+                          class="h-16 flex flex-col items-center justify-center rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-sm">
+                      <span x-text="day.date" 
+                            class="z-10 text-sm tracking-tight mb-1"
+                            :class="{ 'text-white/90': day.isSelected }"></span>
+                      <span class="z-10 text-[0.7rem] font-medium uppercase tracking-wide"
+                            :class="{
+                              'text-gray-500/90': !day.isSelected,
+                              'text-white/70': day.isSelected
+                            }" 
+                            x-text="new Date(day.timestamp).toLocaleDateString('zh-CN', { weekday: 'short' })"></span>
+                      <template x-if="day.isToday">
+                        <div class="absolute top-2 right-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse shadow-sm"></div>
+                      </template>
+                  </button>
+              </template>
+          </div>
+      </template>
+
+      <!-- 月视图 -->
+      <template x-if="viewMode === 'month'">
+        <div class="grid grid-cols-4 gap-3">
+          <template x-for="(month, index) in calendarData.months" :key="index">
+            <button @click="currentTimestamp = month.timestamp; selectedDate = new Date(new Date(currentTimestamp).getFullYear(), new Date(month.timestamp).getMonth(), 1).getTime();"
+              :class="{
+                'bg-gradient-to-br from-purple-500/90 to-blue-500/90 text-white': month.isSelected,
+                'text-gray-700 hover:bg-gradient-to-br from-purple-50/60 to-blue-50/60': !month.isSelected
+              }"
+              class="p-4 text-center rounded-xl border-2 border-gray-200/60 transition-all hover:scale-[1.02] hover:shadow-sm font-medium">
+              <span x-text="month.name" class="text-lg tracking-tight"></span>
+              <div :class="{ 'bg-purple-400/80': month.isSelected, 'bg-gray-200/60': !month.isSelected }" 
+                  class="mt-1 h-0.5 w-8 mx-auto transition-all"></div>
+            </button>
+          </template>
+        </div>
+      </template>
+
+      <!-- 年视图 -->
+      <template x-if="viewMode === 'year'">
+        <div class="grid grid-cols-5 gap-3">
+          <template x-for="yearData in calendarData.years" :key="yearData.year">
+            <button @click="currentTimestamp = new Date(currentTimestamp).setFullYear(yearData.year); selectedDate = new Date(selectedDate).setFullYear(yearData.year);"
+              :class="{
+                'bg-gradient-to-br from-blue-500/90 to-purple-500/90 text-white': yearData.isSelected,
+                'text-gray-700 hover:bg-gradient-to-br from-purple-50/60 to-blue-50/60': !yearData.isSelected
+              }"
+              class="relative p-4 text-center rounded-xl border-2 border-gray-200/60 transition-all hover:scale-[1.02] hover:shadow-sm font-medium">
+              <span x-text="yearData.year" class="text-lg tracking-tight"></span>
+              <span x-show="yearData.year === new Date().getFullYear()" 
+                class="absolute bottom-2 left-1/2 transform -translate-x-1/2 mt-1.5 w-6 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto shadow-sm"></span>
+            </button>                
+          </template>
+        </div>
+      </template>
+
+      <!-- 选中时间显示 -->
+      <div class="mt-6 text-sm text-gray-700/90 font-medium px-2 flex items-center" x-show="selectedDate">
+          <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-blue-600/90 font-semibold tracking-tight" 
+                x-text="`${formatDate(selectedDate)}${viewMode === 'week' ? '（第'+getWeekNumber(selectedDate)+'周）' : ''}`"></span>
+          <template x-if="viewMode === 'week' && selectedWeek">
+              <span class="text-gray-500/80 ml-2" 
+                    x-text="`${formatDate(selectedWeek.start)} - ${formatDate(selectedWeek.end)}`"></span>
+          </template>
+      </div>
+  </div>
+</body>
+<script>
+function createCalendar(config = {}) {
+  return {
+    currentTimestamp: new Date().setHours(0, 0, 0, 0),
+    viewMode: 'day',
+    selectedDate: new Date().setHours(0, 0, 0, 0),
+    selectedWeek: null,
+
+    init() {
+      this.updateSelectedWeek(new Date(this.selectedDate));
+      // 日期保留逻辑，不需要则注释
+        // this.$watch('currentTimestamp', (newVal) => {
+        //     if (!this.selectedDate) return;
+            
+        //     const oldDate = new Date(this.selectedDate);
+        //     const newBaseDate = new Date(newVal);
+            
+        //     // 保持原有日期天数，调整年月
+        //     const testDate = new Date(
+        //         newBaseDate.getFullYear(),
+        //         newBaseDate.getMonth(),
+        //         oldDate.getDate()
+        //     );
+
+        //     // 处理无效日期
+        //     if (testDate.getMonth() !== newBaseDate.getMonth()) {
+        //         testDate.setDate(0); // 设置为上月最后一天
+        //     }
+
+        //     this.selectedDate = testDate.getTime();
+        //     this.updateSelectedWeek(testDate); // 确保周范围同步更新
+        // });
+    },
+
+    // 获取当前日期对象
+    currentDate() {
+      return new Date(this.currentTimestamp)
+    },
+
+    // 获取日历数据
+    get calendarData() {
+      return {
+        years: this.generateYears(),
+        months: this.generateMonths(),
+        days: this.generateDays(),
+        weekDays: this.generateWeekDays()
+      }
+    },
+
+    // 生成年
+    generateYears() {
+      const currentYear = this.currentDate().getFullYear(); // 基于当前视图的年份
+      const selectedYear = new Date(this.selectedDate).getFullYear();
+      
+      // 以当前视图年份所在的20年块为范围
+      const startYear = Math.floor(currentYear / 20) * 20; 
+      
+      return Array.from({ length: 20 }, (_, i) => {
+        const year = startYear + i;
+        return {
+          year: year,
+          isSelected: year === selectedYear
+        };
+      });
+    },
+
+    // 生成月
+    generateMonths() {
+      const currentYear = this.currentDate().getFullYear()
+      const selectedYear = new Date(this.selectedDate).getFullYear()
+      const selectedMonth = new Date(this.selectedDate).getMonth()
+      
+      return Array.from({ length: 12 }, (_, i) => ({
+        name: new Date(currentYear, i, 1).toLocaleString('default', { month: 'short' }),
+        timestamp: new Date(currentYear, i, 1).getTime(),
+        isSelected: currentYear === selectedYear && i === selectedMonth
+      }))
+    },
+    // 生成日
+    generateDays() {
+      const date = new Date(this.currentTimestamp)
+      const baseDate = new Date(date.getFullYear(), date.getMonth(), 1)
+      const startDayOffset = baseDate.getDay() === 0 ? 6 : baseDate.getDay() - 1
+      const startDate = new Date(baseDate)
+      startDate.setDate(-startDayOffset + 1)
+
+      return Array.from({ length: 42 }, (_, i) => {
+        const dayDate = new Date(startDate)
+        dayDate.setDate(startDate.getDate() + i)
+        
+        return {
+          date: dayDate.getDate(),
+          timestamp: dayDate.getTime(),
+          isCurrentMonth: dayDate.getMonth() === date.getMonth(),
+          ...this.getDayStates(dayDate) // 合并日期状态
+        }
+      })
+    },
+    // 生成周
+    generateWeekDays() {
+      const date = new Date(this.selectedDate || this.currentTimestamp)
+      const diff = date.getDate() - date.getDay() + (date.getDay() === 0 ? -6 : 1)
+      
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(date.setDate(diff + i))
+        return {
+          date: d.getDate(),
+          timestamp: d.getTime(),
+          isCurrentMonth: d.getMonth() === this.currentDate().getMonth()
+        }
+      })
+    },
+
+    // 判断日期状态
+    getDayStates(dayDate) {
+      const isSameMonth = dayDate.getMonth() === this.currentDate().getMonth()
+      const isSelected = this.selectedDate === dayDate.getTime()
+      const isInWeek = this.isInSelectedWeek(dayDate.getTime())
+
+      return {
+        isCurrentMonth: isSameMonth,
+        isSelected,
+        isInWeek,
+        isToday: this.isToday(dayDate)
+      }
+    },
+    // 判断日期是否在选中周范围内
+    isInSelectedWeek(timestamp) {
+      if (!this.selectedWeek) return false
+      const targetDate = new Date(timestamp)
+      return targetDate >= new Date(this.selectedWeek.start) && 
+             targetDate <= new Date(this.selectedWeek.end)
+    },
+    // 判断日期是否是今天
+    isToday(date) {
+      const today = new Date()
+      return date.toDateString() === today.toDateString()
+    },
+
+    // 切换视图
+    switchView(mode) {
+      this.viewMode = mode
+
+    },
+    // 选择日期
+    selectDate(timestamp) {
+        const clickedDate = new Date(timestamp)
+        this.updateCurrentMonthIfNeeded(clickedDate)
+        this.selectedDate = timestamp
+        this.updateSelectedWeek(clickedDate)
+    },
+    // 更新当前月份
+    updateCurrentMonthIfNeeded(clickedDate) {
+      const currentDate = this.currentDate()
+      if (clickedDate.getMonth() !== currentDate.getMonth() || 
+          clickedDate.getFullYear() !== currentDate.getFullYear()) {
+        this.currentTimestamp = new Date(
+          clickedDate.getFullYear(),
+          clickedDate.getMonth(),
+          1
+        ).getTime()
+      }
+    },
+    // 更新选中的周范围
+    updateSelectedWeek(date) {
+      const day = date.getDay() || 7; // 处理周日为0的情况，转换为7
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - day + 1); // 调整为周一开始
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // 周日结束
+      
+      this.selectedWeek = {
+        start: weekStart.getTime(),
+        end: weekEnd.getTime()
+      }
+    },
+    // 导航到上/下一个月、上/下一个20年、上/下一个周
+    navigate(direction, isSmallStep = false) {
+      const date = new Date(this.currentTimestamp)
+      const stepMap = {
+        year: () => date.setFullYear(date.getFullYear() + direction * (isSmallStep ? 1 : 20)),
+        month: () => date.setFullYear(date.getFullYear() + direction),
+        week: () => date.setMonth(date.getMonth() + direction),
+        day: () => date.setMonth(date.getMonth() + direction)
+      }
+      
+      stepMap[this.viewMode]?.()
+      this.currentTimestamp = date.getTime()
+    },
+    // 获取周数
+    getWeekNumber(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const yearStart = new Date(d.getFullYear(), 0, 1);
+      return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    },
+
+    // 格式化方法
+    formatDate(timestamp, format) {
+      const date = new Date(timestamp)
+      return format === 'year' ? date.getFullYear() :
+        format === 'month' ? date.toLocaleString('default', { month: 'long' }) :
+        date.toLocaleDateString()
+    }
+  }
+}
+
+</script>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>轮播容器</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 轮播图过渡动画 */
+    .carousel-slide {
+      transition: transform 0.5s ease;
+    }
+  </style>
+</head>
+<body
+  class="bg-gray-100 flex justify-center items-center h-screen"
+  x-data="{
+    slidesData: [
+      {
+        type: 'image',
+        image: 'https://images.pexels.com/photos/30154480/pexels-photo-30154480.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
+        url: 'https://example.com/slide1'
+      },
+      {
+        type: 'video',
+        video: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4', // 替换为真实视频 URL
+        url: 'https://example.com/slide2'
+      },
+      {
+        type: 'image',
+        image: 'https://images.unsplash.com/photo-1736695796493-699707480bcf?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0NHx8fGVufDB8fHx8fA%3D%3D',
+        url: 'https://example.com/slide3'
+      }
+    ]
+  }"
+>
+  <div
+    x-data="carousel(slidesData)"
+    x-init="init()"
+    class="relative w-full max-w-3xl overflow-hidden rounded-lg shadow-lg"
+    @touchstart="touchStart($event)"
+    @touchmove="touchMove($event)"
+    @touchend="touchEnd()"
+    @mouseover="stopCarousel()"
+    @mouseleave="startCarousel()"
+  >
+    <!-- 轮播图容器 -->
+    <div class="carousel-slide relative w-full h-64">
+      <template x-for="(slide, index) in slides" :key="index">
+        <div
+        x-show="currentIndex === index"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-x-10"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-300 transform"
+        x-transition:leave-start="opacity-100 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-10"
+        class="absolute inset-0 w-full h-full"
+        :class="{'cursor-pointer': slide.type === 'image'}"
+        @click="slide.type === 'image' ? handleClick(slide.url) : null"
+        x-effect="if (currentIndex === index && slide.type === 'video' && $refs.video) {
+          $refs.video.play();
+        }"
+      >
+        <!-- 媒体展示 -->
+        <div class="relative w-full h-full">
+          <template x-if="slide.type === 'image'">
+            <img :src="slide.image" alt="轮播图" class="object-cover w-full h-full rounded-lg" />
+          </template>
+          <template x-if="slide.type === 'video'">
+            <video x-ref="video" :src="slide.video" class="object-cover w-full h-full rounded-lg" controls muted></video>
+          </template>
+        </div>
+        <!-- 容器内容展示 -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="grid grid-cols-2 gap-4">
+            <template x-for="(container, cIndex) in slide.content" :key="cIndex">
+              <div :class="container.bg + ' p-4 rounded-lg'">
+                <h3 class="text-white" x-text="container.title"></h3>
+                <p class="text-white" x-text="container.text"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+      </template>
+    </div>
+
+    <!-- 左右按钮 -->
+    <button
+      @click="prevSlide(); resetCarousel()"
+      class="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+    >
+      <
+    </button>
+    <button
+      @click="nextSlide(); resetCarousel()"
+      class="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+    >
+      >
+    </button>
+
+    <!-- 底部圆点导航 -->
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+      <template x-for="(slide, index) in slides" :key="index">
+        <button
+          @click="goToSlide(index); resetCarousel()"
+          :class="{'bg-gray-800': currentIndex === index, 'bg-gray-400': currentIndex !== index}"
+          class="w-3 h-3 rounded-full"
+        ></button>
+      </template>
+    </div>
+  </div>
+
+  <script>
+    function carousel(slides) {
+      return {
+        slides,
+        currentIndex: 0,
+        interval: null,
+        startX: 0,
+        currentX: 0,
+
+        handleClick(url) {
+          console.log('Clicked URL:', url);
+          // 未来可以在这里添加其他逻辑，例如打开新窗口等
+        },
+
+        startCarousel() {
+          if (!this.interval) {
+            this.interval = setInterval(() => {
+              this.nextSlide();
+            }, 3000);
+          }
+        },
+
+        stopCarousel() {
+          clearInterval(this.interval);
+          this.interval = null;
+        },
+
+        resetCarousel() {
+          this.stopCarousel();
+          this.startCarousel();
+        },
+
+        nextSlide() {
+          this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+        },
+
+        prevSlide() {
+          this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+        },
+
+        goToSlide(index) {
+          this.currentIndex = index;
+        },
+
+        touchStart(event) {
+          this.stopCarousel();
+          this.startX = event.touches[0].clientX;
+          this.swipeDistance = 0;
+        },
+
+        touchMove(event) {
+          this.currentX = event.touches[0].clientX;
+          this.swipeDistance = this.currentX - this.startX;
+        },
+
+        touchEnd() {
+          if (Math.abs(this.swipeDistance) > 50) {
+            if (this.swipeDistance < 0) {
+              this.nextSlide();
+            } else {
+              this.prevSlide();
+            }
+          }
+          this.startCarousel();
+        },
+
+        handleVisibilityChange() {
+          if (document.hidden) {
+            this.stopCarousel();
+          } else {
+            this.startCarousel();
+          }
+        },
+
+        init() {
+          this.startCarousel();
+          document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+        }
+      };
+    }
+  </script>
+</body>
+
+</html>
