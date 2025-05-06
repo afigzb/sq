@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎页面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <style>
+        .text-stroke {
+            font-family: 'Comic Neue', cursive;
+        }
+    </style>
+</head>
+<body class="bg-black bg-opacity-65 flex items-center justify-center w-screen h-screen overflow-hidden" >
+    <div class="w-full h-full p-8 relative">
+        <div class="w-full h-full flex flex-col items-center justify-start pt-16" x-data="{
+            selectedLine: 1,
+            lines: [
+                { id: 1, status: 'smooth', name: '線路1' },
+                { id: 2, status: 'smooth', name: '線路2' },
+                { id: 3, status: 'smooth', name: '線路3' },
+                { id: 4, status: 'smooth', name: '線路4' }
+            ],
+            selectLine(lineId) {
+                this.selectedLine = lineId;
+            }
+        }">
+            <!-- 圖片展示区域 - 可以修改背景图片、文字和样式 -->
+            <div class="w-[80%] h-[30%] flex items-center justify-center relative " style="background-image: url('Arknights.jpg'); background-size: cover; background-position: 35% center;">
+                <!-- AD标签 - 可以修改颜色、大小和文字 -->
+                <div class="absolute top-2 left-2 w-7 h-7 bg-orange-500 bg-opacity-65 rounded-full flex items-center justify-center">
+                    <span class="text-white text-xs">AD</span>
+                </div>
+                <!-- log - 可以修改文字、颜色、大小和位置 -->
+                <div class="absolute top-2 right-0 text-4xl text-yellow-400 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-stroke [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
+                    明日方舟
+                </div>
+                <!-- 开发商名称 - 可以修改文字、颜色、大小、位置和旋转角度 -->
+                <div class="absolute top-1/2 left-[15%] text-5xl text-yellow-400 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-stroke [text-shadow:_-3px_-3px_0_#000,_3px_-3px_0_#000,_-3px_3px_0_#000,_3px_3px_0_#000] transform -rotate-6">
+                    鷹角出品
+                </div>
+                <!-- 标语 - 可以修改文字、颜色、大小、位置和旋转角度 -->
+                <div class="absolute top-[68%] left-[45%] text-3xl text-orange-600 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-stroke [text-shadow:_-1px_-1px_0_#fff,_1px_-1px_0_#fff,_-1px_1px_0_#fff,_1px_1px_0_#fff,_-2px_-2px_0_#fff,_2px_-2px_0_#fff,_-2px_2px_0_#fff,_2px_2px_0_#fff,_-3px_-3px_0_#fff,_3px_-3px_0_#fff,_-3px_3px_0_#fff,_3px_3px_0_#fff,_-4px_-4px_0_#000,_4px_-4px_0_#000,_-4px_4px_0_#000,_4px_4px_0_#000,_-4.5px_-4.5px_0_#000,_4.5px_-4.5px_0_#000,_-4.5px_4.5px_0_#000,_4.5px_4.5px_0_#000,_-4px_-3px_0_#000,_-4px_-2px_0_#000,_-4px_-1px_0_#000,_-4px_0px_0_#000,_-4px_1px_0_#000,_-4px_2px_0_#000,_-4px_3px_0_#000,_-4px_4px_0_#000,_-3px_4px_0_#000,_-2px_4px_0_#000,_-1px_4px_0_#000,_0px_4px_0_#000,_1px_4px_0_#000,_2px_4px_0_#000,_3px_4px_0_#000,_4px_4px_0_#000,_4px_3px_0_#000,_4px_2px_0_#000,_4px_1px_0_#000,_4px_0px_0_#000,_4px_-1px_0_#000,_4px_-2px_0_#000,_4px_-3px_0_#000,_4px_-4px_0_#000,_3px_-4px_0_#000,_2px_-4px_0_#000,_1px_-4px_0_#000,_0px_-4px_0_#000,_-1px_-4px_0_#000,_-2px_-4px_0_#000,_-3px_-4px_0_#000,_-4px_-4px_0_#000,_-4.5px_-4px_0_#000,_-4.5px_-3px_0_#000,_-4.5px_-2px_0_#000,_-4.5px_-1px_0_#000,_-4.5px_0px_0_#000,_-4.5px_1px_0_#000,_-4.5px_2px_0_#000,_-4.5px_3px_0_#000,_-4.5px_4px_0_#000,_-4px_4.5px_0_#000,_-3px_4.5px_0_#000,_-2px_4.5px_0_#000,_-1px_4.5px_0_#000,_0px_4.5px_0_#000,_1px_4.5px_0_#000,_2px_4.5px_0_#000,_3px_4.5px_0_#000,_4px_4.5px_0_#000,_4.5px_4.5px_0_#000,_4.5px_4px_0_#000,_4.5px_3px_0_#000,_4.5px_2px_0_#000,_4.5px_1px_0_#000,_4.5px_0px_0_#000,_4.5px_-1px_0_#000,_4.5px_-2px_0_#000,_4.5px_-3px_0_#000,_4.5px_-4px_0_#000,_4px_-4.5px_0_#000,_3px_-4.5px_0_#000,_2px_-4.5px_0_#000,_1px_-4.5px_0_#000,_0px_-4.5px_0_#000,_-1px_-4.5px_0_#000,_-2px_-4.5px_0_#000,_-3px_-4.5px_0_#000,_-4px_-4.5px_0_#000] transform -rotate-6">
+                    必屬精品
+                </div>
+            </div>
+            <div class="text-xl text-white font-medium mt-8">
+                請選擇線路
+            </div>
+            <div class="text-sm text-white mt-4">
+                *如果不能連接或不能載圖，請嘗試切換線路
+            </div>
+            <div class="flex flex-col gap-4 mt-8">
+                <template x-for="line in lines" :key="line.id">
+                    <button 
+                        @click="selectLine(line.id)"
+                        :class="{
+                            'border-orange-600': true,
+                            'bg-orange-600': selectedLine === line.id,
+                            'bg-transparent': selectedLine !== line.id
+                        }"
+                        class="w-40 h-14 border-4 rounded-full text-white flex items-center justify-center">
+                        <div :class="{'text-white': selectedLine === line.id, 'text-orange-600': selectedLine !== line.id}"
+                             class="text-lg mr-3">
+                            <span x-text="line.name"></span>
+                        </div>
+                        <div class="flex items-center justify-center gap-1">
+                            <div :class="{
+                                'bg-green-600': line.status === 'smooth',
+                                'bg-yellow-600': line.status === 'slow',
+                                'bg-red-600': line.status === 'busy'
+                            }" class="rounded-full w-2 h-2"></div>
+                            <div class="text-xs text-center">
+                                <span x-text="line.status === 'smooth' ? '順暢' : line.status === 'slow' ? '緩慢' : '繁忙'"></span>
+                            </div>
+                        </div>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

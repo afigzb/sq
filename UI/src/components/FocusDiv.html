@@ -550,10 +550,10 @@
 <body class="flex items-center justify-center h-screen bg-gray-100">
     <div class="border w-[300px] h-[300px]">
         <!-- 基础跟随效果 -->
-        <drag-follow max-offset="25" follow-speed="0.008">
+        <drag-follow max-offset="25" follow-speed="0.008" maxBounceTimes="10">
             <div class="relative bg-black w-[250px] h-[50px] rounded text-white flex items-center justify-center">
                 <div class="absolute">
-                    <drag-follow max-offset="15" follow-speed="0.008">
+                    <drag-follow max-offset="15" follow-speed="0.008" maxBounceTimes="10">
                         <div class="relative w-[250px] h-[50px] rounded text-white flex items-center justify-center">
                             <div class="absolute">
                                 内容
@@ -565,7 +565,7 @@
         </drag-follow>
 
         <!-- 回弹效果示例 -->
-        <drag-follow max-offset="25" follow-speed="0.01" springConstant="0.8" dampingFactor="0.3" maxBounceTimes="7" bounceThreshold="0.1">
+        <drag-follow max-offset="25" follow-speed="0.01" springConstant="0.8" dampingFactor="0.3" maxBounceTimes="10" bounceThreshold="0.1">
             <div class="relative bg-black w-[250px] h-[50px] rounded text-white flex items-center justify-center">
                 <div class="absolute">
                     回弹效果
