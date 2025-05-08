@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动滚动</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div class="max-w-md mx-auto my-8 p-6 bg-gray-50 rounded-2xl shadow-xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">实时资讯播报</h2>
+        <!-- 测试数据 -->
+        <div x-data="
+    {
+        // 生成模拟新闻数据的方法
+        generateNewsData() {
+            // 预定义的新闻标题数组
+            const titles = [
+                '行业动态：最新技术突破',
+                '市场分析：行业趋势报告',
+                '公司新闻：战略合作达成',
+                '产品更新：新功能发布',
+                '技术分享：开发经验总结',
+                '行业洞察：未来发展方向',
+                '市场动态：用户需求分析',
+                '技术前沿：创新应用案例',
+                '行业报告：市场调研数据',
+                '产品动态：用户体验优化'
+            ];
+            
+            // 预定义的新闻内容数组
+            const contents = [
+                '人工智能领域取得重大进展，自然语言处理模型性能提升...',
+                '云计算技术持续创新，为企业数字化转型提供新动力...',
+                '大数据分析技术助力企业决策，提升运营效率...',
+                '区块链技术应用场景不断扩展，推动产业升级...',
+                '物联网技术快速发展，智能设备普及率持续提升...',
+                '5G技术商用加速，带动相关产业快速发展...',
+                '网络安全技术不断创新，保障数据安全...',
+                '数字化转型成为企业发展的必由之路...',
+                '智能制造技术推动产业升级，提升生产效率...',
+                '数字经济发展迅速，创造新的增长点...'
+            ];
+
+            // 生成100条随机新闻数据
+            const news = [];
+            for (let i = 0; i < 100; i++) {
+                const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+                const randomContent = contents[Math.floor(Math.random() * contents.length)];
+                const time = `${Math.floor(Math.random() * 60)}分钟前`;
+                
+                news.push({
+                    title: randomTitle,
+                    content: randomContent,
+                    time: time
+                });
+            }
+            return news;
+        },
+        originalData: [], // 存储原始新闻数据
+        init() {
+            this.originalData = this.generateNewsData(); // 初始化时生成数据
+        }
+    }" x-init="init">
+            <!-- 表头布局 -->
+            <div class="flex w-full p-4">
+                <div class="w-1/3">111</div>
+                <div class="w-1/2">222</div>
+                <div class="w-1/6">333</div>
+            </div>
+            <!-- 无限滚动容器 -->
+            <div x-data="verticalInfiniteScroll({ 
+            originalData,
+            scrollSpeed: 0.15 // 设置滚动速度
+        })" x-ref="container" x-init="initVerticalInfiniteScroll"
+                class="relative h-96 overflow-hidden rounded-xl bg-white shadow-inner"
+                @mouseenter.passive="pauseAutoScroll" @mouseleave.passive="resumeAutoScroll"
+                @wheel.prevent="handleWheel">
+                <!-- 滚动内容区域 -->
+                <div class="absolute inset-0" :style="`transform: translateY(${virtualPosition}px)`"
+                    @mousedown.prevent="startDrag($event)" @touchstart.passive="startDrag($event)">
+                    <!-- 循环渲染的内容 -->
+                    <template x-for="(item, index) in mirroredData" :key="index">
+                        <div class="flex items-center p-4 scroll-item">
+                            <div class="w-1/3" x-text="item.title"></div>
+                            <div class="w-1/2" x-text="item.content"></div>
+                            <div class="w-1/6" x-text="item.time"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 垂直无限滚动组件
+        function verticalInfiniteScroll(config = {}) {
+            // 解构配置参数，设置默认值
+            const {
+                originalData = [], // 原始数据数组
+                scrollSpeed: originalSpeed = 0.5, // 滚动速度
+                itemHeight = null // 项目高度（可选，会根据数据内容自动计算）
+            } = config;
+
+            return {
+                // 状态变量初始化
+                originalData,
+                originalSpeed,
+                itemHeight,
+                containerHeight: 0, // 容器高度
+                shouldScroll: false, // 是否需要滚动
+                mirroredData: [], // 镜像数据（用于无缝滚动）
+                virtualPosition: 0, // 虚拟滚动位置
+                targetPosition: 0, // 目标滚动位置
+                isDragging: false, // 是否正在拖拽
+                lastDragY: 0, // 上次拖拽的Y坐标
+                totalHeight: 0, // 总内容高度
+
+                // 初始化方法
+                async initVerticalInfiniteScroll() {
+                    await this.initializeContainer();
+                    await this.measureItemHeight();
+                    this.determineScrollBehavior();
+                    this.setupScrollData();
+                    this.shouldScroll && this.autoScroll();
+                },
+
+                /* ========== 核心逻辑模块 ========== */
+                // 初始化容器尺寸
+                async initializeContainer() {
+                    this.containerHeight = this.$refs.container.offsetHeight;
+                },
+
+                // 测量单个项目的高度
+                async measureItemHeight() {
+                    if (this.itemHeight !== null) return;
+
+                    this.mirroredData = [...this.originalData];
+                    await this.$nextTick();
+
+                    const element = this.$el.querySelector('.scroll-item');
+                    this.itemHeight = element?.offsetHeight || 0;
+                },
+
+                // 判断是否需要启用滚动
+                determineScrollBehavior() {
+                    this.totalHeight = this.originalData.length * this.itemHeight;
+                    this.shouldScroll = this.totalHeight > this.containerHeight;
+                },
+
+                // 设置滚动数据
+                setupScrollData() {
+                    // 如果需要滚动，则复制数据以实现无缝效果
+                    this.mirroredData = this.shouldScroll
+                        ? [...this.originalData, ...this.originalData]
+                        : [...this.originalData];
+                    this.scrollSpeed = this.shouldScroll ? this.originalSpeed : 0;
+                },
+
+                /* ========== 滚动控制模块 ========== */
+                // 自动滚动方法
+                autoScroll() {
+                    const animate = () => {
+                        if (!this.shouldScroll) return;
+
+                        this.updateScrollPosition();
+                        this.applySmoothScrolling();
+                        requestAnimationFrame(animate.bind(this));
+                    };
+                    animate();
+                },
+
+                // 更新滚动位置
+                updateScrollPosition() {
+                    if (!this.isDragging) {
+                        this.targetPosition -= this.scrollSpeed;
+                        this.checkBoundary();
+                    }
+                },
+
+                // 应用平滑滚动效果
+                applySmoothScrolling() {
+                    const maxDiff = this.totalHeight / 2;
+                    const currentDiff = this.targetPosition - this.virtualPosition;
+
+                    if (Math.abs(currentDiff) > maxDiff) {
+                        this.virtualPosition = this.targetPosition;
+                    } else {
+                        this.virtualPosition += currentDiff;
+                    }
+                },
+
+                // 检查边界条件
+                checkBoundary() {
+                    if (!this.shouldScroll) return;
+
+                    const maxScroll = -this.totalHeight;
+                    if (this.targetPosition <= maxScroll) {
+                        // 重置到顶部
+                        const offset = this.targetPosition - maxScroll;
+                        this.targetPosition = maxScroll + this.totalHeight + offset;
+                        this.virtualPosition = this.targetPosition;
+                    }
+                    else if (this.targetPosition > 0) {
+                        // 重置到底部
+                        const offset = this.targetPosition;
+                        this.targetPosition = -this.totalHeight + offset;
+                        this.virtualPosition = this.targetPosition;
+                    }
+                },
+
+                /* ========== 拖拽事件模块 ========== */
+                // 开始拖拽
+                startDrag(e) {
+                    if (!this.shouldScroll) return;
+
+                    this.isDragging = true;
+                    this.lastDragY = this.getClientY(e);
+                    this.bindDragEvents();
+                },
+
+                // 处理拖拽过程
+                handleDrag(e) {
+                    if (!this.isDragging) return;
+
+                    e.preventDefault();
+                    const deltaY = this.calculateDeltaY(e);
+                    this.updateDragPosition(deltaY);
+                },
+
+                // 结束拖拽
+                endDrag() {
+                    this.isDragging = false;
+                    this.unbindDragEvents();
+                },
+
+                // 获取客户端Y坐标
+                getClientY(e) {
+                    return e.clientY || e.touches[0].clientY;
+                },
+
+                // 计算Y轴移动距离
+                calculateDeltaY(e) {
+                    const currentY = this.getClientY(e);
+                    const delta = currentY - this.lastDragY;
+                    this.lastDragY = currentY;
+                    return delta;
+                },
+
+                // 更新拖拽位置
+                updateDragPosition(deltaY) {
+                    this.targetPosition += deltaY;
+                    this.checkBoundary();
+                },
+
+                /* ========== 事件管理模块 ========== */
+                // 绑定拖拽相关事件
+                bindDragEvents() {
+                    const handleDrag = (e) => {
+                        if (!this.isDragging) return;
+                        const deltaY = this.calculateDeltaY(e);
+                        this.updateDragPosition(deltaY);
+                    };
+
+                    const endDrag = () => {
+                        this.isDragging = false;
+                        this.unbindDragEvents();
+                    };
+
+                    // 事件处理器对象
+                    this._eventHandlers = {
+                        mousemove: handleDrag,
+                        mouseup: endDrag,
+                        touchmove: handleDrag,
+                        touchend: endDrag
+                    };
+
+                    // 绑定事件
+                    Object.entries(this._eventHandlers).forEach(([event, handler]) => {
+                        const options = event.startsWith('touch') ? { passive: true } : { passive: false };
+                        document.addEventListener(event, handler, options);
+                    });
+                },
+
+                // 解绑拖拽相关事件
+                unbindDragEvents() {
+                    if (this._eventHandlers) {
+                        Object.entries(this._eventHandlers).forEach(([event, handler]) => {
+                            document.removeEventListener(event, handler);
+                        });
+                        this._eventHandlers = null;
+                    }
+                },
+
+                /* ========== 滚轮事件处理 ========== */
+                // 处理滚轮事件
+                handleWheel(e) {
+                    if (!this.shouldScroll) return;
+
+                    e.preventDefault();
+                    const scrollMultiplier = 0.1;
+
+                    const deltaY = e.deltaY || e.wheelDeltaY * -1;
+                    this.applyWheelScroll(-deltaY * scrollMultiplier);
+                },
+
+                // 应用滚轮滚动
+                applyWheelScroll(delta) {
+                    if (this.scrollSpeed > 0) {
+                        this.pauseAutoScroll();
+                    }
+
+                    this.targetPosition += delta;
+                    this.checkBoundary();
+
+                    if (Math.abs(this.targetPosition - this.virtualPosition) > this.totalHeight / 2) {
+                        this.virtualPosition = this.targetPosition;
+                    }
+                },
+
+                /* ========== 滚动控制接口 ========== */
+                // 暂停自动滚动
+                pauseAutoScroll() {
+                    this.scrollSpeed = 0;
+                },
+
+                // 恢复自动滚动
+                resumeAutoScroll() {
+                    this.scrollSpeed = this.originalSpeed;
+                }
+            };
+        }
+    </script>
+</body>
+
+</html>
