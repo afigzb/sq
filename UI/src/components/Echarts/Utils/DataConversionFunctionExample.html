@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts Data Conversion Example</title>
+    <!-- 引入完整的 ECharts 包含 GL 扩展 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+    <script type="module">
+        import EChartsDataConverter from './DataConversionFunction.js';
+
+        // 基础示例数据
+        const sampleData = [
+            { category: 'A', value: 100 },
+            { category: 'B', value: 200 },
+            { category: 'C', value: 150 },
+            { category: 'D', value: 300 },
+            { category: 'E', value: 250 }
+        ];
+
+        // 多系列示例数据
+        const multiSeriesData = [
+            { month: '1月', category: '服装', sales: 200 },
+            { month: '1月', category: '电子', sales: 300 },
+            { month: '2月', category: '服装', sales: 250 },
+            { month: '2月', category: '电子', sales: 350 },
+            { month: '3月', category: '服装', sales: 180 },
+            { month: '3月', category: '电子', sales: 280 },
+            { month: '4月', category: '服装', sales: 220 },
+            { month: '4月', category: '电子', sales: 320 }
+        ];
+
+        // 多维度示例数据
+        const multiDimensionalData = [
+            { name: '产品A', 质量: 90, 价格: 80, 服务: 95, 外观: 70, 性能: 85 },
+            { name: '产品B', 质量: 85, 价格: 90, 服务: 75, 外观: 85, 性能: 80 },
+            { name: '产品C', 质量: 95, 价格: 70, 服务: 85, 外观: 90, 性能: 90 }
+        ];
+
+        // 3D散点图示例数据
+        const scatter3DData = [
+            { x: 10, y: 5, z: 3, name: '点1' },
+            { x: 15, y: 8, z: 12, name: '点2' },
+            { x: 8, y: 12, z: 5, name: '点3' },
+            { x: 20, y: 3, z: 8, name: '点4' },
+            { x: 5, y: 15, z: 10, name: '点5' },
+            { x: 18, y: 10, z: 15, name: '点6' }
+        ];
+
+        // 基础配置对象
+        const basicConfig = {
+            categoryField: 'category',
+            valueField: 'value'
+        };
+
+        // 多系列配置对象
+        const multiSeriesConfig = {
+            categoryField: 'month',
+            valueField: 'sales',
+            seriesField: 'category'
+        };
+
+        // 多维度配置对象
+        const multiDimensionalConfig = {
+            dimensions: [
+                { field: '质量', name: '质量评分' },
+                { field: '价格', name: '价格评分' },
+                { field: '服务', name: '服务评分' },
+                { field: '外观', name: '外观评分' },
+                { field: '性能', name: '性能评分' }
+            ]
+        };
+
+        // 3D散点图配置对象
+        const scatter3DConfig = {
+            dimensions: [
+                { field: 'x', name: 'X轴' },
+                { field: 'y', name: 'Y轴' },
+                { field: 'z', name: 'Z轴' }
+            ]
+        };
+
+        // 初始化图表容器
+        const chartContainers = {
+            // 基础图表
+            pie: document.getElementById('pieChart'),
+            rose: document.getElementById('roseChart'),
+            polarBar: document.getElementById('polarBarChart'),
+            radar: document.getElementById('radarChart'),
+            scatter: document.getElementById('scatterChart'),
+            area: document.getElementById('areaChart'),
+            bar: document.getElementById('barChart'),
+            line: document.getElementById('lineChart'),
+            
+            // 多系列图表
+            multiBar: document.getElementById('multiBarChart'),
+            multiLine: document.getElementById('multiLineChart'),
+            multiArea: document.getElementById('multiAreaChart'),
+            multiPie: document.getElementById('multiPieChart'),
+            multiRadar: document.getElementById('multiRadarChart'),
+            
+            // 多维度图表
+            multiDimensionalRadar: document.getElementById('multiDimensionalRadarChart')
+        };
+
+        // 为每种图表类型创建实例
+        Object.entries(chartContainers).forEach(([type, container]) => {
+            if (!container) return;
+            
+            const chart = echarts.init(container);
+            let option;
+            
+            // 根据图表类型选择数据和配置
+            if (type === 'multiBar' || type === 'multiLine' || type === 'multiArea' || type === 'multiPie' || type === 'multiRadar') {
+                option = EChartsDataConverter.convertToEChartsData(
+                    multiSeriesData, 
+                    multiSeriesConfig, 
+                    type.replace('multi', '').toLowerCase()
+                );
+            } else if (type === 'multiDimensionalRadar') {
+                option = EChartsDataConverter.convertToEChartsData(
+                    multiDimensionalData, 
+                    multiDimensionalConfig, 
+                    'radar'
+                );
+            } else {
+                option = EChartsDataConverter.convertToEChartsData(sampleData, basicConfig, type);
+            }
+            
+            chart.setOption(option);
+        });
+
+        // 直接创建平行坐标图和3D散点图，不通过转换器
+        // 平行坐标图
+        const parallelChart = echarts.init(document.getElementById('parallelChart'));
+        parallelChart.setOption({
+            parallelAxis: multiDimensionalConfig.dimensions.map((dim, index) => ({
+                dim: index,
+                name: dim.name || dim.field,
+            })),
+            parallel: {
+                layout: 'horizontal',
+                axisExpandable: true
+            },
+            series: [{
+                type: 'parallel',
+                lineStyle: {
+                    width: 2
+                },
+                data: multiDimensionalData.map(item => {
+                    return multiDimensionalConfig.dimensions.map(dim => item[dim.field] || 0);
+                })
+            }]
+        });
+
+        // 3D散点图
+        const scatter3DChart = echarts.init(document.getElementById('scatter3DChart'));
+        scatter3DChart.setOption({
+            grid3D: {},
+            xAxis3D: {name: 'X轴'},
+            yAxis3D: {name: 'Y轴'},
+            zAxis3D: {name: 'Z轴'},
+            series: [{
+                type: 'scatter3D',
+                symbolSize: 12,
+                data: scatter3DData.map(item => [item.x, item.y, item.z]),
+                itemStyle: {
+                    opacity: 0.7
+                }
+            }]
+        });
+
+        // 响应式调整
+        window.addEventListener('resize', () => {
+            Object.values(chartContainers).forEach(container => {
+                if (container) {
+                    echarts.getInstanceByDom(container)?.resize();
+                }
+            });
+            parallelChart.resize();
+            scatter3DChart.resize();
+        });
+    </script>
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin: 20px 0 10px;
+            font-size: 24px;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .explanation {
+            grid-column: 1 / -1;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-grid">
+        <h2 class="section-title">基础图表</h2>
+        
+        <div>
+            <h2>饼图</h2>
+            <div id="pieChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>玫瑰图</h2>
+            <div id="roseChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>极坐标柱状图</h2>
+            <div id="polarBarChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>雷达图</h2>
+            <div id="radarChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>散点图</h2>
+            <div id="scatterChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>面积图</h2>
+            <div id="areaChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>柱状图</h2>
+            <div id="barChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>折线图</h2>
+            <div id="lineChart" class="chart-container"></div>
+        </div>
+        
+        <h2 class="section-title">多系列图表</h2>
+        <div class="explanation">
+            多系列图表展示了如何使用 <code>seriesField</code> 将数据划分为不同的系列，每个系列使用不同的颜色表示。此例中我们使用"服装"和"电子"两个类别在各月份的销售数据。
+        </div>
+        
+        <div>
+            <h2>多系列柱状图</h2>
+            <div id="multiBarChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>多系列折线图</h2>
+            <div id="multiLineChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>多系列面积图</h2>
+            <div id="multiAreaChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>多系列雷达图</h2>
+            <div id="multiRadarChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>多系列饼图</h2>
+            <div id="multiPieChart" class="chart-container"></div>
+        </div>
+        
+        <h2 class="section-title">多维度图表</h2>
+        <div class="explanation">
+            多维度图表展示了如何在一个图表中展示多个维度的数据。此例中我们使用产品的多个评分维度（质量、价格、服务、外观、性能）进行展示。多维度雷达图显示每个产品在各个维度上的表现，平行坐标图显示所有产品在所有维度上的分布，3D散点图则使用三个维度作为坐标轴展示数据点在空间中的分布。
+        </div>
+        
+        <div>
+            <h2>多维度雷达图</h2>
+            <div id="multiDimensionalRadarChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>平行坐标图</h2>
+            <div id="parallelChart" class="chart-container"></div>
+        </div>
+        <div>
+            <h2>3D散点图</h2>
+            <div id="scatter3DChart" class="chart-container"></div>
+        </div>
+    </div>
+</body>
+</html>
