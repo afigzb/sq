@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滑动阻尼效果演示</title>
+    <style>
+        /* 重置默认样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 固定body，防止原生滚动 */
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        /* 为demo设置一些样式 */
+        .section {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        /* 交替的背景色，用于视觉区分 */
+        .section:nth-child(odd) {
+            background-color: #f0f0f0;
+        }
+
+        .section:nth-child(even) {
+            background-color: #e0e0e0;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #007bff;
+        }
+
+        /* 标题和文本样式 */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* 代码区块样式 */
+        pre {
+            background: #f8f8f8;
+            border-radius: 5px;
+            padding: 1rem;
+            overflow-x: auto;
+            max-width: 800px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+        }
+
+        /* 参数调整区域样式 */
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            margin: 1rem 0 2rem 0;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .control-group input {
+            width: 100%;
+            padding: 0.5rem;
+        }
+
+        .value-display {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* 演示区块 */
+        .demo-box {
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        /* 按钮样式 */
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            margin: 1rem 0;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        /* 功能特点列表 */
+        .features-list {
+            list-style-position: inside;
+            max-width: 800px;
+            text-align: left;
+            margin: 1.5rem 0;
+        }
+
+        .features-list li {
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        /* 视觉指示器 */
+        .scroll-indicator {
+            position: relative;
+            width: 30px;
+            height: 50px;
+            border: 2px solid #333;
+            border-radius: 15px;
+            margin: 2rem auto;
+        }
+
+        .scroll-indicator::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #333;
+            border-radius: 50%;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollAnim 2s infinite;
+        }
+
+        @keyframes scrollAnim {
+            0% {
+                opacity: 1;
+                top: 10px;
+            }
+            70% {
+                opacity: 0;
+                top: 30px;
+            }
+            100% {
+                opacity: 0;
+                top: 30px;
+            }
+        }
+    </style>
+    <script type="module" src="./SlidingDamping.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">SlidingDamping 组件</div>
+        <div class="nav-links">
+            <a href="#intro">介绍</a>
+            <a href="#features">特点</a>
+            <a href="#usage">使用方法</a>
+            <a href="#demo">参数演示</a>
+        </div>
+    </nav>
+
+    <sliding-damping damping="0.03" touch-damping="0.2" limit-speed="100" id="demoComponent">
+        <section class="section" id="intro">
+            <h1>SlidingDamping 滑动阻尼效果</h1>
+            <p>这是一个基于Web Components实现的平滑滚动组件，它模拟了物理世界中的阻尼滚动效果，使网页滚动更加自然流畅。</p>
+            <div class="scroll-indicator"></div>
+            <p>请向下滚动体验阻尼滚动效果 👇</p>
+        </section>
+
+        <section class="section" id="features">
+            <h2>组件特点</h2>
+            <ul class="features-list">
+                <li>基于物理阻尼模型，实现自然流畅的滚动体验</li>
+                <li>支持鼠标滚轮和触摸屏操作</li>
+                <li>可配置阻尼系数，满足不同交互需求</li>
+                <li>自适应不同设备类型，在移动设备上也有良好表现</li>
+                <li>使用Web Components技术实现，可在任意框架中使用</li>
+                <li>性能优化：使用requestAnimationFrame和will-change属性</li>
+            </ul>
+            <div class="demo-box">
+                继续向下滚动查看更多内容
+            </div>
+        </section>
+
+        <section class="section" id="usage">
+            <h2>如何使用</h2>
+            <p>SlidingDamping 是一个标准的Web Component，使用非常简单：</p>
+            <pre><code>&lt;script type="module" src="./SlidingDamping.js"&gt;&lt;/script&gt;
+
+&lt;sliding-damping damping="0.03" touch-damping="0.2" limit-speed="100"&gt;
+    &lt;!-- 您的内容放在这里 --&gt;
+    &lt;section&gt;第一部分内容&lt;/section&gt;
+    &lt;section&gt;第二部分内容&lt;/section&gt;
+&lt;/sliding-damping&gt;</code></pre>
+            <p>组件支持以下属性配置：</p>
+            <ul class="features-list">
+                <li><strong>damping</strong>: 鼠标滚轮的阻尼系数（默认：0.03）- 值越小滚动越平滑</li>
+                <li><strong>touch-damping</strong>: 触摸设备的阻尼系数（默认：0.15）- 值越大响应越快</li>
+                <li><strong>limit-speed</strong>: 最大滚动速度限制（默认：100）- 防止滚动过快</li>
+            </ul>
+        </section>
+
+        <section class="section" id="demo">
+            <h2>参数调整演示</h2>
+            <p>调整下面的参数，体验不同阻尼效果的差异：</p>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="dampingRange">滚轮阻尼系数 (damping)</label>
+                    <input type="range" id="dampingRange" min="0.01" max="0.2" step="0.01" value="0.03">
+                    <div class="value-display">当前值: <span id="dampingValue">0.03</span></div>
+                </div>
+                <div class="control-group">
+                    <label for="touchDampingRange">触摸阻尼系数 (touch-damping)</label>
+                    <input type="range" id="touchDampingRange" min="0.05" max="0.5" step="0.05" value="0.2">
+                    <div class="value-display">当前值: <span id="touchDampingValue">0.2</span></div>
+                </div>
+                <div class="control-group">
+                    <label for="limitSpeedRange">最大滚动速度 (limit-speed)</label>
+                    <input type="range" id="limitSpeedRange" min="50" max="200" step="10" value="100">
+                    <div class="value-display">当前值: <span id="limitSpeedValue">100</span></div>
+                </div>
+                <button id="resetButton">重置默认值</button>
+            </div>
+
+            <div class="demo-box">
+                调整参数后在此页面滚动以体验不同效果
+            </div>
+            
+            <h2>工作原理</h2>
+            <p>SlidingDamping 组件通过以下步骤实现平滑滚动效果：</p>
+            <ul class="features-list">
+                <li>捕获滚轮和触摸事件，计算目标滚动位置</li>
+                <li>使用阻尼系数平滑过渡当前位置到目标位置</li>
+                <li>通过 requestAnimationFrame 在每一帧更新位置</li>
+                <li>使用 CSS transform 实现高性能的视觉滚动</li>
+            </ul>
+            <pre><code>// 阻尼滚动的核心实现原理
+_updatePosition() {
+  const damping = this.isMobile && this.isDragging 
+    ? this.touchDamping 
+    : this.damping;
+    
+  // 使用阻尼系数计算新的位置，实现平滑过渡
+  this.currentY += (this.targetY - this.currentY) * damping;
+    
+  // 更新元素位置
+  if (this.contentEl) {
+    this.contentEl.style.transform = `translateY(${-this.currentY}px)`;
+  }
+}</code></pre>
+        </section>
+
+        <section class="section">
+            <h2>感谢使用</h2>
+            <p>SlidingDamping 组件为您的网站提供了优雅、自然的滚动体验。继续探索更多可能性，创造出令人愉悦的用户界面！</p>
+            <button id="scrollToTopButton">返回顶部</button>
+        </section>
+    </sliding-damping>
+
+    <script>
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', () => {
+            // 获取组件实例
+            const slidingComponent = document.getElementById('demoComponent');
+            
+            // 获取控制元素
+            const dampingRange = document.getElementById('dampingRange');
+            const touchDampingRange = document.getElementById('touchDampingRange');
+            const limitSpeedRange = document.getElementById('limitSpeedRange');
+            
+            const dampingValue = document.getElementById('dampingValue');
+            const touchDampingValue = document.getElementById('touchDampingValue');
+            const limitSpeedValue = document.getElementById('limitSpeedValue');
+            
+            const resetButton = document.getElementById('resetButton');
+            const scrollToTopButton = document.getElementById('scrollToTopButton');
+            
+            // 更新阻尼系数和显示值
+            dampingRange.addEventListener('input', () => {
+                const value = dampingRange.value;
+                dampingValue.textContent = value;
+                slidingComponent.setAttribute('damping', value);
+            });
+            
+            touchDampingRange.addEventListener('input', () => {
+                const value = touchDampingRange.value;
+                touchDampingValue.textContent = value;
+                slidingComponent.setAttribute('touch-damping', value);
+            });
+            
+            limitSpeedRange.addEventListener('input', () => {
+                const value = limitSpeedRange.value;
+                limitSpeedValue.textContent = value;
+                slidingComponent.setAttribute('limit-speed', value);
+            });
+            
+            // 重置默认值
+            resetButton.addEventListener('click', () => {
+                dampingRange.value = 0.03;
+                touchDampingRange.value = 0.2;
+                limitSpeedRange.value = 100;
+                
+                dampingValue.textContent = 0.03;
+                touchDampingValue.textContent = 0.2;
+                limitSpeedValue.textContent = 100;
+                
+                slidingComponent.setAttribute('damping', 0.03);
+                slidingComponent.setAttribute('touch-damping', 0.2);
+                slidingComponent.setAttribute('limit-speed', 100);
+            });
+            
+            // 返回顶部按钮
+            scrollToTopButton.addEventListener('click', () => {
+                // 这里我们直接修改组件内部的 targetY 属性
+                // 在实际项目中，最好提供一个公共方法来实现这个功能
+                slidingComponent.targetY = 0;
+            });
+            
+            // 如果是模拟触摸设备开发环境，添加一个提示
+            if (window.matchMedia('(pointer: coarse)').matches) {
+                const touchInfo = document.createElement('div');
+                touchInfo.style.position = 'fixed';
+                touchInfo.style.bottom = '20px';
+                touchInfo.style.right = '20px';
+                touchInfo.style.background = 'rgba(0,0,0,0.7)';
+                touchInfo.style.color = 'white';
+                touchInfo.style.padding = '10px';
+                touchInfo.style.borderRadius = '5px';
+                touchInfo.style.zIndex = '9999';
+                touchInfo.textContent = '当前为触摸设备模式';
+                document.body.appendChild(touchInfo);
+            }
+        });
+    </script>
+</body>
+</html> 
