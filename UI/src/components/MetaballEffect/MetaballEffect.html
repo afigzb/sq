@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>融球控件 - Web Component</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .demo-container {
+            position: relative;
+            width: 100vw;
+            height: 80vh;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .demo-item {
+            position: absolute;
+            transition: all 0.1s ease;
+        }
+
+        .ball {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ff6b6b;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            background: #4ecdc4;
+        }
+
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 52px solid #ffe66d;
+        }
+
+        .text-item {
+            font-size: 24px;
+            font-weight: bold;
+            color: #a8e6cf;
+            padding: 10px 20px;
+            background: #a8e6cf;
+            border-radius: 20px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #45b7aa;
+        }
+
+        .info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>融球控件 (Metaball Component)</h2>
+        <p>这是一个Web Component封装的融球控件，可以为任何插入的元素提供融球效果。</p>
+        <p>控件只负责融球效果，元素的移动由外部控制。</p>
+    </div>
+
+    <div class="controls">
+        <button onclick="toggleAnimation()">开始/停止动画</button>
+        <button onclick="resetPositions()">重置位置</button>
+        <label>
+            模糊强度: 
+            <input type="range" id="blurSlider" min="2" max="15" value="8" 
+                   onchange="updateBlur(this.value)">
+            <span id="blurValue">8</span>px
+        </label>
+        <label>
+            对比度: 
+            <input type="range" id="contrastSlider" min="10" max="40" value="20" 
+                   onchange="updateContrast(this.value)">
+            <span id="contrastValue">20</span>
+        </label>
+    </div>
+
+    <!-- 使用融球控件 -->
+    <metaball-container class="demo-container">
+        <div class="demo-item ball" style="left: 100px; top: 100px;"></div>
+        <div class="demo-item square" style="left: 300px; top: 200px;"></div>
+        <div class="demo-item triangle" style="left: 500px; top: 150px;"></div>
+        <div class="demo-item text-item" style="left: 200px; top: 300px;">TEXT</div>
+    </metaball-container>
+
+    <script type="module">
+        // 导入融球控件
+        import MetaballContainer from './MetaballEffect.js';
+
+        // 演示动画控制
+        let animationId = null;
+        let isAnimating = false;
+        const items = [];
+
+        // 初始化演示项目
+        function initDemo() {
+            const container = document.querySelector('metaball-container');
+            const demoItems = container.querySelectorAll('.demo-item');
+            
+            demoItems.forEach((item, index) => {
+                const rect = item.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                items.push({
+                    element: item,
+                    x: parseFloat(item.style.left) || 0,
+                    y: parseFloat(item.style.top) || 0,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    width: item.offsetWidth,
+                    height: item.offsetHeight
+                });
+            });
+        }
+
+        // 动画循环
+        function animate() {
+            if (!isAnimating) return;
+
+            const container = document.querySelector('metaball-container');
+            const containerRect = container.getBoundingClientRect();
+
+            items.forEach(item => {
+                // 更新位置
+                item.x += item.vx;
+                item.y += item.vy;
+
+                // 边界检测
+                if (item.x <= 0 || item.x >= containerRect.width - item.width) {
+                    item.vx *= -1;
+                    item.x = Math.max(0, Math.min(containerRect.width - item.width, item.x));
+                }
+                if (item.y <= 0 || item.y >= containerRect.height - item.height) {
+                    item.vy *= -1;
+                    item.y = Math.max(0, Math.min(containerRect.height - item.height, item.y));
+                }
+
+                // 应用位置
+                item.element.style.left = `${item.x}px`;
+                item.element.style.top = `${item.y}px`;
+            });
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // 控制函数
+        window.toggleAnimation = function() {
+            isAnimating = !isAnimating;
+            if (isAnimating) {
+                animate();
+            } else {
+                cancelAnimationFrame(animationId);
+            }
+        };
+
+        window.resetPositions = function() {
+            items.forEach(item => {
+                item.x = Math.random() * 400;
+                item.y = Math.random() * 300;
+                item.vx = (Math.random() - 0.5) * 2;
+                item.vy = (Math.random() - 0.5) * 2;
+                item.element.style.left = `${item.x}px`;
+                item.element.style.top = `${item.y}px`;
+            });
+        };
+
+        window.updateBlur = function(value) {
+            const container = document.querySelector('metaball-container');
+            container.setBlur(value);
+            document.getElementById('blurValue').textContent = value;
+        };
+
+        window.updateContrast = function(value) {
+            const container = document.querySelector('metaball-container');
+            container.setContrast(value);
+            document.getElementById('contrastValue').textContent = value;
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 等待Web Component注册完成
+            setTimeout(() => {
+                initDemo();
+            }, 100);
+        });
+
+        // 鼠标交互演示
+        document.addEventListener('mousemove', (e) => {
+            if (!isAnimating) return;
+            
+            const container = document.querySelector('metaball-container');
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 鼠标吸引效果
+            items.forEach(item => {
+                const dx = mouseX - (item.x + item.width / 2);
+                const dy = mouseY - (item.y + item.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 150) {
+                    const force = (150 - distance) / 150 * 0.01;
+                    item.vx += dx / distance * force;
+                    item.vy += dy / distance * force;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
