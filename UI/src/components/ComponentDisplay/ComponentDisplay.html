@@ -462,6 +462,7 @@
             <label for="jsFileInput">文件路径：</label>
             <input type="text" id="jsFileInput" placeholder="例如: ../Echarts/Utils/DataConversionFunction.js" class="file-input">
             <button class="btn btn-primary" onclick="addJSFile()">➕ 添加</button>
+            <button class="btn btn-secondary" onclick="testExternalFileImport()">🧪 测试导入</button>
           </div>
         </div>
         <div class="imported-files" id="importedFiles">
@@ -542,6 +543,9 @@
 
   <!-- 引入 CodeDisplay 组件 -->
   <script src="../CodeDisplay/CodeDisplay.js"></script>
+  
+  <!-- 引入 CodePreview 组件 -->
+  <script src="../CodePreview/CodePreview.js"></script>
   
   <script src="script.js"></script>
 </body>

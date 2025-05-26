@@ -1,499 +1,635 @@
-    // 全局变量
-    let codeDisplay = null;
-    const preview = document.getElementById('preview');
-    const fullscreenPreview = document.getElementById('fullscreenPreview');
-    const statusIndicator = document.getElementById('statusIndicator');
-    const errorMessage = document.getElementById('errorMessage');
-    
-    let updateTimeout;
-    let isUpdating = false;
+/**
+ * 优化后的代码展示与预览集成脚本
+ * 利用 CodeDisplay 和 CodePreview 组件的内置功能，减少重复逻辑
+ */
 
-    // 外部JavaScript文件管理
-    let externalJSFiles = [];
-    let jsFileContents = new Map(); // 存储文件路径和内容的映射
+// ==================== 核心控制器类 ====================
+class CodeEditorController {
+    constructor() {
+        this.codeDisplay = null;
+        this.codePreview = null;
+        this.fullscreenCodePreview = null;
+        this.externalFileManager = new ExternalFileManager();
+        this.uiManager = new UIManager();
+        
+        // 防抖定时器
+        this.updateTimeout = null;
+        this.DEBOUNCE_DELAY = 300;
+        
+        this.init();
+    }
 
-    // 默认代码
-    const defaultCode = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Display React Code String</title>
-        <style>
-            body {
-                font-family: monospace;
-                background-color: #f5f5f5;
-                padding: 20px;
+    async init() {
+        await this.initializeComponents();
+        this.setupEventListeners();
+        this.setupKeyboardShortcuts();
+        this.externalFileManager.updateDisplay();
+    }
+
+    async initializeComponents() {
+        // 获取配置
+        const displayOptions = this.getDisplayOptions();
+        const previewOptions = this.getPreviewOptions();
+
+        // 初始化 CodeDisplay
+        this.codeDisplay = new CodeDisplay('#codeEditor', displayOptions);
+        await this.codeDisplay.render(this.getDefaultCode(), this.getSelectedLanguage());
+
+        // 初始化主预览 - 找到现有的iframe并替换为CodePreview容器
+        this.setupPreviewContainer('#preview', 'codePreviewContainer');
+        this.codePreview = new CodePreview('#codePreviewContainer', previewOptions);
+
+        // 初始化全屏预览 - 找到现有的iframe并替换为CodePreview容器
+        this.setupPreviewContainer('#fullscreenPreview', 'fullscreenCodePreview');
+        this.fullscreenCodePreview = new CodePreview('#fullscreenCodePreview', {
+            ...previewOptions,
+            onError: (error) => console.error('全屏预览错误:', error)
+        });
+
+        // 初始预览更新
+        this.updatePreviewDebounced();
+    }
+
+    getDisplayOptions() {
+        return {
+            theme: document.getElementById('themeSelect').value,
+            showLineNumbers: document.getElementById('showLineNumbers').checked,
+            editable: document.getElementById('enableEditing').checked,
+            maxHeight: '500px',
+            onChange: (code, language) => {
+                this.updatePreviewDebounced();
             }
-            pre {
-                background-color: #272822;
-                color: #f8f8f2;
-                padding: 15px;
-                border-radius: 8px;
-                overflow-x: auto;
+        };
+    }
+
+    getPreviewOptions() {
+        return {
+            width: '100%',
+            height: '100%',
+            onError: (error) => {
+                console.error('预览错误:', error);
+                this.uiManager.setStatus('error');
+            },
+            onLoad: () => {
+                this.uiManager.setStatus('loaded');
             }
-        </style>
-    </head>
-    <body>
-        <h2>React Hook 示例代码</h2>
-        <pre id="codeBlock"></pre>
-    
-        <script>
-            const defaultCode = '// React Hook 示例\\nfunction Counter() {\\n    const [count, setCount] = useState(0);\\n    \\n    return (\\n        <div>\\n            <p>Count: {count}</p>\\n            <button onClick={() => setCount(count + 1)}>\\n                Increment\\n            </button>\\n        </div>\\n    );\\n}';
-    
-            // 将代码插入页面
-            document.getElementById('codeBlock').textContent = defaultCode;
-        </script>
-    </body>
-    </html>`;
-    
-    // 初始化 CodeDisplay
-    async function initCodeDisplay() {
-      const options = {
-        theme: document.getElementById('themeSelect').value,
-        showLineNumbers: document.getElementById('showLineNumbers').checked,
-        editable: document.getElementById('enableEditing').checked,
-        maxHeight: '500px',
-        onChange: function(code, language) {
-          console.log('代码已更改');
-          updatePreviewDebounced();
-        }
-      };
-
-      codeDisplay = new CodeDisplay('#codeEditor', options);
-      await codeDisplay.render(defaultCode, document.getElementById('languageSelect').value);
-      
-      // 初始预览
-      updatePreviewDebounced();
+        };
     }
 
-    // 防抖更新预览
-    function updatePreviewDebounced() {
-      if (isUpdating) return;
-      
-      clearTimeout(updateTimeout);
-      updateTimeout = setTimeout(() => {
-        updatePreview();
-      }, 300);
-    }
-
-    // 更新预览
-    function updatePreview() {
-      if (isUpdating) return;
-      
-      try {
-        isUpdating = true;
-        const code = codeDisplay ? codeDisplay.getCode() : '';
-        
-        if (code.trim() === '') {
-          showError('代码不能为空');
-          return;
+    setupPreviewContainer(existingSelector, newContainerId) {
+        const existingElement = document.querySelector(existingSelector);
+        if (!existingElement) {
+            console.error(`找不到元素: ${existingSelector}`);
+            return;
         }
         
-        // 处理外部文件导入
-        const processedCode = processCodeWithExternalFiles(code);
+        // 创建新的容器div
+        const newContainer = document.createElement('div');
+        newContainer.id = newContainerId;
+        newContainer.style.width = '100%';
+        newContainer.style.height = '100%';
         
-        // 更新预览
-        preview.srcdoc = processedCode;
-        fullscreenPreview.srcdoc = processedCode;
-        
-        // 更新状态
-        statusIndicator.className = 'status-indicator';
-        hideError();
-        
-        console.log('✅ 预览更新成功');
-        
-      } catch (error) {
-        showError('预览更新失败: ' + error.message);
-        statusIndicator.className = 'status-indicator error';
-      } finally {
-        isUpdating = false;
-      }
+        // 只替换iframe元素本身，而不是整个父容器
+        existingElement.parentElement.replaceChild(newContainer, existingElement);
     }
 
-    // 显示错误信息
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-      statusIndicator.className = 'status-indicator error';
+    // ==================== 预览更新逻辑 ====================
+    updatePreviewDebounced() {
+        clearTimeout(this.updateTimeout);
+        this.updateTimeout = setTimeout(() => {
+            this.updatePreview();
+        }, this.DEBOUNCE_DELAY);
     }
 
-    // 隐藏错误信息
-    function hideError() {
-      errorMessage.style.display = 'none';
-    }
+    updatePreview() {
+        if (!this.codePreview || !this.codeDisplay) return;
 
-    // 清空编辑器
-    function clearEditor() {
-      if (confirm('确定要清空编辑器吗？')) {
-        if (codeDisplay) {
-          codeDisplay.setCode('', codeDisplay.getLanguage());
-          updatePreview();
+        try {
+            const code = this.codeDisplay.getCode();
+            
+            // 处理空代码
+            if (!code.trim()) {
+                this.codePreview.render('');
+                this.fullscreenCodePreview?.render('');
+                return;
+            }
+
+            // 处理外部文件导入并渲染
+            const processedCode = this.externalFileManager.processCode(code);
+            this.codePreview.render(processedCode);
+            this.fullscreenCodePreview?.render(processedCode);
+        } catch (error) {
+            console.error('预览更新失败:', error);
         }
-      }
     }
 
-    // 复制代码
-    async function copyCode() {
-      if (!codeDisplay) return;
-      
-      try {
-        const code = codeDisplay.getCode();
-        await navigator.clipboard.writeText(code);
+    // ==================== 用户操作方法 ====================
+    clearEditor() {
+        if (confirm('确定要清空编辑器吗？')) {
+            this.codeDisplay?.setCode('', this.codeDisplay.getLanguage());
+        }
+    }
+
+    async copyCode() {
+        if (!this.codeDisplay) return;
         
-        // 显示成功提示
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '✅ 已复制';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-        }, 2000);
-        
-      } catch (error) {
-        alert('复制失败: ' + error.message);
-      }
+        try {
+            const code = this.codeDisplay.getCode();
+            await navigator.clipboard.writeText(code);
+            this.uiManager.showButtonSuccess(event.target, '✅ 已复制');
+        } catch (error) {
+            alert('复制失败: ' + error.message);
+        }
     }
 
-    // 刷新预览
-    function refreshPreview() {
-      updatePreview();
-      
-      // 显示刷新动画
-      const btn = event.target;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '🔄 刷新中...';
-      btn.disabled = true;
-      
-      setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }, 1000);
+    refreshPreview() {
+        this.updatePreview();
+        this.uiManager.showButtonLoading(event.target, '🔄 刷新中...');
     }
 
-    // 打开全屏预览
-    function openFullscreen() {
+    openFullscreen() {
         document.getElementById('fullscreenOverlay').style.display = 'flex';
-        if (codeDisplay) {
-            const code = codeDisplay.getCode();
-            const processedCode = processCodeWithExternalFiles(code);
-            fullscreenPreview.srcdoc = processedCode;
+        if (this.codeDisplay && this.fullscreenCodePreview) {
+            const code = this.codeDisplay.getCode();
+            const processedCode = this.externalFileManager.processCode(code);
+            this.fullscreenCodePreview.render(processedCode);
         }
     }
 
-    // 关闭全屏预览
-    function closeFullscreen() {
-      document.getElementById('fullscreenOverlay').style.display = 'none';
+    closeFullscreen() {
+        document.getElementById('fullscreenOverlay').style.display = 'none';
     }
 
-    // 切换语言
-    function changeLanguage() {
-      if (codeDisplay) {
+    // ==================== 配置更新方法 ====================
+    changeLanguage() {
         const language = document.getElementById('languageSelect').value;
-        codeDisplay.setLanguage(language);
-      }
+        this.codeDisplay?.setLanguage(language);
     }
 
-    // 控制面板事件监听
-    document.getElementById('languageSelect').addEventListener('change', changeLanguage);
+    changeTheme() {
+        const theme = document.getElementById('themeSelect').value;
+        this.codeDisplay?.changeTheme(theme);
+    }
 
-    document.getElementById('themeSelect').addEventListener('change', function() {
-      if (codeDisplay) {
-        codeDisplay.changeTheme(this.value);
-      }
-    });
+    toggleLineNumbers() {
+        const show = document.getElementById('showLineNumbers').checked;
+        this.codeDisplay?.toggleLineNumbers(show);
+    }
 
-    document.getElementById('showLineNumbers').addEventListener('change', function() {
-      if (codeDisplay) {
-        codeDisplay.toggleLineNumbers(this.checked);
-      }
-    });
+    toggleEditing() {
+        const editable = document.getElementById('enableEditing').checked;
+        this.codeDisplay?.setEditable(editable);
+    }
 
-    document.getElementById('enableEditing').addEventListener('change', function() {
-      if (codeDisplay) {
-        codeDisplay.setEditable(this.checked);
-      }
-    });
+    // ==================== 事件监听设置 ====================
+    setupEventListeners() {
+        // 配置变更监听
+        document.getElementById('languageSelect').addEventListener('change', () => this.changeLanguage());
+        document.getElementById('themeSelect').addEventListener('change', () => this.changeTheme());
+        document.getElementById('showLineNumbers').addEventListener('change', () => this.toggleLineNumbers());
+        document.getElementById('enableEditing').addEventListener('change', () => this.toggleEditing());
 
-    // 键盘快捷键
-    document.addEventListener('keydown', function(e) {
-      // Ctrl+S 或 Cmd+S: 刷新预览
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        refreshPreview();
-      }
-      
-      // F11: 全屏预览
-      if (e.key === 'F11') {
-        e.preventDefault();
-        openFullscreen();
-      }
-      
-      // Esc: 关闭全屏
-      if (e.key === 'Escape') {
-        closeFullscreen();
-      }
-      
-      // 回车键：在文件输入框中添加文件
-      if (e.key === 'Enter' && e.target.id === 'jsFileInput') {
-        e.preventDefault();
-        addJSFile();
-      }
-    });
-
-    // 页面加载完成后初始化
-    document.addEventListener('DOMContentLoaded', function() {
-      // 等待 CodeDisplay 加载完成
-      setTimeout(async function() {
-        await initCodeDisplay();
-        // 初始化外部文件显示
-        updateImportedFilesDisplay();
-        console.log('🚀 即时代码预览组件已加载完成！');
-        console.log('💡 快捷键提示:');
-        console.log('   Ctrl+S: 刷新预览');
-        console.log('   F11: 全屏预览');
-        console.log('   Esc: 关闭全屏');
-        console.log('📁 外部文件导入功能已启用');
-      }, 500);
-    });
-
-    // 错误处理
-    window.addEventListener('error', function(e) {
-      console.error('页面错误:', e.error);
-      showError('页面执行错误: ' + e.message);
-    });
-
-    // 预览框架错误处理
-    preview.addEventListener('load', function() {
-      try {
-        preview.contentWindow.addEventListener('error', function(e) {
-          showError('预览页面错误: ' + e.message);
+        // 全局错误处理
+        window.addEventListener('error', (e) => {
+            console.error('页面错误:', e.error);
         });
-      } catch (error) {
-        // 跨域限制，忽略
-      }
-    });
-
-    // ==================== 外部JavaScript文件管理功能 ====================
-
-    // 添加JavaScript文件
-    async function addJSFile() {
-      const fileInput = document.getElementById('jsFileInput');
-      const filePath = fileInput.value.trim();
-      
-      if (!filePath) {
-        alert('请输入文件路径');
-        return;
-      }
-      
-      if (externalJSFiles.includes(filePath)) {
-        alert('该文件已经添加过了');
-        return;
-      }
-      
-      try {
-        // 添加到列表
-        externalJSFiles.push(filePath);
-        
-        // 尝试读取文件内容
-        await loadJSFileContent(filePath);
-        
-        // 更新UI显示
-        updateImportedFilesDisplay();
-        
-        // 清空输入框
-        fileInput.value = '';
-        
-        // 更新预览
-        updatePreviewDebounced();
-        
-      } catch (error) {
-        // 从列表中移除失败的文件
-        externalJSFiles = externalJSFiles.filter(path => path !== filePath);
-        showError(`加载文件失败: ${filePath} - ${error.message}`);
-      }
     }
 
-    // 读取JavaScript文件内容
-    async function loadJSFileContent(filePath) {
-      try {
-        // 构建相对于当前页面的完整路径
-        const fullPath = getFullPath(filePath);
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                this.refreshPreview();
+            } else if (e.key === 'F11') {
+                e.preventDefault();
+                this.openFullscreen();
+            } else if (e.key === 'Escape') {
+                this.closeFullscreen();
+            } else if (e.key === 'Enter' && e.target.id === 'jsFileInput') {
+                e.preventDefault();
+                this.externalFileManager.addFile();
+            }
+        });
+    }
+
+    // ==================== 工具方法 ====================
+    getDefaultCode() {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Display React Code String</title>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        pre {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>React Hook 示例代码</h2>
+    <pre id="codeBlock"></pre>
+
+    <script>
+        const defaultCode = '// React Hook 示例\\nfunction Counter() {\\n    const [count, setCount] = useState(0);\\n    \\n    return (\\n        <div>\\n            <p>Count: {count}</p>\\n            <button onClick={() => setCount(count + 1)}>\\n                Increment\\n            </button>\\n        </div>\\n    );\\n}';
+
+        // 将代码插入页面
+        document.getElementById('codeBlock').textContent = defaultCode;
+    </script>
+</body>
+</html>`;
+    }
+
+    getSelectedLanguage() {
+        return document.getElementById('languageSelect').value;
+    }
+}
+
+// ==================== 外部文件管理器类 ====================
+class ExternalFileManager {
+    constructor() {
+        this.files = [];
+        this.fileContents = new Map();
+        this.fileIds = new Map();
+    }
+
+    async addFile() {
+        const fileInput = document.getElementById('jsFileInput');
+        const filePath = fileInput.value.trim();
         
-        const response = await fetch(fullPath);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!filePath) {
+            alert('请输入文件路径');
+            return;
         }
         
-        const content = await response.text();
-        jsFileContents.set(filePath, {
-          content: content,
-          status: 'loaded',
-          error: null
-        });
+        // 检查文件是否已存在
+        if (this.files.includes(filePath)) {
+            alert('该文件已经添加过了');
+            return;
+        }
         
-        console.log(`✅ 成功加载文件: ${filePath}`);
-        
-      } catch (error) {
-        jsFileContents.set(filePath, {
-          content: '',
-          status: 'error',
-          error: error.message
-        });
-        
-        console.error(`❌ 加载文件失败: ${filePath}`, error);
-        throw error;
-      }
+        try {
+            this.files.push(filePath);
+            await this.loadFileContent(filePath);
+            this.updateDisplay();
+            fileInput.value = '';
+            
+            // 触发预览更新
+            if (window.codeController) {
+                window.codeController.updatePreviewDebounced();
+            }
+        } catch (error) {
+            this.files = this.files.filter(path => path !== filePath);
+            console.error(`加载文件失败: ${filePath}`, error);
+            alert(`加载文件失败: ${filePath} - ${error.message}`);
+        }
     }
 
-    // 获取文件的完整路径
-    function getFullPath(relativePath) {
-      // 如果已经是绝对路径，直接返回
-      if (relativePath.startsWith('http://') || relativePath.startsWith('https://') || relativePath.startsWith('/')) {
-        return relativePath;
-      }
-      
-      // 处理相对路径
-      const currentPath = window.location.pathname;
-      const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-      
-      // 处理 ../ 和 ./
-      let path = relativePath;
-      let baseDir = currentDir;
-      
-      while (path.startsWith('../')) {
-        path = path.substring(3);
-        baseDir = baseDir.substring(0, baseDir.lastIndexOf('/'));
-      }
-      
-      if (path.startsWith('./')) {
-        path = path.substring(2);
-      }
-      
-      return `${baseDir}/${path}`;
+    async loadFileContent(filePath) {
+        try {
+            const fullPath = this.getFullPath(filePath);
+            const response = await fetch(fullPath);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const content = await response.text();
+            this.fileContents.set(filePath, {
+                content: content,
+                status: 'loaded',
+                error: null
+            });
+        } catch (error) {
+            this.fileContents.set(filePath, {
+                content: '',
+                status: 'error',
+                error: error.message
+            });
+            throw error;
+        }
     }
 
-    // 移除JavaScript文件
-    function removeJSFile(filePath) {
-      externalJSFiles = externalJSFiles.filter(path => path !== filePath);
-      jsFileContents.delete(filePath);
-      updateImportedFilesDisplay();
-      updatePreviewDebounced();
-    }
+    removeFile(fileId) {
+        const filePath = this.fileIds.get(fileId);
+        if (!filePath) return;
 
-    // 更新导入文件显示
-    function updateImportedFilesDisplay() {
-      const container = document.getElementById('importedFiles');
-      
-      if (externalJSFiles.length === 0) {
-        container.innerHTML = '<p style="color: #6c757d; font-style: italic;">暂无导入的文件</p>';
-        return;
-      }
-      
-      container.innerHTML = externalJSFiles.map(filePath => {
-        const fileInfo = jsFileContents.get(filePath);
-        const status = fileInfo ? fileInfo.status : 'loading';
-        const error = fileInfo ? fileInfo.error : null;
+        this.files = this.files.filter(path => path !== filePath);
+        this.fileContents.delete(filePath);
+        this.fileIds.delete(fileId);
+        this.updateDisplay();
         
-        return `
-          <div class="imported-file-item">
-            <div class="file-info">
-              <div class="file-path">📄 ${filePath}</div>
-              <div class="file-status ${status}">
-                ${status === 'loaded' ? '✅ 已加载' : 
-                  status === 'error' ? `❌ 加载失败: ${error}` : 
-                  '⏳ 加载中...'}
-              </div>
-            </div>
-            <button class="btn-remove" onclick="removeJSFile('${filePath}')">🗑️ 移除</button>
-          </div>
-        `;
-      }).join('');
+        if (window.codeController) {
+            window.codeController.updatePreviewDebounced();
+        }
     }
 
-    // 处理代码中的import语句并嵌入外部文件
-    function processCodeWithExternalFiles(code) {
-      if (!code || externalJSFiles.length === 0) {
-        return code;
-      }
-      
-      let processedCode = code;
-      
-      // 收集所有成功加载的文件内容
-      const loadedScripts = [];
-      
-      externalJSFiles.forEach(filePath => {
-        const fileInfo = jsFileContents.get(filePath);
-        if (fileInfo && fileInfo.status === 'loaded') {
-          // 处理文件内容，移除export语句并转换为普通JavaScript
-          let fileContent = fileInfo.content;
-          
-          // 移除export default语句并创建全局变量
-          fileContent = fileContent.replace(
-            /export\s+default\s+(\w+)/g, 
-            'window.$1 = $1'
-          );
-          
-          // 移除其他export语句
-          fileContent = fileContent.replace(
-            /export\s+\{[^}]+\}/g, 
-            ''
-          );
-          
-          // 移除export const/let/var语句
-          fileContent = fileContent.replace(
-            /export\s+(const|let|var)\s+/g, 
-            '$1 '
-          );
-          
-          loadedScripts.push(`
+    processCode(code) {
+        if (!code || this.files.length === 0) {
+            return code;
+        }
+
+        let processedCode = code;
+        const loadedScripts = [];
+
+        // 收集所有成功加载的文件内容
+        this.files.forEach(filePath => {
+            const fileInfo = this.fileContents.get(filePath);
+            if (fileInfo && fileInfo.status === 'loaded') {
+                let fileContent = this.processFileContent(fileInfo.content);
+                loadedScripts.push(`
 // ==================== ${filePath} ====================
 ${fileContent}
 // ==================== End of ${filePath} ====================
-          `);
+                `);
+            }
+        });
+
+        // 处理import语句
+        processedCode = this.processImportStatements(processedCode);
+
+        // 嵌入到HTML中
+        if (loadedScripts.length > 0 && this.isHtmlCode(processedCode)) {
+            processedCode = this.embedScriptsInHtml(processedCode, loadedScripts);
         }
-      });
-      
-      // 在代码中查找并替换import语句
-      const importRegex = /import\s+(\w+|\{[^}]+\})\s+from\s+['"`]([^'"`]+)['"`];?\s*\n?/g;
-      
-      processedCode = processedCode.replace(importRegex, (match, importName, path) => {
-        // 检查是否是我们已经加载的文件之一
-        const matchedFile = externalJSFiles.find(filePath => 
-          path.includes(filePath.split('/').pop()) || filePath.includes(path)
-        );
+
+        return processedCode;
+    }
+
+    processFileContent(content) {
+        return content
+            .replace(/export\s+default\s+(\w+)/g, 'window.$1 = $1')
+            .replace(/export\s+\{[^}]+\}/g, '')
+            .replace(/export\s+(const|let|var)\s+/g, '$1 ');
+    }
+
+    processImportStatements(code) {
+        const importRegex = /import\s+(\w+|\{[^}]+\})\s+from\s+['"`]([^'"`]+)['"`];?\s*\n?/g;
         
-        if (matchedFile) {
-          console.log(`🔄 替换import语句: ${match}`);
-          return `// 已通过外部文件导入: ${path}\n`;
-        }
-        
-        return match; // 保持未匹配的import语句不变
-      });
-      
-      // 如果是HTML文件，将脚本内容嵌入到HTML中
-      if (processedCode.includes('<html') || processedCode.includes('<!DOCTYPE html')) {
-        // 查找是否已经有script标签
-        const scriptTagRegex = /<script[^>]*type\s*=\s*["']module["'][^>]*>/i;
-        const bodyEndRegex = /<\/body>/i;
-        const headEndRegex = /<\/head>/i;
-        
-        if (loadedScripts.length > 0) {
-          const scriptContent = `
+        return code.replace(importRegex, (match, importName, path) => {
+            const matchedFile = this.files.find(filePath => 
+                path.includes(filePath.split('/').pop()) || filePath.includes(path)
+            );
+            
+            if (matchedFile) {
+                return `// 已通过外部文件导入: ${path}\n`;
+            }
+            
+            return match;
+        });
+    }
+
+    isHtmlCode(code) {
+        return code.includes('<html') || code.includes('<!DOCTYPE html');
+    }
+
+    embedScriptsInHtml(code, scripts) {
+        const scriptContent = `
 <script>
 // ==================== 外部导入的JavaScript文件 ====================
-${loadedScripts.join('\n')}
+${scripts.join('\n')}
 // ==================== 外部文件导入结束 ====================
 </script>`;
-          
-          // 将脚本插入到</head>之前
-          if (headEndRegex.test(processedCode)) {
-            processedCode = processedCode.replace(headEndRegex, `${scriptContent}\n</head>`);
-          } else if (bodyEndRegex.test(processedCode)) {
-            processedCode = processedCode.replace(bodyEndRegex, `${scriptContent}\n</body>`);
-          } else {
-            processedCode += scriptContent;
-          }
+
+        // 优先插入到</head>之前，其次是</body>之前
+        if (/<\/head>/i.test(code)) {
+            return code.replace(/<\/head>/i, `${scriptContent}\n</head>`);
+        } else if (/<\/body>/i.test(code)) {
+            return code.replace(/<\/body>/i, `${scriptContent}\n</body>`);
+        } else {
+            return code + scriptContent;
         }
-      }
-      
-      return processedCode;
     }
+
+    getFullPath(relativePath) {
+        if (relativePath.startsWith('http://') || relativePath.startsWith('https://') || relativePath.startsWith('/')) {
+            return relativePath;
+        }
+        
+        const currentPath = window.location.pathname;
+        let currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+        let path = relativePath;
+        
+        while (path.startsWith('../')) {
+            path = path.substring(3);
+            currentDir = currentDir.substring(0, currentDir.lastIndexOf('/'));
+        }
+        
+        if (path.startsWith('./')) {
+            path = path.substring(2);
+        }
+        
+        return `${currentDir}/${path}`;
+    }
+
+    updateDisplay() {
+        const container = document.getElementById('importedFiles');
+        
+        if (this.files.length === 0) {
+            container.innerHTML = '<p style="color: #6c757d; font-style: italic;">暂无导入的文件</p>';
+            return;
+        }
+        
+        container.innerHTML = this.files.map(filePath => {
+            const fileInfo = this.fileContents.get(filePath);
+            const status = fileInfo ? fileInfo.status : 'loading';
+            const error = fileInfo ? fileInfo.error : null;
+            
+            // 为每个文件生成唯一ID
+            const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            this.fileIds.set(fileId, filePath);
+            
+            return `
+                <div class="imported-file-item">
+                    <div class="file-info">
+                        <div class="file-path">📄 ${filePath}</div>
+                        <div class="file-status ${status}">
+                            ${status === 'loaded' ? '✅ 已加载' : 
+                              status === 'error' ? `❌ 加载失败: ${error}` : 
+                              '⏳ 加载中...'}
+                        </div>
+                    </div>
+                    <button class="btn-remove" onclick="window.codeController.externalFileManager.removeFile('${fileId}')">🗑️ 移除</button>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+// ==================== UI管理器类 ====================
+class UIManager {
+    constructor() {
+        this.statusIndicator = document.getElementById('statusIndicator');
+    }
+
+    setStatus(status) {
+        if (this.statusIndicator) {
+            this.statusIndicator.className = status === 'error' ? 'status-indicator error' : 'status-indicator';
+        }
+    }
+
+    showButtonSuccess(button, text, duration = 2000) {
+        const originalText = button.innerHTML;
+        button.innerHTML = text;
+        setTimeout(() => {
+            button.innerHTML = originalText;
+        }, duration);
+    }
+
+    showButtonLoading(button, text, duration = 1000) {
+        const originalText = button.innerHTML;
+        button.innerHTML = text;
+        button.disabled = true;
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, duration);
+    }
+}
+
+// ==================== 测试管理器类 ====================
+class TestManager {
+    constructor(codeController) {
+        this.codeController = codeController;
+        this.initTestFunctions();
+    }
+    
+    initTestFunctions() {
+        // 暴露测试函数到全局
+        window.testExternalFileImport = () => this.runExternalFileImportTest();
+        
+        // 添加开发调试信息
+        if (this.isDevelopmentMode()) {
+            console.log('🚀 即时代码预览组件已加载完成！');
+            console.log('💡 快捷键: Ctrl+S(刷新), F11(全屏), Esc(退出全屏)');
+            console.log('📁 外部文件导入功能已启用');
+            console.log('🧪 测试功能已启用 - 调用 testExternalFileImport() 进行测试');
+        }
+    }
+    
+    isDevelopmentMode() {
+        // 判断是否为开发模式
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' ||
+               window.location.search.includes('debug=true');
+    }
+
+    runExternalFileImportTest() {
+        console.log('🧪 开始测试外部文件导入功能...');
+        
+        const testFilePath = '../test/mock-utils.js';
+        const externalFileManager = this.codeController.externalFileManager;
+        
+        // 检查文件是否已存在
+        if (externalFileManager.files.includes(testFilePath)) {
+            console.log('测试文件已存在，跳过添加');
+            return;
+        }
+        
+        externalFileManager.files.push(testFilePath);
+        
+        externalFileManager.fileContents.set(testFilePath, {
+            content: `
+                // 模拟的工具函数
+                function formatDate(date) {
+                    return date.toLocaleDateString();
+                }
+                
+                function capitalize(str) {
+                    return str.charAt(0).toUpperCase() + str.slice(1);
+                }
+                
+                export { formatDate, capitalize };
+            `,
+            status: 'loaded',
+            error: null
+        });
+        
+        externalFileManager.updateDisplay();
+        
+        const testCode = `<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>外部文件导入测试</title>
+</head>
+<body>
+    <h2>外部文件导入功能测试</h2>
+    <div id="output"></div>
+    
+    <script>
+        const today = new Date();
+        const output = document.getElementById('output');
+        
+        output.innerHTML = 
+          '<p>今天是: ' + formatDate(today) + '</p>' +
+          '<p>测试文本: ' + capitalize('hello world') + '</p>';
+    </script>
+</body>
+</html>`;
+        
+        if (this.codeController.codeDisplay) {
+            this.codeController.codeDisplay.setCode(testCode, 'html');
+            this.codeController.updatePreviewDebounced();
+        }
+        
+        console.log('✅ 外部文件导入功能测试完成');
+    }
+    
+    // 其他测试方法可以在这里添加
+    runPerformanceTest() {
+        console.log('🧪 开始性能测试...');
+        // 性能测试逻辑
+    }
+    
+    runUITest() {
+        console.log('🧪 开始UI测试...');
+        // UI测试逻辑
+    }
+}
+
+// ==================== 全局函数（保持兼容性） ====================
+function clearEditor() {
+    window.codeController?.clearEditor();
+}
+
+function copyCode() {
+    window.codeController?.copyCode();
+}
+
+function refreshPreview() {
+    window.codeController?.refreshPreview();
+}
+
+function openFullscreen() {
+    window.codeController?.openFullscreen();
+}
+
+function closeFullscreen() {
+    window.codeController?.closeFullscreen();
+}
+
+function addJSFile() {
+    window.codeController?.externalFileManager.addFile();
+}
+
+function updatePreview() {
+    window.codeController?.updatePreview();
+}
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(async function() {
+        window.codeController = new CodeEditorController();
+        window.testManager = new TestManager(window.codeController);
+    }, 500);
+});
