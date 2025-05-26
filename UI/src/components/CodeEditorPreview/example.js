@@ -413,9 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
         advancedExample.setLanguage(this.value);
     });
     
-    document.getElementById('lineNumbersCheck').addEventListener('change', function() {
-        advancedExample.setAttribute('show-line-numbers', this.checked);
-    });
+
     
     document.getElementById('editableCheck').addEventListener('change', function() {
         advancedExample.setAttribute('editable', this.checked);
@@ -456,6 +454,398 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         alert('事件监听器已添加，请查看控制台输出');
+    });
+
+    // 外部文件导入示例控制
+    const externalFileExample = document.getElementById('externalFileExample');
+    
+    document.getElementById('loadDemoBtn').addEventListener('click', function() {
+        const demoCode = `<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>外部文件导入示例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .output {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        #dynamicContent {
+            min-height: 50px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🚀 外部文件导入演示</h1>
+        <p>这个示例展示了如何使用从 test.js 导入的工具类和函数。</p>
+        
+        <div class="demo-section">
+            <h3>📅 日期格式化</h3>
+            <button class="btn btn-primary" onclick="showFormattedDate()">显示当前时间</button>
+            <div id="dateOutput" class="output"></div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🎨 随机颜色生成</h3>
+            <button class="btn btn-success" onclick="changeBackgroundColor()">随机背景色</button>
+            <button class="btn btn-warning" onclick="addColoredCard()">添加彩色卡片</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>✨ 动画效果</h3>
+            <button class="btn btn-primary" onclick="testFadeIn()">淡入动画</button>
+            <button class="btn btn-success" onclick="testSlideDown()">下滑动画</button>
+            <button class="btn btn-warning" onclick="testShake()">摇摆动画</button>
+            <div id="animationTarget" style="display: none; padding: 10px; background: #007acc; color: white; border-radius: 4px; margin-top: 10px;">
+                这是动画测试元素！
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>💾 本地存储</h3>
+            <input type="text" id="storageInput" placeholder="输入要保存的内容" style="width: 200px; padding: 5px;">
+            <button class="btn btn-primary" onclick="saveToStorage()">保存</button>
+            <button class="btn btn-success" onclick="loadFromStorage()">读取</button>
+            <button class="btn btn-danger" onclick="clearStorage()">清空</button>
+            <div id="storageOutput" class="output"></div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🔔 通知系统</h3>
+            <button class="btn btn-primary" onclick="showInfoNotification()">信息通知</button>
+            <button class="btn btn-success" onclick="showSuccessNotification()">成功通知</button>
+            <button class="btn btn-warning" onclick="showWarningNotification()">警告通知</button>
+            <button class="btn btn-danger" onclick="showErrorNotification()">错误通知</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>📝 表单验证</h3>
+            <form id="testForm" onsubmit="return validateTestForm(event)">
+                <input type="email" id="email" placeholder="邮箱地址" style="width: 200px; padding: 5px; margin: 5px;">
+                <input type="text" id="phone" placeholder="手机号码" style="width: 200px; padding: 5px; margin: 5px;">
+                <button type="submit" class="btn btn-primary">验证表单</button>
+            </form>
+            <div id="validationOutput" class="output"></div>
+        </div>
+        
+        <div id="dynamicContent"></div>
+    </div>
+    
+    <script>
+        // 检查工具类是否已加载
+        if (typeof Utils === 'undefined') {
+            document.body.innerHTML = '<div style="text-align: center; padding: 50px; color: red;"><h2>错误：test.js 文件未正确加载！</h2><p>请确保外部文件导入功能正常工作。</p></div>';
+        } else {
+            console.log('✅ test.js 工具类已成功导入！');
+        }
+        
+        // 日期格式化
+        function showFormattedDate() {
+            const formattedDate = Utils.formatDate();
+            document.getElementById('dateOutput').textContent = '当前时间: ' + formattedDate;
+        }
+        
+        // 背景色变换
+        function changeBackgroundColor() {
+            const color = Utils.randomColor();
+            document.querySelector('.demo-container').style.background = 
+                \`linear-gradient(135deg, \${color}, rgba(255, 255, 255, 0.9))\`;
+            UIHelper.showNotification(\`背景色已变为: \${color}\`, 'info');
+        }
+        
+        // 添加彩色卡片
+        function addColoredCard() {
+            const color = Utils.randomColor();
+            const randomNum = Utils.randomNumber(1, 100);
+            const card = UIHelper.createCard(
+                \`彩色卡片 #\${randomNum}\`,
+                \`这是一个随机生成的卡片，颜色是 <strong>\${color}</strong>\`
+            );
+            card.style.borderLeft = \`4px solid \${color}\`;
+            document.getElementById('dynamicContent').appendChild(card);
+        }
+        
+        // 动画测试
+        function testFadeIn() {
+            const target = document.getElementById('animationTarget');
+            target.style.display = 'none';
+            AnimationHelper.fadeIn(target);
+        }
+        
+        function testSlideDown() {
+            const target = document.getElementById('animationTarget');
+            target.style.display = 'block';
+            AnimationHelper.slideDown(target);
+        }
+        
+        function testShake() {
+            const target = document.getElementById('animationTarget');
+            target.style.display = 'block';
+            AnimationHelper.shake(target);
+        }
+        
+        // 存储功能
+        function saveToStorage() {
+            const input = document.getElementById('storageInput');
+            const value = input.value.trim();
+            if (value) {
+                SimpleStorage.set('demo-data', value);
+                document.getElementById('storageOutput').textContent = '已保存: ' + value;
+                input.value = '';
+                UIHelper.showNotification('数据已保存！', 'success');
+            }
+        }
+        
+        function loadFromStorage() {
+            const data = SimpleStorage.get('demo-data', '暂无数据');
+            document.getElementById('storageOutput').textContent = '读取的数据: ' + data;
+        }
+        
+        function clearStorage() {
+            SimpleStorage.remove('demo-data');
+            document.getElementById('storageOutput').textContent = '存储已清空';
+            UIHelper.showNotification('存储已清空！', 'warning');
+        }
+        
+        // 通知系统
+        function showInfoNotification() {
+            UIHelper.showNotification('这是一个信息通知', 'info');
+        }
+        
+        function showSuccessNotification() {
+            UIHelper.showNotification('操作成功完成！', 'success');
+        }
+        
+        function showWarningNotification() {
+            UIHelper.showNotification('请注意这个警告', 'warning');
+        }
+        
+        function showErrorNotification() {
+            UIHelper.showNotification('发生了一个错误', 'error');
+        }
+        
+        // 表单验证
+        function validateTestForm(event) {
+            event.preventDefault();
+            
+            const formData = {
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value
+            };
+            
+            const rules = {
+                email: [
+                    { type: 'required', message: '邮箱不能为空' },
+                    { type: 'email', message: '邮箱格式不正确' }
+                ],
+                phone: [
+                    { type: 'required', message: '手机号不能为空' }
+                ]
+            };
+            
+            const validation = FormValidator.validateForm(formData, rules);
+            const output = document.getElementById('validationOutput');
+            
+            if (validation.isValid) {
+                output.innerHTML = '<span style="color: green;">✅ 表单验证通过！</span>';
+                UIHelper.showNotification('表单验证成功！', 'success');
+            } else {
+                const errors = Object.values(validation.errors).join(', ');
+                output.innerHTML = \`<span style="color: red;">❌ 验证失败: \${errors}</span>\`;
+                UIHelper.showNotification('表单验证失败', 'error');
+            }
+            
+            return false;
+        }
+        
+        // 初始化演示
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置事件总线监听
+            eventBus.on('demo-event', function(data) {
+                console.log('收到演示事件:', data);
+            });
+            
+            // 触发一个演示事件
+            setTimeout(() => {
+                eventBus.emit('demo-event', { message: '外部文件导入示例已加载！' });
+            }, 1000);
+            
+            console.log('🎉 外部文件导入演示页面已初始化完成！');
+        });
+    </script>
+</body>
+</html>`;
+        
+        externalFileExample.setCode(demoCode, 'html');
+    });
+    
+    document.getElementById('testUtilsBtn').addEventListener('click', function() {
+        const testCode = `<!DOCTYPE html>
+<html>
+<head>
+    <title>工具函数测试</title>
+</head>
+<body>
+    <h1>Utils 工具类测试</h1>
+    <button onclick="runTests()">运行测试</button>
+    <div id="results"></div>
+    
+    <script>
+        function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            // 测试日期格式化
+            const date = Utils.formatDate();
+            results.innerHTML += '<p>当前时间: ' + date + '</p>';
+            
+            // 测试随机颜色
+            const color = Utils.randomColor();
+            results.innerHTML += '<p style="color: ' + color + '">随机颜色: ' + color + '</p>';
+            
+            // 测试随机数
+            const num = Utils.randomNumber(1, 100);
+            results.innerHTML += '<p>随机数(1-100): ' + num + '</p>';
+            
+            UIHelper.showNotification('工具函数测试完成！', 'success');
+        }
+    </script>
+</body>
+</html>`;
+        externalFileExample.setCode(testCode, 'html');
+    });
+    
+    document.getElementById('testAnimationBtn').addEventListener('click', function() {
+        const animationCode = `<!DOCTYPE html>
+<html>
+<head>
+    <title>动画测试</title>
+    <style>
+        .test-box {
+            width: 100px;
+            height: 100px;
+            background: #007acc;
+            margin: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>动画效果测试</h1>
+    <button onclick="AnimationHelper.fadeIn(document.getElementById('box1'))">淡入</button>
+    <button onclick="AnimationHelper.slideDown(document.getElementById('box2'))">滑动</button>
+    <button onclick="AnimationHelper.shake(document.getElementById('box3'))">摇摆</button>
+    
+    <div id="box1" class="test-box"></div>
+    <div id="box2" class="test-box"></div>
+    <div id="box3" class="test-box" style="display: block;"></div>
+</body>
+</html>`;
+        externalFileExample.setCode(animationCode, 'html');
+    });
+    
+    document.getElementById('testStorageBtn').addEventListener('click', function() {
+        const storageCode = `<!DOCTYPE html>
+<html>
+<head>
+    <title>存储测试</title>
+</head>
+<body>
+    <h1>本地存储测试</h1>
+    <input type="text" id="input" placeholder="输入内容">
+    <button onclick="save()">保存</button>
+    <button onclick="load()">读取</button>
+    <button onclick="clear()">清空</button>
+    <div id="output"></div>
+    
+    <script>
+        function save() {
+            const value = document.getElementById('input').value;
+            SimpleStorage.set('test-key', value);
+            document.getElementById('output').innerHTML = '已保存: ' + value;
+        }
+        
+        function load() {
+            const value = SimpleStorage.get('test-key', '暂无数据');
+            document.getElementById('output').innerHTML = '读取: ' + value;
+        }
+        
+        function clear() {
+            SimpleStorage.remove('test-key');
+            document.getElementById('output').innerHTML = '已清空';
+        }
+    </script>
+</body>
+</html>`;
+        externalFileExample.setCode(storageCode, 'html');
+    });
+    
+    document.getElementById('testUIHelperBtn').addEventListener('click', function() {
+        const uiCode = `<!DOCTYPE html>
+<html>
+<head>
+    <title>UI助手测试</title>
+</head>
+<body>
+    <h1>UI助手测试</h1>
+    <button onclick="createElements()">创建元素</button>
+    <button onclick="showNotifications()">显示通知</button>
+    <div id="container"></div>
+    
+    <script>
+        function createElements() {
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+            
+            // 创建按钮
+            const btn = UIHelper.createButton('测试按钮', () => {
+                UIHelper.showNotification('按钮被点击了！', 'info');
+            }, 'btn btn-primary');
+            container.appendChild(btn);
+            
+            // 创建卡片
+            const card = UIHelper.createCard('测试卡片', '这是通过 UIHelper 创建的卡片');
+            container.appendChild(card);
+        }
+        
+        function showNotifications() {
+            setTimeout(() => UIHelper.showNotification('信息通知', 'info'), 0);
+            setTimeout(() => UIHelper.showNotification('成功通知', 'success'), 500);
+            setTimeout(() => UIHelper.showNotification('警告通知', 'warning'), 1000);
+            setTimeout(() => UIHelper.showNotification('错误通知', 'error'), 1500);
+        }
+    </script>
+</body>
+</html>`;
+        externalFileExample.setCode(uiCode, 'html');
     });
 
     // 初始化基础示例

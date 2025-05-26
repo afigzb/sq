@@ -220,7 +220,6 @@
                     theme="prism"
                     language="html"
                     editable="true"
-                    show-line-numbers="false"
                     auto-preview="true">
                 </code-editor-preview>
             </div>
@@ -256,11 +255,7 @@
                         </select>
                     </div>
                     
-                    <div class="control-group">
-                        <label>
-                            <input type="checkbox" id="lineNumbersCheck" checked> 显示行号
-                        </label>
-                    </div>
+
                     
                     <div class="control-group">
                         <label>
@@ -280,9 +275,7 @@
                     theme="prism-dark"
                     language="javascript"
                     editable="true"
-                    show-line-numbers="true"
                     show-toolbar="true"
-                    show-external-files="true"
                     show-fullscreen="true"
                     auto-preview="true"
                     debounce-delay="300"
@@ -374,8 +367,36 @@
                     height="500px"
                     theme="prism-tomorrow"
                     language="html"
+                    editable="true">
+                </code-editor-preview>
+            </div>
+        </div>
+
+        <!-- 外部文件导入示例 -->
+        <div class="demo-section">
+            <div class="demo-header">📁 外部文件导入示例</div>
+            <div class="demo-content">
+                <div class="demo-description">
+                    <strong>外部文件导入：</strong>可以在初始化时或运行时导入外部 JavaScript 文件，实现代码模块化
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" id="loadDemoBtn">加载工具库示例</button>
+                    <button class="btn" id="testUtilsBtn">测试工具函数</button>
+                    <button class="btn" id="testAnimationBtn">测试动画功能</button>
+                    <button class="btn" id="testStorageBtn">测试存储功能</button>
+                    <button class="btn" id="testUIHelperBtn">测试UI助手</button>
+                </div>
+                
+                <!-- 预导入外部文件的示例组件 -->
+                <code-editor-preview 
+                    id="externalFileExample"
+                    width="100%" 
+                    height="600px"
+                    theme="prism-okaidia"
+                    language="html"
                     editable="true"
-                    show-line-numbers="true">
+                    external-files='["./test.js"]'>
                 </code-editor-preview>
             </div>
         </div>

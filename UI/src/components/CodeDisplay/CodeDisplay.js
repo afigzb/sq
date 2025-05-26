@@ -13,7 +13,6 @@ class CodeDisplay {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
             theme: 'prism',
-            showLineNumbers: false,
             autoHighlight: true,
             editable: false,
             maxHeight: '500px',
@@ -272,7 +271,7 @@ class CodeDisplay {
 
         // 创建容器
         const container = document.createElement('div');
-        container.className = `code-display-container${this.options.showLineNumbers ? ' line-numbers' : ''}${this.options.editable ? ' editable' : ''}`;
+        container.className = `code-display-container line-numbers${this.options.editable ? ' editable' : ''}`;
         
         // 创建展示元素
         this.displayElement = this.createDisplayElement(code, language);
@@ -544,18 +543,7 @@ class CodeDisplay {
         }
     }
 
-    // 切换行号显示
-    toggleLineNumbers(show) {
-        this.options.showLineNumbers = show;
-        const container = this.container.querySelector('.code-display-container');
-        if (container) {
-            if (show) {
-                container.classList.add('line-numbers');
-            } else {
-                container.classList.remove('line-numbers');
-            }
-        }
-    }
+
 
     // 销毁组件
     destroy() {

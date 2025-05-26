@@ -1,16 +1,25 @@
 /**
  * 代码编辑预览器控制模块
- * 简化版本，直接使用 CodeDisplay 和 CodePreview 的 API
+ * 负责数据处理和核心功能实现，遵循数据驱动原则
  */
 
 class CodeEditorPreviewController {
     constructor(options = {}) {
+        // 提取回调函数
+        this.callbacks = {
+            onCodeChange: options.callbacks?.onCodeChange || options.onCodeChange || null,
+            onPreviewUpdate: options.callbacks?.onPreviewUpdate || options.onPreviewUpdate || null,
+            onError: options.callbacks?.onError || options.onError || null,
+            onConfigChange: options.callbacks?.onConfigChange || options.onConfigChange || null,
+            onStateChange: options.callbacks?.onStateChange || options.onStateChange || null
+        };
+
+        // 初始配置
         this.options = {
             displayContainer: options.displayContainer || '#codeEditor',
             previewContainer: options.previewContainer || '#codePreview',
             displayOptions: {
                 theme: 'prism',
-                showLineNumbers: false,
                 editable: true,
                 maxHeight: '500px',
                 ...options.displayOptions
@@ -26,18 +35,27 @@ class CodeEditorPreviewController {
             ...options
         };
 
+        // UI元素引用
+        this.uiElements = options.uiElements || {};
+        this.componentRef = options.componentRef || null;
+        
+        // 状态管理
+        this.state = {
+            currentCode: '',
+            currentLanguage: this.options.defaultLanguage,
+            theme: this.options.displayOptions.theme,
+            editable: this.options.displayOptions.editable,
+            showToolbar: true,
+            showFullscreen: true,
+            externalFiles: []
+        };
+
+        // 核心组件
         this.codeDisplay = null;
         this.codePreview = null;
         this.fileManager = new FileManager();
         this.updateTimeout = null;
         this.isInitialized = false;
-        
-        this.callbacks = {
-            onCodeChange: options.onCodeChange || null,
-            onPreviewUpdate: options.onPreviewUpdate || null,
-            onError: options.onError || null,
-            onConfigChange: options.onConfigChange || null
-        };
     }
 
     // 初始化
@@ -47,6 +65,11 @@ class CodeEditorPreviewController {
         
         if (this.options.defaultCode) {
             await this.setCode(this.options.defaultCode, this.options.defaultLanguage);
+        }
+        
+        // 如果有预设的外部文件，导入它们
+        if (this.options.initialConfig?.externalFiles && this.options.initialConfig.externalFiles.length > 0) {
+            await this.setExternalFiles(this.options.initialConfig.externalFiles);
         }
         
         return true;
@@ -68,14 +91,37 @@ class CodeEditorPreviewController {
         // 渲染初始内容
         if (this.options.defaultCode) {
             await this.codeDisplay.render(this.options.defaultCode, this.options.defaultLanguage);
+            this.state.currentCode = this.options.defaultCode;
         }
+    }
+
+    // 状态管理
+    updateState(newState) {
+        const oldState = {...this.state};
+        this.state = {...this.state, ...newState};
+        
+        // 触发状态变更回调
+        if (this.callbacks.onStateChange) {
+            this.callbacks.onStateChange(this.state, oldState);
+        }
+        
+        return this.state;
+    }
+
+    getState() {
+        return {...this.state};
     }
 
     // 核心功能方法
     async setCode(code, language) {
         if (!this.codeDisplay) return false;
         
-        await this.codeDisplay.setCode(code, language);
+        await this.codeDisplay.setCode(code, language || this.state.currentLanguage);
+        this.updateState({
+            currentCode: code,
+            currentLanguage: language || this.state.currentLanguage
+        });
+
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
         }
@@ -83,17 +129,19 @@ class CodeEditorPreviewController {
     }
 
     getCode() {
-        return this.codeDisplay ? this.codeDisplay.getCode() : '';
+        return this.state.currentCode;
     }
 
     getLanguage() {
-        return this.codeDisplay ? this.codeDisplay.getLanguage() : this.options.defaultLanguage;
+        return this.state.currentLanguage;
     }
 
     async setLanguage(language) {
         if (!this.codeDisplay) return false;
         
         this.codeDisplay.setLanguage(language);
+        this.updateState({ currentLanguage: language });
+        
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
         }
@@ -129,19 +177,23 @@ class CodeEditorPreviewController {
         return this.updatePreview();
     }
 
-    // 配置管理 - 直接使用组件API
+    // 配置管理 - 更新状态并反映到组件
     updateDisplayConfig(config) {
         if (!this.codeDisplay) return false;
 
+        const newState = {};
+        
         if (config.theme !== undefined) {
             this.codeDisplay.changeTheme(config.theme);
+            newState.theme = config.theme;
         }
-        if (config.showLineNumbers !== undefined) {
-            this.codeDisplay.toggleLineNumbers(config.showLineNumbers);
-        }
+        
         if (config.editable !== undefined) {
             this.codeDisplay.setEditable(config.editable);
+            newState.editable = config.editable;
         }
+        
+        this.updateState(newState);
         
         if (this.callbacks.onConfigChange) {
             this.callbacks.onConfigChange(config);
@@ -162,19 +214,42 @@ class CodeEditorPreviewController {
         return true;
     }
 
-    // 文件管理 - 保持原有逻辑不变
+    // UI 配置
+    setShowToolbar(show) {
+        this.updateState({ showToolbar: show });
+        return true;
+    }
+
+    setShowFullscreen(show) {
+        this.updateState({ showFullscreen: show });
+        return true;
+    }
+
+    // 文件管理 - 保持原有逻辑不变，但更新状态
     async addExternalFile(filePath) {
+        if (!filePath || !filePath.trim()) return false;
+        
         const success = await this.fileManager.addFile(filePath);
-        if (success && this.options.autoPreview) {
-            this.updatePreviewDebounced();
+        if (success) {
+            const files = this.fileManager.getFiles();
+            this.updateState({ externalFiles: files });
+            
+            if (this.options.autoPreview) {
+                this.updatePreviewDebounced();
+            }
         }
         return success;
     }
 
     removeExternalFile(filePath) {
         const success = this.fileManager.removeFile(filePath);
-        if (success && this.options.autoPreview) {
-            this.updatePreviewDebounced();
+        if (success) {
+            const files = this.fileManager.getFiles();
+            this.updateState({ externalFiles: files });
+            
+            if (this.options.autoPreview) {
+                this.updatePreviewDebounced();
+            }
         }
         return success;
     }
@@ -183,8 +258,38 @@ class CodeEditorPreviewController {
         return this.fileManager.getFiles();
     }
 
+    async setExternalFiles(files) {
+        // 清除现有文件
+        const currentFiles = this.getExternalFiles();
+        for (const file of currentFiles) {
+            this.fileManager.removeFile(file);
+        }
+        
+        // 添加新文件
+        let allSucceeded = true;
+        for (const file of files) {
+            const success = await this.fileManager.addFile(file);
+            if (!success) {
+                allSucceeded = false;
+            }
+        }
+        
+        this.updateState({ externalFiles: this.fileManager.getFiles() });
+        
+        if (this.options.autoPreview) {
+            this.updatePreviewDebounced();
+        }
+        
+        return allSucceeded;
+    }
+
     // 事件处理 - 简化
     handleCodeChange(code, language) {
+        this.updateState({
+            currentCode: code,
+            currentLanguage: language
+        });
+        
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
         }
@@ -198,16 +303,141 @@ class CodeEditorPreviewController {
         // 预览加载完成
     }
 
-    // 工具方法
-    async copyCode() {
-        const code = this.getCode();
-        await navigator.clipboard.writeText(code);
+    // 新增: 处理来自组件的用户操作
+    handleAction(action, params = {}) {
+        // 根据用户操作分发不同的处理逻辑
+        switch (action) {
+            case 'copy':
+                return this.copyCode();
+            case 'clear':
+                return this.clearCode();
+            case 'refresh':
+                return this.refreshPreview();
+            case 'fullscreen':
+                return this.openFullscreen();
+            case 'close-fullscreen':
+                return this.closeFullscreen();
+            case 'add-file':
+                if (this.uiElements.filePathInput) {
+                    const filePath = this.uiElements.filePathInput.value.trim();
+                    if (filePath) {
+                        this.addExternalFile(filePath);
+                        this.uiElements.filePathInput.value = '';
+                    }
+                }
+                return true;
+            case 'remove-file':
+                if (params.filePath) {
+                    return this.removeExternalFile(params.filePath);
+                }
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    // 新增: 处理组件属性变更
+    handleAttributeChange(key, newValue, oldValue) {
+        // 根据不同的属性类型进行处理
+        const displayConfigAttrs = ['theme', 'editable'];
+        const controllerConfigAttrs = ['language', 'autoPreview', 'debounceDelay'];
+        const uiConfigAttrs = ['showToolbar', 'showFullscreen'];
+        
+        if (displayConfigAttrs.includes(key)) {
+            // 处理显示配置相关的属性
+            const parsedValue = key === 'editable' ? (newValue === 'true' || newValue === '') : newValue;
+            this.updateDisplayConfig({ [key]: parsedValue });
+        } 
+        else if (key === 'language') {
+            // 处理语言变更
+            this.setLanguage(newValue);
+        }
+        else if (key === 'autoPreview') {
+            // 处理自动预览
+            const autoPreview = newValue === 'true' || newValue === '';
+            this.options.autoPreview = autoPreview;
+            if (autoPreview) {
+                this.updatePreviewDebounced();
+            }
+        }
+        else if (uiConfigAttrs.includes(key)) {
+            // 处理UI显示相关的属性
+            const show = newValue === 'true' || newValue === '';
+            if (key === 'showToolbar') this.setShowToolbar(show);
+            else if (key === 'showFullscreen') this.setShowFullscreen(show);
+            
+            // 这些变更可能需要重新渲染UI
+            if (this.componentRef && typeof this.componentRef.render === 'function') {
+                const config = {
+                    ...this.state,
+                    width: this.componentRef.getAttribute('width') || '100%',
+                    height: this.componentRef.getAttribute('height') || 'auto'
+                };
+                this.componentRef.render(config);
+            }
+        }
+        else if (key === 'externalFiles') {
+            // 处理外部文件列表
+            if (newValue) {
+                try {
+                    const files = typeof newValue === 'string' ? 
+                        (newValue.startsWith('[') ? JSON.parse(newValue) : newValue.split(',').map(f => f.trim()).filter(f => f)) : 
+                        newValue;
+                    this.setExternalFiles(files);
+                } catch (e) {
+                    console.error('Failed to parse external files:', e);
+                }
+            } else {
+                this.setExternalFiles([]);
+            }
+        }
+        else if (key === 'debounceDelay') {
+            // 处理防抖延迟时间
+            const delay = parseInt(newValue) || 300;
+            this.options.debounceDelay = delay;
+        }
+    }
+
+    // 全屏预览功能
+    openFullscreen() {
+        if (!this.uiElements.fullscreenOverlay) return false;
+        
+        this.uiElements.fullscreenOverlay.style.display = 'flex';
+        
+        const fullscreenContainer = this.uiElements.fullscreenOverlay.querySelector('.fullscreen-preview-container');
+        if (fullscreenContainer) {
+            const fullscreenPreview = new CodePreview(fullscreenContainer, {
+                width: '100%',
+                height: '100%'
+            });
+            fullscreenPreview.render(this.getCode());
+        }
         return true;
     }
 
-    clearCode() {
-        this.setCode('', this.getLanguage());
+    closeFullscreen() {
+        if (!this.uiElements.fullscreenOverlay) return false;
+        
+        this.uiElements.fullscreenOverlay.style.display = 'none';
         return true;
+    }
+
+    // 工具方法
+    async copyCode() {
+        const code = this.getCode();
+        try {
+            await navigator.clipboard.writeText(code);
+            return true;
+        } catch (error) {
+            if (this.callbacks.onError) {
+                this.callbacks.onError('复制失败', error);
+            }
+            return false;
+        }
+    }
+
+    clearCode() {
+        return this.setCode('', this.getLanguage());
     }
 
     // 生命周期
