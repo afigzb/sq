@@ -1,27 +1,18 @@
 /**
  * CodeEditorPreview Web Component
- * 轻量级的 Web Component 包装器，委托所有核心功能给 Controller
- * 采用信任模式，减少冗余的提示信息
+ * 轻量级包装器，委托所有核心功能给 Controller
  */
 
 class CodeEditorPreview extends HTMLElement {
     constructor() {
         super();
-        
-        // 控制器实例
         this.controller = null;
-        
-        // 组件状态
         this.isInitialized = false;
-        
-        // UI 元素引用
         this.elements = {};
-        
-        // 配置对象
         this.config = this.getDefaultConfig();
     }
 
-    // ==================== Web Component 生命周期 ====================
+    // Web Component 生命周期
     connectedCallback() {
         this.parseAttributes();
         this.render();
@@ -51,11 +42,11 @@ class CodeEditorPreview extends HTMLElement {
         }
     }
 
-    // ==================== 初始化方法 ====================
+    // 初始化方法
     getDefaultConfig() {
         return {
             width: '100%',
-            height: '600px',
+            height: 'auto',
             theme: 'prism',
             language: 'html',
             showLineNumbers: false,
@@ -65,15 +56,13 @@ class CodeEditorPreview extends HTMLElement {
             showExternalFiles: true,
             showFullscreen: true,
             debounceDelay: 300,
-            trustMode: true // 信任模式，减少提示
+            trustMode: true
         };
     }
 
     parseAttributes() {
-        // 解析布尔属性的辅助函数
         const parseBooleanAttr = (value) => value === 'true' || value === '';
         
-        // 解析所有属性
         if (this.hasAttribute('width')) this.config.width = this.getAttribute('width');
         if (this.hasAttribute('height')) this.config.height = this.getAttribute('height');
         if (this.hasAttribute('theme')) this.config.theme = this.getAttribute('theme');
@@ -204,60 +193,51 @@ class CodeEditorPreview extends HTMLElement {
     }
 
     async initializeController() {
-        try {
-            const controllerOptions = {
-                displayContainer: this.elements.codeEditorContainer,
-                previewContainer: this.elements.codePreviewContainer,
-                defaultCode: this.getAttribute('default-code') || this.getDefaultCode(),
-                defaultLanguage: this.config.language,
-                autoPreview: this.config.autoPreview,
-                debounceDelay: this.config.debounceDelay,
-                displayOptions: {
-                    theme: this.config.theme,
-                    showLineNumbers: this.config.showLineNumbers,
-                    editable: this.config.editable,
-                    maxHeight: '400px'
-                },
-                previewOptions: {
-                    width: '100%',
-                    height: '400px'
-                },
-                onCodeChange: (code, language) => {
-                    this.dispatchEvent(new CustomEvent('code-change', {
-                        detail: { code, language }
-                    }));
-                },
-                onPreviewUpdate: (code) => {
-                    this.dispatchEvent(new CustomEvent('preview-update', {
-                        detail: { code }
-                    }));
-                },
-                onError: this.config.trustMode ? null : (title, error) => {
-                    console.error(`${title}:`, error);
-                },
-                onConfigChange: (config) => {
-                    this.dispatchEvent(new CustomEvent('config-change', {
-                        detail: { config }
-                    }));
-                }
-            };
+        const controllerOptions = {
+            displayContainer: this.elements.codeEditorContainer,
+            previewContainer: this.elements.codePreviewContainer,
+            defaultCode: this.getAttribute('default-code') || this.getDefaultCode(),
+            defaultLanguage: this.config.language,
+            autoPreview: this.config.autoPreview,
+            debounceDelay: this.config.debounceDelay,
+            displayOptions: {
+                theme: this.config.theme,
+                showLineNumbers: this.config.showLineNumbers,
+                editable: this.config.editable,
+                maxHeight: '400PX'
+            },
+            previewOptions: {
+                width: '100%',
+                height: '400px'
+            },
+            onCodeChange: (code, language) => {
+                this.dispatchEvent(new CustomEvent('code-change', {
+                    detail: { code, language }
+                }));
+            },
+            onPreviewUpdate: (code) => {
+                this.dispatchEvent(new CustomEvent('preview-update', {
+                    detail: { code }
+                }));
+            },
+            onConfigChange: (config) => {
+                this.dispatchEvent(new CustomEvent('config-change', {
+                    detail: { config }
+                }));
+            }
+        };
 
-            this.controller = await CodeEditorPreviewController.create(controllerOptions);
-            this.syncUIWithController();
-            this.isInitialized = true;
-            
-            this.dispatchEvent(new CustomEvent('initialized', {
-                detail: { controller: this.controller }
-            }));
-            
-        } catch (error) {
-            console.error('CodeEditorPreview 初始化失败:', error);
-        }
+        this.controller = await CodeEditorPreviewController.create(controllerOptions);
+        this.syncUIWithController();
+        this.isInitialized = true;
+        
+        this.dispatchEvent(new CustomEvent('initialized', {
+            detail: { controller: this.controller }
+        }));
     }
 
-    // ==================== 事件处理 ====================
+    // 事件处理
     setupEventListeners() {
-        // 使用事件委托
         this.addEventListener('click', this.handleClick.bind(this));
         this.addEventListener('change', this.handleChange.bind(this));
         this.addEventListener('keydown', this.handleKeydown.bind(this));
@@ -272,9 +252,7 @@ class CodeEditorPreview extends HTMLElement {
                 this.controller.copyCode();
                 break;
             case 'clear':
-                if (this.config.trustMode || confirm('确定要清空编辑器吗？')) {
-                    this.controller.clearCode();
-                }
+                this.controller.clearCode();
                 break;
             case 'refresh':
                 this.controller.refreshPreview();
@@ -324,7 +302,6 @@ class CodeEditorPreview extends HTMLElement {
     handleAttributeChange(name, newValue) {
         const configKey = name.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
         
-        // 更新配置
         if (['show-line-numbers', 'editable', 'auto-preview', 'show-toolbar', 'show-external-files', 'show-fullscreen', 'trust-mode'].includes(name)) {
             this.config[configKey] = newValue === 'true' || newValue === '';
         } else if (name === 'debounce-delay') {
@@ -333,7 +310,6 @@ class CodeEditorPreview extends HTMLElement {
             this.config[configKey] = newValue;
         }
 
-        // 应用变更
         if (this.controller) {
             switch (name) {
                 case 'theme':
@@ -354,16 +330,14 @@ class CodeEditorPreview extends HTMLElement {
         }
     }
 
-    // ==================== 功能方法 ====================
+    // 功能方法
     syncUIWithController() {
         if (!this.controller) return;
         
-        // 同步语言选择
         if (this.elements.languageSelect) {
             this.elements.languageSelect.value = this.controller.getLanguage();
         }
         
-        // 同步主题等其他设置
         if (this.elements.themeSelect) {
             this.elements.themeSelect.value = this.config.theme;
         }
@@ -405,7 +379,6 @@ class CodeEditorPreview extends HTMLElement {
         
         this.elements.fullscreenOverlay.style.display = 'flex';
         
-        // 创建全屏预览
         const fullscreenContainer = this.elements.fullscreenOverlay.querySelector('.fullscreen-preview-container');
         if (fullscreenContainer && this.controller) {
             const fullscreenPreview = new CodePreview(fullscreenContainer, {
@@ -422,7 +395,7 @@ class CodeEditorPreview extends HTMLElement {
         }
     }
 
-    // ==================== 公共 API ====================
+    // 公共 API
     async setCode(code, language) {
         return this.controller ? await this.controller.setCode(code, language) : false;
     }
@@ -470,7 +443,7 @@ class CodeEditorPreview extends HTMLElement {
 </html>`;
     }
 
-    // ==================== 样式定义 ====================
+    // 样式定义
     getStyles() {
         return `<style>
             .code-editor-preview-wrapper {

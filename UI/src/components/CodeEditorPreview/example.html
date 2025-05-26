@@ -277,11 +277,8 @@
                     show-fullscreen="true"
                     auto-preview="true"
                     debounce-delay="300"
-                    default-code='<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <title>高级示例</title>
+                    default-code='
+                    <!--注意不要在这里面直接写完整的html结构，会被浏览器误解析-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -316,8 +313,6 @@
             transform: translateY(-2px);
         }
     </style>
-</head>
-<body>
     <div class="card">
         <h1>🎉 高级代码编辑器</h1>
         <p>这是一个带有高级配置的示例</p>
@@ -343,9 +338,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             console.log("高级示例已加载完成！");
         });
-    </script>
-</body>
-</html>'>
+    </script>'>
                 </code-editor-preview>
             </div>
         </div>

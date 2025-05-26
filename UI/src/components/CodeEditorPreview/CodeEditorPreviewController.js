@@ -1,17 +1,13 @@
 /**
  * 代码编辑预览器控制模块
- * 提供完整的代码编辑和预览功能的核心控制逻辑
- * 整合 CodeDisplay 和 CodePreview 组件
+ * 简化版本，采用信任模式，去除冗余检查
  */
 
 class CodeEditorPreviewController {
     constructor(options = {}) {
         this.options = {
-            // 容器选择器
             displayContainer: options.displayContainer || '#codeEditor',
             previewContainer: options.previewContainer || '#codePreview',
-            
-            // 组件配置
             displayOptions: {
                 theme: 'prism',
                 showLineNumbers: false,
@@ -24,29 +20,21 @@ class CodeEditorPreviewController {
                 height: '400px',
                 ...options.previewOptions
             },
-            
-            // 控制器配置
             debounceDelay: 300,
             defaultLanguage: 'html',
             autoPreview: true,
-            trustMode: true, // 默认开启信任模式
             ...options
         };
 
-        // 组件实例
         this.codeDisplay = null;
         this.codePreview = null;
-        
-        // 管理器实例
         this.fileManager = new FileManager();
         this.configManager = new ConfigManager(this.options);
         this.eventManager = new EventManager();
         
-        // 状态
         this.updateTimeout = null;
         this.isInitialized = false;
         
-        // 事件回调
         this.callbacks = {
             onCodeChange: options.onCodeChange || null,
             onPreviewUpdate: options.onPreviewUpdate || null,
@@ -55,46 +43,31 @@ class CodeEditorPreviewController {
         };
     }
 
-    // ==================== 初始化方法 ====================
+    // 初始化
     async initialize() {
-        if (this.isInitialized) return;
-
-        try {
-            await this.initializeComponents();
-            this.setupEventListeners();
-            this.isInitialized = true;
-            
-            // 设置默认代码
-            if (this.options.defaultCode) {
-                await this.setCode(this.options.defaultCode, this.options.defaultLanguage);
-            }
-            
-            return true;
-        } catch (error) {
-            this.handleError('初始化失败', error);
-            return false;
+        await this.initializeComponents();
+        this.setupEventListeners();
+        this.isInitialized = true;
+        
+        if (this.options.defaultCode) {
+            await this.setCode(this.options.defaultCode, this.options.defaultLanguage);
         }
+        
+        return true;
     }
 
     async initializeComponents() {
         // 初始化代码展示组件
-        const displayOptions = {
+        this.codeDisplay = new CodeDisplay(this.options.displayContainer, {
             ...this.options.displayOptions,
-            onChange: (code, language) => {
-                this.handleCodeChange(code, language);
-            }
-        };
-        
-        this.codeDisplay = new CodeDisplay(this.options.displayContainer, displayOptions);
+            onChange: (code, language) => this.handleCodeChange(code, language)
+        });
         
         // 初始化预览组件
-        const previewOptions = {
+        this.codePreview = new CodePreview(this.options.previewContainer, {
             ...this.options.previewOptions,
-            onError: this.options.trustMode ? null : (error) => this.handleError('预览错误', error),
             onLoad: () => this.handlePreviewLoad()
-        };
-        
-        this.codePreview = new CodePreview(this.options.previewContainer, previewOptions);
+        });
         
         // 渲染初始内容
         if (this.options.defaultCode) {
@@ -103,28 +76,20 @@ class CodeEditorPreviewController {
     }
 
     setupEventListeners() {
-        // 文件管理器事件
         this.eventManager.on('fileAdded', () => this.updatePreviewDebounced());
         this.eventManager.on('fileRemoved', () => this.updatePreviewDebounced());
         this.eventManager.on('configChanged', (config) => this.handleConfigChange(config));
     }
 
-    // ==================== 核心功能方法 ====================
+    // 核心功能方法
     async setCode(code, language) {
-        if (!this.isInitialized) {
-            return false; // 未初始化，静默失败
-        }
+        if (!this.codeDisplay) return false;
         
-        try {
-            await this.codeDisplay.setCode(code, language);
-            if (this.options.autoPreview) {
-                this.updatePreviewDebounced();
-            }
-            return true;
-        } catch (error) {
-            this.handleError('设置代码失败', error);
-            return false;
+        await this.codeDisplay.setCode(code, language);
+        if (this.options.autoPreview) {
+            this.updatePreviewDebounced();
         }
+        return true;
     }
 
     getCode() {
@@ -136,22 +101,17 @@ class CodeEditorPreviewController {
     }
 
     async setLanguage(language) {
-        if (!this.isInitialized) return false;
+        if (!this.codeDisplay) return false;
         
-        try {
-            this.codeDisplay.setLanguage(language);
-            this.configManager.updateConfig({ language });
-            if (this.options.autoPreview) {
-                this.updatePreviewDebounced();
-            }
-            return true;
-        } catch (error) {
-            this.handleError('设置语言失败', error);
-            return false;
+        this.codeDisplay.setLanguage(language);
+        this.configManager.updateConfig({ language });
+        if (this.options.autoPreview) {
+            this.updatePreviewDebounced();
         }
+        return true;
     }
 
-    // ==================== 预览控制方法 ====================
+    // 预览控制
     updatePreviewDebounced() {
         clearTimeout(this.updateTimeout);
         this.updateTimeout = setTimeout(() => {
@@ -160,24 +120,19 @@ class CodeEditorPreviewController {
     }
 
     async updatePreview() {
-        if (!this.isInitialized || !this.codePreview) return;
+        if (!this.codePreview) return;
 
-        try {
-            const code = this.getCode();
-            if (!code.trim()) {
-                this.codePreview.render('');
-                return;
-            }
+        const code = this.getCode();
+        if (!code.trim()) {
+            this.codePreview.render('');
+            return;
+        }
 
-            // 处理外部文件导入
-            const processedCode = this.fileManager.processCode(code);
-            await this.codePreview.render(processedCode);
-            
-            if (this.callbacks.onPreviewUpdate) {
-                this.callbacks.onPreviewUpdate(processedCode);
-            }
-        } catch (error) {
-            this.handleError('预览更新失败', error);
+        const processedCode = this.fileManager.processCode(code);
+        await this.codePreview.render(processedCode);
+        
+        if (this.callbacks.onPreviewUpdate) {
+            this.callbacks.onPreviewUpdate(processedCode);
         }
     }
 
@@ -185,73 +140,57 @@ class CodeEditorPreviewController {
         return this.updatePreview();
     }
 
-    // ==================== 配置管理方法 ====================
+    // 配置管理
     updateDisplayConfig(config) {
         if (!this.codeDisplay) return false;
 
-        try {
-            if (config.theme !== undefined) {
-                this.codeDisplay.changeTheme(config.theme);
-            }
-            if (config.showLineNumbers !== undefined) {
-                this.codeDisplay.toggleLineNumbers(config.showLineNumbers);
-            }
-            if (config.editable !== undefined) {
-                this.codeDisplay.setEditable(config.editable);
-            }
-            
-            this.configManager.updateConfig(config);
-            return true;
-        } catch (error) {
-            this.handleError('更新显示配置失败', error);
-            return false;
+        if (config.theme !== undefined) {
+            this.codeDisplay.changeTheme(config.theme);
         }
+        if (config.showLineNumbers !== undefined) {
+            this.codeDisplay.toggleLineNumbers(config.showLineNumbers);
+        }
+        if (config.editable !== undefined) {
+            this.codeDisplay.setEditable(config.editable);
+        }
+        
+        this.configManager.updateConfig(config);
+        return true;
     }
 
     updatePreviewConfig(config) {
         if (!this.codePreview) return false;
 
-        try {
-            if (config.width !== undefined || config.height !== undefined) {
-                this.codePreview.setSize(config.width, config.height);
-            }
-            
-            this.configManager.updateConfig(config);
-            return true;
-        } catch (error) {
-            this.handleError('更新预览配置失败', error);
-            return false;
+        if (config.width !== undefined || config.height !== undefined) {
+            this.codePreview.setSize(config.width, config.height);
         }
+        
+        this.configManager.updateConfig(config);
+        return true;
     }
 
-    // ==================== 文件管理方法 ====================
+    // 文件管理
     async addExternalFile(filePath) {
-        try {
-            await this.fileManager.addFile(filePath);
+        const success = await this.fileManager.addFile(filePath);
+        if (success) {
             this.eventManager.emit('fileAdded', filePath);
-            return true;
-        } catch (error) {
-            this.handleError('添加外部文件失败', error);
-            return false;
         }
+        return success;
     }
 
     removeExternalFile(filePath) {
-        try {
-            this.fileManager.removeFile(filePath);
+        const success = this.fileManager.removeFile(filePath);
+        if (success) {
             this.eventManager.emit('fileRemoved', filePath);
-            return true;
-        } catch (error) {
-            this.handleError('移除外部文件失败', error);
-            return false;
         }
+        return success;
     }
 
     getExternalFiles() {
         return this.fileManager.getFiles();
     }
 
-    // ==================== 事件处理方法 ====================
+    // 事件处理
     handleCodeChange(code, language) {
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
@@ -263,7 +202,7 @@ class CodeEditorPreviewController {
     }
 
     handlePreviewLoad() {
-        // 预览加载完成的处理逻辑
+        // 预览加载完成
     }
 
     handleConfigChange(config) {
@@ -272,48 +211,24 @@ class CodeEditorPreviewController {
         }
     }
 
-    handleError(title, error) {
-        // 信任模式下只记录到控制台
-        if (this.options.trustMode) {
-            console.error(`${title}:`, error);
-        } else {
-            console.error(`${title}:`, error);
-            if (this.callbacks.onError) {
-                this.callbacks.onError(title, error);
-            }
-        }
-    }
-
-    // ==================== 工具方法 ====================
+    // 工具方法
     async copyCode() {
-        try {
-            const code = this.getCode();
-            await navigator.clipboard.writeText(code);
-            return true;
-        } catch (error) {
-            this.handleError('复制代码失败', error);
-            return false;
-        }
+        const code = this.getCode();
+        await navigator.clipboard.writeText(code);
+        return true;
     }
 
     clearCode() {
-        try {
-            this.setCode('', this.getLanguage());
-            return true;
-        } catch (error) {
-            this.handleError('清空代码失败', error);
-            return false;
-        }
+        this.setCode('', this.getLanguage());
+        return true;
     }
 
-    // ==================== 生命周期方法 ====================
+    // 生命周期
     destroy() {
-        // 清理定时器
         if (this.updateTimeout) {
             clearTimeout(this.updateTimeout);
         }
         
-        // 销毁组件
         if (this.codeDisplay) {
             this.codeDisplay.destroy();
         }
@@ -321,22 +236,19 @@ class CodeEditorPreviewController {
             this.codePreview.destroy();
         }
         
-        // 清理事件
         this.eventManager.removeAllListeners();
-        
-        // 重置状态
         this.isInitialized = false;
     }
 
-    // ==================== 静态工厂方法 ====================
+    // 静态工厂方法
     static async create(options) {
         const controller = new CodeEditorPreviewController(options);
-        await controller.initialize(); // 信任模式下，总是返回控制器实例
+        await controller.initialize();
         return controller;
     }
 }
 
-// ==================== 配置管理器类 ====================
+// 配置管理器
 class ConfigManager {
     constructor(initialConfig = {}) {
         this.config = { ...initialConfig };
@@ -367,7 +279,7 @@ class ConfigManager {
     }
 }
 
-// ==================== 文件管理器类 ====================
+// 文件管理器
 class FileManager {
     constructor() {
         this.files = [];
@@ -376,22 +288,17 @@ class FileManager {
 
     async addFile(filePath) {
         if (this.files.includes(filePath)) {
-            return false; // 文件已存在，静默返回
-        }
-
-        try {
-            const content = await this.loadFileContent(filePath);
-            this.files.push(filePath);
-            this.fileContents.set(filePath, {
-                content,
-                status: 'loaded',
-                error: null
-            });
-            return true;
-        } catch (error) {
-            console.error(`加载文件失败: ${filePath}`, error);
             return false;
         }
+
+        const content = await this.loadFileContent(filePath);
+        this.files.push(filePath);
+        this.fileContents.set(filePath, {
+            content,
+            status: 'loaded',
+            error: null
+        });
+        return true;
     }
 
     removeFile(filePath) {
@@ -416,7 +323,6 @@ class FileManager {
         let processedCode = code;
         const loadedScripts = [];
 
-        // 收集所有成功加载的文件内容
         this.files.forEach(filePath => {
             const fileInfo = this.fileContents.get(filePath);
             if (fileInfo && fileInfo.status === 'loaded') {
@@ -429,10 +335,8 @@ ${fileContent}
             }
         });
 
-        // 处理import语句
         processedCode = this.processImportStatements(processedCode);
 
-        // 嵌入到HTML中
         if (loadedScripts.length > 0 && this.isHtmlCode(processedCode)) {
             processedCode = this.embedScriptsInHtml(processedCode, loadedScripts);
         }
@@ -443,16 +347,10 @@ ${fileContent}
     async loadFileContent(filePath) {
         const fullPath = this.getFullPath(filePath);
         const response = await fetch(fullPath);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
         return await response.text();
     }
 
     processFileContent(content) {
-        // 简化导出语句处理
         return content
             .replace(/export\s+default\s+(\w+)/g, 'window.$1 = $1')
             .replace(/export\s+\{[^}]+\}/g, '')
@@ -518,7 +416,7 @@ ${scripts.join('\n')}
     }
 }
 
-// ==================== 事件管理器类 ====================
+// 事件管理器
 class EventManager {
     constructor() {
         this.listeners = new Map();
@@ -544,11 +442,7 @@ class EventManager {
     emit(event, ...args) {
         if (this.listeners.has(event)) {
             this.listeners.get(event).forEach(listener => {
-                try {
-                    listener(...args);
-                } catch (error) {
-                    console.error(`事件监听器执行错误: ${event}`, error);
-                }
+                listener(...args);
             });
         }
     }
