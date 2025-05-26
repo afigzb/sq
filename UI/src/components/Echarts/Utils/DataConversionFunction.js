@@ -2,7 +2,7 @@
  * ECharts数据转换工具类
  * 这是数据转换函数，实际上只要能传入正确格式的数据即可，用不用这个函数是无所谓的，有自己的转化逻辑用自己的也行，反正这东西我八成也不会维护
  */
-class EChartsDataConverter {
+export class EChartsDataConverter {
     /**
      * 通用数据转换函数
      * @param {Array} data - 原始数据数组
@@ -446,6 +446,3 @@ class EChartsDataConverter {
         };
     }
 }
-
-// 导出转换器类
-export default EChartsDataConverter;

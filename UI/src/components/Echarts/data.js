@@ -5,7 +5,7 @@
  * 只是个数据模拟的js，同时有展示如何使用数据转换函数
  */
 
-import EChartsDataConverter from './Utils/DataConversionFunction.js';
+import { EChartsDataConverter } from './Utils/DataConversionFunction.js';
 
 // =====================================
 // 原始数据库数据

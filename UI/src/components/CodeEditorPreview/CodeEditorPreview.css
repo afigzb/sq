@@ -1,0 +1,507 @@
+/* 主容器 - 现代简洁布局 */
+.code-editor-preview-wrapper {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    min-height: 500px;
+    height: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* 工具栏 */
+.code-editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #edf2f7;
+    flex-wrap: wrap;
+}
+
+.toolbar-group { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem; 
+}
+
+.toolbar-actions { 
+    margin-left: auto; 
+    display: flex; 
+    gap: 0.75rem; 
+}
+
+/* 主内容区域 - Grid布局 */
+.code-editor-preview-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 100%;
+}
+
+/* 编辑器和预览区域 */
+.code-editor-section,
+.code-preview-section {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100%;
+}
+
+.code-editor-section { 
+    border-right: 1px solid #edf2f7; 
+}
+
+/* 区域标题 */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-header h3 { 
+    margin: 0; 
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.editor-controls,
+.preview-controls { 
+    display: flex; 
+    gap: 0.75rem; 
+    align-items: center; 
+}
+
+/* 内容容器 */
+.code-editor-container,
+.code-preview-container {
+    overflow: auto;
+    position: relative;
+    height: 100%;
+}
+
+/* 外部文件区域 */
+.external-files-section {
+    border-top: 1px solid #edf2f7;
+    background: #f8fafc;
+}
+
+.file-input-group {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    align-items: center;
+}
+
+.file-path-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+}
+
+.file-path-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.imported-files-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    padding: 0.5rem 1.25rem 1rem;
+}
+
+/* 改为标签样式 */
+.imported-file-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    background: #e0f2fe;
+    border-radius: 20px;
+    margin: 0;
+    transition: all 0.2s;
+    border: none;
+}
+
+.imported-file-item:hover {
+    background: #bae6fd;
+}
+
+.file-path {
+    font-family: ui-monospace, "SF Mono", Monaco, "Cascadia Mono", "Segoe UI Mono", monospace;
+    color: #0369a1;
+    font-size: 0.8125rem;
+    margin-right: 0.5rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-remove {
+    background: transparent;
+    color: #0369a1;
+    border: none;
+    padding: 0.125rem 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.btn-remove:hover {
+    background: rgba(3, 105, 161, 0.1);
+    color: #0c4a6e;
+}
+
+.no-files-message {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 1rem;
+}
+
+/* 全屏覆盖层 */
+.fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.fullscreen-overlay[style*="flex"] {
+    visibility: visible;
+    opacity: 1;
+}
+
+.fullscreen-header {
+    display: none;
+}
+
+.fullscreen-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10001;
+}
+
+.fullscreen-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.fullscreen-preview-container {
+    background: white;
+    overflow: auto;
+    margin: 0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    position: relative;
+    width: 90%;
+    height: 90%;
+}
+
+.fullscreen-preview-container iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none;
+    display: block;
+}
+
+.fullscreen-preview-container > * {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* 按钮样式 */
+button {
+    padding: 0.5rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+}
+
+button:hover { 
+    background: #f1f5f9;
+    border-color: #cbd5e1; 
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.view-switch-btn {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    font-weight: 500;
+}
+
+.view-switch-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    font-weight: 500;
+}
+
+.view-switch-btn:hover:not(.active) {
+    background: #f1f5f9;
+}
+
+.btn-icon {
+    padding: 0.375rem;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 6px;
+    color: #64748b;
+}
+
+.btn-icon:hover { 
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.btn-close {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+.btn-close:hover { 
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+/* 表单元素 */
+select, input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+/* 使用说明覆盖层 */
+.instructions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 10;
+    border: 1px solid #edf2f7;
+    border-top: none;
+}
+
+.instructions-content {
+    height: 100%;
+    overflow: auto;
+    padding: 1.5rem;
+    background: #f8fafc;
+    box-sizing: border-box;
+}
+
+.instructions-text {
+    line-height: 1.7;
+    color: #334155;
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+/* 确保代码编辑器section有相对定位 */
+.code-editor-section {
+    position: relative;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .code-editor-preview-main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    
+    .code-editor-section { 
+        border-right: none; 
+        border-bottom: 1px solid #edf2f7; 
+    }
+    
+    .toolbar-actions { 
+        margin-left: 0; 
+        order: 1; 
+        width: 100%; 
+    }
+
+    .imported-files-list {
+        gap: 0.5rem;
+    }
+    
+    .file-path {
+        max-width: 150px;
+    }
+} 
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    .code-editor-preview-wrapper {
+        background: #1e293b;
+        border-color: #334155;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .code-editor-toolbar, .external-files-section {
+        background: #0f172a;
+        border-color: #1e293b;
+    }
+    
+    .section-header {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .section-header h3 {
+        color: #e2e8f0;
+    }
+    
+    .code-editor-section {
+        border-color: #334155;
+    }
+    
+    .imported-file-item {
+        background: #0c4a6e;
+    }
+    
+    .imported-file-item:hover {
+        background: #075985;
+    }
+    
+    .file-path {
+        color: #e0f2fe;
+    }
+    
+    .btn-remove {
+        color: #e0f2fe;
+    }
+    
+    .btn-remove:hover {
+        background: rgba(224, 242, 254, 0.1);
+        color: #bae6fd;
+    }
+    
+    .no-files-message {
+        color: #64748b;
+    }
+    
+    button {
+        background: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    button:hover {
+        background: #334155;
+        border-color: #475569;
+    }
+    
+    .view-switch-btn {
+        background: #1e293b;
+    }
+    
+    .view-switch-btn:hover:not(.active) {
+        background: #334155;
+    }
+    
+    .btn-icon {
+        color: #94a3b8;
+    }
+    
+    .btn-icon:hover {
+        background: #334155;
+        color: #e2e8f0;
+    }
+    
+    select, input, .file-path-input {
+        background: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .instructions-content {
+        background: #1e293b;
+    }
+    
+    .instructions-text {
+        color: #e2e8f0;
+    }
+    
+    label {
+        color: #e2e8f0;
+    }
+    
+    .fullscreen-preview-container {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    button:focus {
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+} 

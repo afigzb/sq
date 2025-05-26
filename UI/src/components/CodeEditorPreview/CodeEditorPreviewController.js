@@ -47,7 +47,9 @@ export class CodeEditorPreviewController {
             editable: this.options.displayOptions.editable,
             showToolbar: true,
             showFullscreen: true,
-            externalFiles: []
+            externalFiles: [],
+            currentView: 'editor',
+            instructions: options.instructions || ''
         };
 
         // 核心组件
@@ -274,23 +276,29 @@ export class CodeEditorPreviewController {
     }
 
     // 处理来自组件的用户操作
-    handleAction(action, params = {}) {
+    async handleAction(action, params = {}) {
         switch (action) {
             case 'copy':
                 return this.copyCode();
+            case 'reset':
+                return this.resetCode();
             case 'clear':
                 return this.clearCode();
             case 'refresh':
                 return this.refreshPreview();
             case 'fullscreen':
-                return this.openFullscreen();
+                return await this.openFullscreen();
             case 'close-fullscreen':
                 return this.closeFullscreen();
+            case 'switch-to-editor':
+                return this.switchToEditor();
+            case 'switch-to-instructions':
+                return this.switchToInstructions();
             case 'add-file':
                 if (this.uiElements.filePathInput) {
                     const filePath = this.uiElements.filePathInput.value.trim();
                     if (filePath) {
-                        this.addExternalFile(filePath);
+                        await this.addExternalFile(filePath);
                         this.uiElements.filePathInput.value = '';
                     }
                 }
@@ -352,21 +360,61 @@ export class CodeEditorPreviewController {
             const delay = parseInt(newValue) || 300;
             this.options.debounceDelay = delay;
         }
+        else if (key === 'instructions') {
+            this.updateState({ instructions: newValue || '' });
+        }
+    }
+
+    // 视图切换方法
+    switchToEditor() {
+        this.updateState({ currentView: 'editor' });
+        return true;
+    }
+
+    switchToInstructions() {
+        this.updateState({ currentView: 'instructions' });
+        return true;
+    }
+
+    // 使用说明管理
+    setInstructions(instructions) {
+        this.updateState({ instructions: instructions || '' });
+        return true;
+    }
+
+    getInstructions() {
+        return this.state.instructions;
     }
 
     // 全屏预览功能
-    openFullscreen() {
+    async openFullscreen() {
         if (!this.uiElements.fullscreenOverlay) return false;
         
         this.uiElements.fullscreenOverlay.style.display = 'flex';
         
         const fullscreenContainer = this.uiElements.fullscreenOverlay.querySelector('.fullscreen-preview-container');
-        if (fullscreenContainer) {
-            const fullscreenPreview = new CodePreview(fullscreenContainer, {
-                width: '100%',
-                height: '100%'
-            });
-            fullscreenPreview.render(this.getCode());
+        if (fullscreenContainer && this.codePreview && this.codePreview.iframe) {
+            // 简单直接的方法：复制当前iframe的内容
+            fullscreenContainer.innerHTML = '';
+            
+            // 创建新的iframe，复制当前预览的内容
+            const iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.background = 'white';
+            
+            fullscreenContainer.appendChild(iframe);
+            
+            // 获取当前预览的处理过的代码
+            const code = this.getCode();
+            const processedCode = this.fileManager.processCode(code);
+            
+            // 将内容写入新iframe
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(processedCode);
+            iframeDoc.close();
         }
         return true;
     }
@@ -375,6 +423,13 @@ export class CodeEditorPreviewController {
         if (!this.uiElements.fullscreenOverlay) return false;
         
         this.uiElements.fullscreenOverlay.style.display = 'none';
+        
+        // 清空全屏容器
+        const fullscreenContainer = this.uiElements.fullscreenOverlay.querySelector('.fullscreen-preview-container');
+        if (fullscreenContainer) {
+            fullscreenContainer.innerHTML = '';
+        }
+        
         return true;
     }
 
@@ -383,6 +438,10 @@ export class CodeEditorPreviewController {
         const code = this.getCode();
         await navigator.clipboard.writeText(code);
         return true;
+    }
+
+    resetCode() {
+        return this.setCode(this.options.defaultCode || '', this.options.defaultLanguage);
     }
 
     clearCode() {
@@ -481,25 +540,29 @@ class FileManager {
 
     processFileContent(content) {
         return content
+            // 处理默认导出
             .replace(/export\s+default\s+(\w+)/g, 'window.$1 = $1')
+            // 处理具名导出对象
             .replace(/export\s+\{[^}]+\}/g, '')
-            .replace(/export\s+(const|let|var)\s+/g, '$1 ');
+            // 处理变量导出
+            .replace(/export\s+(const|let|var|function|class)\s+/g, '$1 ')
+            // 处理 export class
+            .replace(/export\s+class\s+(\w+)/g, 'class $1; window.$1 = $1')
+            // 处理 export async function
+            .replace(/export\s+async\s+function\s+(\w+)/g, 'async function $1; window.$1 = $1')
+            // 移除import语句
+            .replace(/import\s+.*?from\s+['"`].*?['"`];?/g, '// 导入已移除')
+            // 移除import类型语句
+            .replace(/import\s+type\s+.*?from\s+['"`].*?['"`];?/g, '// 类型导入已移除')
+            // 移除动态导入
+            .replace(/import\s*\(.*?\)/g, '/* 动态导入已移除 */');
     }
 
     processImportStatements(code) {
-        const importRegex = /import\s+(\w+|\{[^}]+\})\s+from\s+['"`]([^'"`]+)['"`];?\s*\n?/g;
-        
-        return code.replace(importRegex, (match, importName, path) => {
-            const matchedFile = this.files.find(filePath => 
-                path.includes(filePath.split('/').pop()) || filePath.includes(path)
-            );
-            
-            if (matchedFile) {
-                return `// 已通过外部文件导入: ${path}\n`;
-            }
-            
-            return match;
-        });
+        // 移除所有import语句
+        return code
+            .replace(/import\s+.*?from\s+['"`].*?['"`];?\s*\n?/g, '// import 语句已移除\n')
+            .replace(/import\s*\(.*?\)/g, '/* 动态导入已移除 */');
     }
 
     isHtmlCode(code) {
@@ -558,4 +621,4 @@ if (typeof define === 'function' && define.amd) {
 if (typeof window !== 'undefined') {
     window.CodeEditorPreviewController = CodeEditorPreviewController;
     window.FileManager = FileManager;
-} 
+}

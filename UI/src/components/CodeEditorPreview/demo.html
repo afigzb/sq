@@ -5,32 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeEditorPreview Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="./CodeEditorPreview.js"></script>
-    <script src="..\Echarts\Utils/DataConversionFunction.js"></script>
+    <!-- 确保以模块方式加载组件 -->
+    <script type="module" src="demo.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">CodeEditorPreview 组件演示</h1>
+        
+        <!-- 测试按钮 -->
+        <div class="test-buttons mb-4" style="text-align: center; gap: 10px; display: flex; justify-content: center; flex-wrap: wrap;">
+            <button onclick="testSwitchToInstructions()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到使用说明</button>
+            <button onclick="testSwitchToEditor()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到编辑器</button>
+            <button onclick="testUpdateInstructions()" style="padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer;">更新使用说明</button>
+            <button onclick="testFullscreen()" style="padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer;">测试全屏预览</button>
+        </div>
+
         <div class="bg-white p-8 shadow-lg rounded-lg">
             <div class="bg-white rounded-lg shadow-lg overflow-auto">
                 <!-- 基础用法 -->
                 <code-editor-preview
+                    instructions="这是一个代码编辑预览器组件的使用说明：
+
+1. 代码编辑功能：
+   - 支持多种编程语言语法高亮
+   - 可以实时编辑代码
+   - 支持主题切换
+
+2. 实时预览功能：
+   - 自动预览HTML代码效果
+   - 支持外部文件导入
+   - 支持全屏预览
+
+3. 使用方法：
+   - 在左侧编辑器中输入代码
+   - 右侧会实时显示预览效果
+   - 可以通过工具栏切换主题和设置
+
+4. 高级功能：
+   - 支持导入外部JavaScript/CSS文件
+   - 支持代码复制和清空
+   - 响应式设计，适配移动端
+
+5. 全屏预览：
+   - 点击预览区域右上角的🔍按钮
+   - 支持外部文件导入功能
+   - 按ESC键或点击✕按钮关闭
+
+6. 导入外部文件：
+   - 非常值得注意一点，需要代码提供导入功能只是为了凸显代码高级，基本问题是另外一个文件夹的相对路径在这个文件夹里面并非是正确的，如果你手动修改了相对路径，不需要导入功能也能正常运行，否则则需要使用导入功能导入依赖
+
+7. 关于页面卡顿问题:
+   - 原因之一是代码量过大，预览实现的原理是使用iframe加上我手动写了个节流这是正常卡顿。
+   - 原因之二是预览的js和预览逻辑有所冲突，这个是个很复杂的事情，自个看着办吧
+
+8. 关于代码编辑器：
+   - 如果你发现用户更改代码后使用说明没更新，这是个很正常的事情，使用说明需要手动更改传入，为了避免用户更改代码后需要刷新页面回档，我提供了个手动重置按钮
+
+
+
+- 点击上方的'代码编辑器'按钮可以切换回编辑模式。"
                 ></code-editor-preview>
             </div>
         </div>
-        
     </div>
-
-    <script>
-        // 等待组件加载完成
-        document.addEventListener('DOMContentLoaded', () => {
-            const editor = document.querySelector('code-editor-preview');
-            
-            // 监听代码变化事件
-            editor.addEventListener('code-change', (event) => {
-                console.log('代码已更新:', event.detail);
-            });
-        });
-    </script>
 </body>
 </html>

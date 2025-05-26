@@ -4,8 +4,6 @@
  */
 
 import { CodeEditorPreviewController } from './CodeEditorPreviewController.js';
-import { CodeDisplay } from '../CodeDisplay/CodeDisplay.js';
-import { CodePreview } from '../CodePreview/CodePreview.js';
 
 class CodeEditorPreview extends HTMLElement {
     constructor() {
@@ -13,6 +11,17 @@ class CodeEditorPreview extends HTMLElement {
         this.controller = null;
         this.isInitialized = false;
         this.elements = {};
+        
+        // 添加样式表
+        if (!document.querySelector('link[href*="CodeEditorPreview.css"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            // 使用相对于当前脚本的路径
+            const scriptPath = document.currentScript?.src || '';
+            const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1);
+            link.href = basePath + 'CodeEditorPreview.css';
+            document.head.appendChild(link);
+        }
     }
 
     // Web Component 生命周期
@@ -35,7 +44,8 @@ class CodeEditorPreview extends HTMLElement {
             'width', 'theme', 'language', 
             'editable', 'auto-preview',
             'show-toolbar', 'show-fullscreen',
-            'debounce-delay', 'default-code', 'external-files'
+            'debounce-delay', 'default-code', 'external-files',
+            'instructions'
         ];
     }
 
@@ -68,7 +78,8 @@ class CodeEditorPreview extends HTMLElement {
             showFullscreen: this.hasAttribute('show-fullscreen') ? parseBooleanAttr(this.getAttribute('show-fullscreen')) : true,
             debounceDelay: this.hasAttribute('debounce-delay') ? parseInt(this.getAttribute('debounce-delay')) : 300,
             defaultCode: this.getAttribute('default-code') || this.getDefaultCode(),
-            externalFiles
+            externalFiles,
+            instructions: this.getAttribute('instructions') || ''
         };
     }
 
@@ -76,7 +87,6 @@ class CodeEditorPreview extends HTMLElement {
     render(config) {
         this.innerHTML = `
             <div class="code-editor-preview-wrapper" style="width: ${config.width};">
-                ${this.getStyles()}
                 ${config.showToolbar ? `
                     <div class="code-editor-toolbar">
                         <div class="toolbar-group">
@@ -91,15 +101,18 @@ class CodeEditorPreview extends HTMLElement {
                         <div class="toolbar-group">
                             <label><input type="checkbox" class="enable-editing" ${config.editable ? 'checked' : ''}> 允许编辑</label>
                         </div>
+                        <div class="toolbar-group">
+                            <button class="btn view-switch-btn active" data-action="switch-to-editor">代码编辑器</button>
+                            <button class="btn view-switch-btn" data-action="switch-to-instructions">使用说明</button>
+                        </div>
                         <div class="toolbar-actions">
                             <button class="btn" data-action="copy">📋 复制代码</button>
+                            <button class="btn" data-action="reset">🔄 重置</button>
                             <button class="btn" data-action="clear">🗑️ 清空</button>
                         </div>
                     </div>
                 ` : ''}
                 
-
-
                 <div class="code-editor-preview-main">
                     <div class="code-editor-section">
                         <div class="section-header">
@@ -115,6 +128,13 @@ class CodeEditorPreview extends HTMLElement {
                             </div>
                         </div>
                         <div class="code-editor-container" id="codeEditor"></div>
+                        
+                        <!-- 使用说明覆盖层 -->
+                        <div class="instructions-overlay" style="display: none;">
+                            <div class="instructions-content">
+                                <div class="instructions-text">${config.instructions || '开发者还没有写使用说明哦'}</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="code-preview-section">
@@ -129,7 +149,7 @@ class CodeEditorPreview extends HTMLElement {
                     </div>
                 </div>
 
-                                <div class="external-files-section">
+                <div class="external-files-section">
                     <div class="section-header">
                         <h3>外部文件导入</h3>
                         <div class="file-input-group">
@@ -149,10 +169,7 @@ class CodeEditorPreview extends HTMLElement {
                 
                 ${config.showFullscreen ? `
                     <div class="fullscreen-overlay" style="display: none;">
-                        <div class="fullscreen-header">
-                            <h3>全屏预览</h3>
-                            <button class="btn-close" data-action="close-fullscreen">✕</button>
-                        </div>
+                        <button class="fullscreen-close-btn" data-action="close-fullscreen">✕</button>
                         <div class="fullscreen-preview-container"></div>
                     </div>
                 ` : ''}
@@ -173,7 +190,10 @@ class CodeEditorPreview extends HTMLElement {
             importedFilesList: this.querySelector('.imported-files-list'),
             fullscreenOverlay: this.querySelector('.fullscreen-overlay'),
             codeEditorContainer: this.querySelector('#codeEditor'),
-            codePreviewContainer: this.querySelector('#codePreview')
+            codePreviewContainer: this.querySelector('#codePreview'),
+            instructionsOverlay: this.querySelector('.instructions-overlay'),
+            instructionsText: this.querySelector('.instructions-text'),
+            viewSwitchBtns: this.querySelectorAll('.view-switch-btn')
         };
     }
 
@@ -190,7 +210,10 @@ class CodeEditorPreview extends HTMLElement {
         if (!action) return;
 
         const filePath = event.target.dataset.filePath;
-        this.controller.handleAction(action, { filePath });
+        // 使用异步处理来支持全屏预览等异步操作
+        this.controller.handleAction(action, { filePath }).catch(error => {
+            console.error('处理操作时出错:', error);
+        });
     }
 
     handleChange(event) {
@@ -224,6 +247,7 @@ class CodeEditorPreview extends HTMLElement {
             autoPreview: config.autoPreview,
             debounceDelay: config.debounceDelay,
             initialConfig: config,
+            instructions: config.instructions,
             displayOptions: {
                 theme: config.theme,
                 editable: config.editable,
@@ -254,6 +278,16 @@ class CodeEditorPreview extends HTMLElement {
     updateUI(newState, oldState = {}) {
         // 只在必要时更新UI元素
         if (!newState) return;
+        
+        // 视图切换更新
+        if (newState.currentView !== oldState.currentView) {
+            this.updateViewDisplay(newState.currentView);
+        }
+        
+        // 使用说明内容更新
+        if (newState.instructions !== oldState.instructions && this.elements.instructionsText) {
+            this.elements.instructionsText.textContent = newState.instructions || '开发者还没有写使用说明哦';
+        }
         
         // 外部文件列表更新
         if (newState.externalFiles !== oldState.externalFiles && this.elements.importedFilesList) {
@@ -294,12 +328,33 @@ class CodeEditorPreview extends HTMLElement {
         `).join('');
     }
 
+    // 视图切换显示更新
+    updateViewDisplay(currentView) {
+        if (!this.elements.instructionsOverlay) return;
+        
+        // 更新按钮状态
+        this.elements.viewSwitchBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if ((currentView === 'editor' && btn.dataset.action === 'switch-to-editor') ||
+                (currentView === 'instructions' && btn.dataset.action === 'switch-to-instructions')) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // 切换显示：显示或隐藏使用说明覆盖层
+        this.elements.instructionsOverlay.style.display = currentView === 'instructions' ? 'block' : 'none';
+    }
+
     // 简化的公共API - 直接代理到控制器
     getCode() { return this.controller?.getCode() || ''; }
     setCode(code, language) { return this.controller?.setCode(code, language) || false; }
     getLanguage() { return this.controller?.getLanguage() || 'html'; }
     setLanguage(language) { return this.controller?.setLanguage(language) || false; }
     getExternalFiles() { return this.controller?.getExternalFiles() || []; }
+    getInstructions() { return this.controller?.getInstructions() || ''; }
+    setInstructions(instructions) { return this.controller?.setInstructions(instructions) || false; }
+    switchToEditor() { return this.controller?.switchToEditor() || false; }
+    switchToInstructions() { return this.controller?.switchToInstructions() || false; }
     getController() { return this.controller; }
 
     // 默认示例代码
@@ -328,212 +383,6 @@ class CodeEditorPreview extends HTMLElement {
     </div>
 </body>
 </html>`;
-    }
-
-    // 组件样式
-    getStyles() {
-        return `<style>
-            * { box-sizing: border-box; }
-            
-            /* 主容器 - 简洁布局 */
-            .code-editor-preview-wrapper {
-                display: flex;
-                flex-direction: column;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                background: #fff;
-                font-family: system-ui, sans-serif;
-                font-size: 14px;
-                min-height: 500px;
-                height: auto;
-            }
-            
-            /* 工具栏 */
-            .code-editor-toolbar {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                padding: 0.75rem 1rem;
-                background: #f8f9fa;
-                border-bottom: 1px solid #e9ecef;
-                flex-wrap: wrap;
-            }
-            
-            .toolbar-group { display: flex; align-items: center; gap: 0.5rem; }
-            .toolbar-actions { margin-left: auto; display: flex; gap: 0.5rem; }
-            
-            /* 主内容区域 - Grid布局 */
-            .code-editor-preview-main {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-            
-            /* 编辑器和预览区域 */
-            .code-editor-section,
-            .code-preview-section {
-                display: grid;
-                grid-template-rows: auto 1fr;
-            }
-            
-            .code-editor-section { border-right: 1px solid #e9ecef; }
-            
-            /* 区域标题 */
-            .section-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.75rem 1rem;
-                background: #f1f3f4;
-                border-bottom: 1px solid #e9ecef;
-            }
-            
-            .section-header h3 { margin: 0; font-weight: 600; }
-            
-            .editor-controls,
-            .preview-controls { display: flex; gap: 0.5rem; align-items: center; }
-            
-            /* 内容容器 */
-            .code-editor-container,
-            .code-preview-container {
-                overflow: auto;
-            }
-            
-            /* 外部文件区域 */
-            .external-files-section {
-                border-top: 1px solid #e9ecef;
-                background: #f8f9fa;
-            }
-            
-            .file-input-group {
-                display: flex;
-                gap: 0.5rem;
-                padding: 1rem;
-            }
-            
-            .file-path-input {
-                flex: 1;
-                padding: 0.5rem;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-            }
-            
-            .imported-files-list {
-                padding: 0 1rem 1rem;
-            }
-            
-            .imported-file-item {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.5rem;
-                background: white;
-                border: 1px solid #e9ecef;
-                border-radius: 4px;
-                margin-bottom: 0.5rem;
-            }
-            
-            .file-path {
-                font-family: ui-monospace, monospace;
-                color: #6c757d;
-                flex: 1;
-                margin-right: 0.5rem;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            
-            .no-files-message {
-                text-align: center;
-                color: #adb5bd;
-                font-style: italic;
-                padding: 1rem;
-            }
-            
-            /* 全屏覆盖层 */
-            .fullscreen-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.9);
-                z-index: 9999;
-                display: grid;
-                grid-template-rows: auto 1fr;
-            }
-            
-            .fullscreen-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 1rem;
-                background: #343a40;
-                color: white;
-            }
-            
-            .fullscreen-preview-container {
-                background: white;
-                overflow: auto;
-            }
-            
-            /* 按钮样式 */
-            button {
-                padding: 0.375rem 0.75rem;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                background: white;
-                cursor: pointer;
-                transition: all 0.15s ease-in-out;
-            }
-            
-            button:hover { background: #e9ecef; }
-            
-            .btn-icon {
-                padding: 0.25rem 0.5rem;
-                border: none;
-                background: transparent;
-            }
-            
-            .btn-icon:hover { background: rgba(0, 0, 0, 0.075); }
-            
-            .btn-close, .btn-remove {
-                background: #dc3545;
-                color: white;
-                border-color: #dc3545;
-            }
-            
-            .btn-close:hover, .btn-remove:hover { background: #c82333; }
-            
-            /* 表单元素 */
-            select, input {
-                padding: 0.25rem 0.5rem;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-            }
-            
-            label {
-                display: flex;
-                align-items: center;
-                gap: 0.25rem;
-                cursor: pointer;
-            }
-            
-            /* 响应式设计 */
-            @media (max-width: 768px) {
-                .code-editor-preview-main {
-                    grid-template-columns: 1fr;
-                    grid-template-rows: 1fr 1fr;
-                }
-                
-                .code-editor-section { 
-                    border-right: none; 
-                    border-bottom: 1px solid #e9ecef; 
-                }
-                
-                .toolbar-actions { 
-                    margin-left: 0; 
-                    order: 1; 
-                    width: 100%; 
-                }
-            }
-        </style>`;
     }
 }
 
