@@ -1,6 +1,6 @@
 /**
  * 代码编辑预览器控制模块
- * 简化版本，采用信任模式，去除冗余检查
+ * 简化版本，直接使用 CodeDisplay 和 CodePreview 的 API
  */
 
 class CodeEditorPreviewController {
@@ -29,9 +29,6 @@ class CodeEditorPreviewController {
         this.codeDisplay = null;
         this.codePreview = null;
         this.fileManager = new FileManager();
-        this.configManager = new ConfigManager(this.options);
-        this.eventManager = new EventManager();
-        
         this.updateTimeout = null;
         this.isInitialized = false;
         
@@ -46,7 +43,6 @@ class CodeEditorPreviewController {
     // 初始化
     async initialize() {
         await this.initializeComponents();
-        this.setupEventListeners();
         this.isInitialized = true;
         
         if (this.options.defaultCode) {
@@ -75,12 +71,6 @@ class CodeEditorPreviewController {
         }
     }
 
-    setupEventListeners() {
-        this.eventManager.on('fileAdded', () => this.updatePreviewDebounced());
-        this.eventManager.on('fileRemoved', () => this.updatePreviewDebounced());
-        this.eventManager.on('configChanged', (config) => this.handleConfigChange(config));
-    }
-
     // 核心功能方法
     async setCode(code, language) {
         if (!this.codeDisplay) return false;
@@ -104,7 +94,6 @@ class CodeEditorPreviewController {
         if (!this.codeDisplay) return false;
         
         this.codeDisplay.setLanguage(language);
-        this.configManager.updateConfig({ language });
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
         }
@@ -140,7 +129,7 @@ class CodeEditorPreviewController {
         return this.updatePreview();
     }
 
-    // 配置管理
+    // 配置管理 - 直接使用组件API
     updateDisplayConfig(config) {
         if (!this.codeDisplay) return false;
 
@@ -154,7 +143,9 @@ class CodeEditorPreviewController {
             this.codeDisplay.setEditable(config.editable);
         }
         
-        this.configManager.updateConfig(config);
+        if (this.callbacks.onConfigChange) {
+            this.callbacks.onConfigChange(config);
+        }
         return true;
     }
 
@@ -165,23 +156,25 @@ class CodeEditorPreviewController {
             this.codePreview.setSize(config.width, config.height);
         }
         
-        this.configManager.updateConfig(config);
+        if (this.callbacks.onConfigChange) {
+            this.callbacks.onConfigChange(config);
+        }
         return true;
     }
 
-    // 文件管理
+    // 文件管理 - 保持原有逻辑不变
     async addExternalFile(filePath) {
         const success = await this.fileManager.addFile(filePath);
-        if (success) {
-            this.eventManager.emit('fileAdded', filePath);
+        if (success && this.options.autoPreview) {
+            this.updatePreviewDebounced();
         }
         return success;
     }
 
     removeExternalFile(filePath) {
         const success = this.fileManager.removeFile(filePath);
-        if (success) {
-            this.eventManager.emit('fileRemoved', filePath);
+        if (success && this.options.autoPreview) {
+            this.updatePreviewDebounced();
         }
         return success;
     }
@@ -190,7 +183,7 @@ class CodeEditorPreviewController {
         return this.fileManager.getFiles();
     }
 
-    // 事件处理
+    // 事件处理 - 简化
     handleCodeChange(code, language) {
         if (this.options.autoPreview) {
             this.updatePreviewDebounced();
@@ -203,12 +196,6 @@ class CodeEditorPreviewController {
 
     handlePreviewLoad() {
         // 预览加载完成
-    }
-
-    handleConfigChange(config) {
-        if (this.callbacks.onConfigChange) {
-            this.callbacks.onConfigChange(config);
-        }
     }
 
     // 工具方法
@@ -236,7 +223,6 @@ class CodeEditorPreviewController {
             this.codePreview.destroy();
         }
         
-        this.eventManager.removeAllListeners();
         this.isInitialized = false;
     }
 
@@ -245,37 +231,6 @@ class CodeEditorPreviewController {
         const controller = new CodeEditorPreviewController(options);
         await controller.initialize();
         return controller;
-    }
-}
-
-// 配置管理器
-class ConfigManager {
-    constructor(initialConfig = {}) {
-        this.config = { ...initialConfig };
-        this.listeners = [];
-    }
-
-    updateConfig(newConfig) {
-        const oldConfig = { ...this.config };
-        this.config = { ...this.config, ...newConfig };
-        
-        this.listeners.forEach(listener => {
-            listener(this.config, oldConfig);
-        });
-    }
-
-    getConfig() {
-        return { ...this.config };
-    }
-
-    onConfigChange(listener) {
-        this.listeners.push(listener);
-        return () => {
-            const index = this.listeners.indexOf(listener);
-            if (index > -1) {
-                this.listeners.splice(index, 1);
-            }
-        };
     }
 }
 
@@ -416,64 +371,22 @@ ${scripts.join('\n')}
     }
 }
 
-// 事件管理器
-class EventManager {
-    constructor() {
-        this.listeners = new Map();
-    }
-
-    on(event, listener) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, []);
-        }
-        this.listeners.get(event).push(listener);
-    }
-
-    off(event, listener) {
-        if (this.listeners.has(event)) {
-            const listeners = this.listeners.get(event);
-            const index = listeners.indexOf(listener);
-            if (index > -1) {
-                listeners.splice(index, 1);
-            }
-        }
-    }
-
-    emit(event, ...args) {
-        if (this.listeners.has(event)) {
-            this.listeners.get(event).forEach(listener => {
-                listener(...args);
-            });
-        }
-    }
-
-    removeAllListeners() {
-        this.listeners.clear();
-    }
-}
-
 // 模块化支持
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { 
         CodeEditorPreviewController, 
-        ConfigManager, 
-        FileManager, 
-        EventManager 
+        FileManager 
     };
 }
 
 if (typeof define === 'function' && define.amd) {
     define([], () => ({ 
         CodeEditorPreviewController, 
-        ConfigManager, 
-        FileManager, 
-        EventManager 
+        FileManager 
     }));
 }
 
 if (typeof window !== 'undefined') {
     window.CodeEditorPreviewController = CodeEditorPreviewController;
-    window.ConfigManager = ConfigManager;
     window.FileManager = FileManager;
-    window.EventManager = EventManager;
 } 

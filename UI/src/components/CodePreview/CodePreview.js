@@ -214,8 +214,9 @@ class CodePreview {
         this.hideError();
 
         try {
-            // 直接设置iframe内容，不做额外处理
-            this.iframe.srcdoc = code || this.getEmptyPageHtml();
+            // 注入滚动条样式到代码中
+            const processedCode = this.injectScrollbarStyles(code || this.getEmptyPageHtml());
+            this.iframe.srcdoc = processedCode;
             
         } catch (error) {
             this.isLoading = false;
@@ -231,6 +232,67 @@ class CodePreview {
     // 获取空页面HTML
     getEmptyPageHtml() {
         return '<div style="padding:20px;color:#666;text-align:center;">暂无预览内容</div>';
+    }
+
+    // 注入滚动条样式到代码中
+    injectScrollbarStyles(code) {
+        const scrollbarStyles = `
+            <style>
+                /* 滚动条样式 - 与CodeDisplay.js保持一致 */
+                * {
+                    scrollbar-width: thin;
+                    scrollbar-color: #c1c1c1 #f1f1f1;
+                }
+
+                *::-webkit-scrollbar {
+                    width: 12px;
+                    height: 12px;
+                }
+
+                *::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 6px;
+                }
+
+                *::-webkit-scrollbar-thumb {
+                    background: #c1c1c1;
+                    border-radius: 6px;
+                    transition: background 0.3s ease;
+                }
+
+                *::-webkit-scrollbar-thumb:hover {
+                    background: #a8a8a8;
+                }
+            </style>
+        `;
+
+        // 检查代码是否已经包含完整的HTML结构
+        if (code.toLowerCase().includes('<!doctype') || code.toLowerCase().includes('<html')) {
+            // 完整的HTML文档，在head中注入样式
+            if (code.toLowerCase().includes('<head>')) {
+                return code.replace(/<head>/i, `<head>${scrollbarStyles}`);
+            } else if (code.toLowerCase().includes('<html>')) {
+                return code.replace(/<html>/i, `<html><head>${scrollbarStyles}</head>`);
+            } else {
+                return code.replace(/<!doctype[^>]*>/i, `$&<head>${scrollbarStyles}</head>`);
+            }
+        } else if (code.toLowerCase().includes('<body>')) {
+            // 包含body标签但不是完整HTML，在body前添加样式
+            return code.replace(/<body>/i, `${scrollbarStyles}<body>`);
+        } else {
+            // 代码片段，包装在完整的HTML结构中
+            return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${scrollbarStyles}
+</head>
+<body>
+    ${code}
+</body>
+</html>`;
+        }
     }
 
     // HTML转义

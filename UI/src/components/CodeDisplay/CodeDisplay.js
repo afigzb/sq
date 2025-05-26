@@ -17,6 +17,8 @@ class CodeDisplay {
             autoHighlight: true,
             editable: false,
             maxHeight: '500px',
+            maxWidth: '100%',
+            wordWrap: true,
             onChange: null,
             ...options
         };
@@ -133,6 +135,7 @@ class CodeDisplay {
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
                 background: white;
                 max-height: ${this.options.maxHeight};
+                max-width: ${this.options.maxWidth};
                 position: relative;
                 width: 100%;
             }
@@ -181,11 +184,12 @@ class CodeDisplay {
 
             .code-display-container pre code {
                 display: block;
-                white-space: pre;
-                word-wrap: normal;
+                white-space: ${this.options.wordWrap ? 'pre-wrap' : 'pre'};
+                word-wrap: ${this.options.wordWrap ? 'break-word' : 'normal'};
                 overflow: visible;
                 outline: none;
                 width: 100%;
+                max-width: 100%;
                 box-sizing: border-box;
                 padding: 0;
             }
@@ -195,8 +199,9 @@ class CodeDisplay {
                 outline: none;
                 background: #f8f8f8;
                 color: #333;
-                white-space: pre;
-                word-wrap: normal;
+                white-space: ${this.options.wordWrap ? 'pre-wrap' : 'pre'};
+                word-wrap: ${this.options.wordWrap ? 'break-word' : 'normal'};
+                max-width: 100%;
             }
 
             .code-display-container.editable {
