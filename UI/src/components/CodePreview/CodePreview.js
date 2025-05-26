@@ -15,7 +15,7 @@ class CodePreview {
             width: '100%',
             height: '400px',
             sandbox: 'allow-scripts allow-same-origin allow-forms',
-            errorDisplay: true,
+            errorDisplay: true, // 默认信任模式，不显示错误
             onError: null,
             onLoad: null,
             ...options
@@ -24,7 +24,7 @@ class CodePreview {
         this.currentCode = '';
         this.iframe = null;
         this.errorElement = null;
-        this.isLoading = false;
+        this.isLoading = true;
         
         this.init();
     }

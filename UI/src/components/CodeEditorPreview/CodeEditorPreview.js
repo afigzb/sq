@@ -1,23 +1,59 @@
 /**
  * CodeEditorPreview Web Component
- * 完整的代码编辑预览器组件
- * 不使用 Shadow DOM，避免样式问题
+ * 轻量级的 Web Component 包装器，委托所有核心功能给 Controller
+ * 采用信任模式，减少冗余的提示信息
  */
 
 class CodeEditorPreview extends HTMLElement {
     constructor() {
         super();
         
-        // 不使用 Shadow DOM
-        this.attachShadow = null;
-        
         // 控制器实例
         this.controller = null;
         
         // 组件状态
         this.isInitialized = false;
-        this.config = {
-            // 默认配置
+        
+        // UI 元素引用
+        this.elements = {};
+        
+        // 配置对象
+        this.config = this.getDefaultConfig();
+    }
+
+    // ==================== Web Component 生命周期 ====================
+    connectedCallback() {
+        this.parseAttributes();
+        this.render();
+        this.initializeController();
+    }
+
+    disconnectedCallback() {
+        if (this.controller) {
+            this.controller.destroy();
+            this.controller = null;
+        }
+        this.isInitialized = false;
+    }
+
+    static get observedAttributes() {
+        return [
+            'width', 'height', 'theme', 'language', 
+            'show-line-numbers', 'editable', 'auto-preview',
+            'show-toolbar', 'show-external-files', 'show-fullscreen',
+            'debounce-delay', 'default-code', 'trust-mode'
+        ];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue !== newValue && this.isInitialized) {
+            this.handleAttributeChange(name, newValue);
+        }
+    }
+
+    // ==================== 初始化方法 ====================
+    getDefaultConfig() {
+        return {
             width: '100%',
             height: '600px',
             theme: 'prism',
@@ -28,76 +64,36 @@ class CodeEditorPreview extends HTMLElement {
             showToolbar: true,
             showExternalFiles: true,
             showFullscreen: true,
-            debounceDelay: 300
+            debounceDelay: 300,
+            trustMode: true // 信任模式，减少提示
         };
-
-        // UI 元素引用
-        this.elements = {};
-        
-        // 事件监听器存储
-        this.eventListeners = new Map();
     }
 
-    // ==================== Web Component 生命周期 ====================
-    connectedCallback() {
-        this.parseAttributes();
-        this.createTemplate();
-        this.setupEventListeners();
-        this.initializeController();
-    }
-
-    disconnectedCallback() {
-        this.cleanup();
-    }
-
-    static get observedAttributes() {
-        return [
-            'width', 'height', 'theme', 'language', 
-            'show-line-numbers', 'editable', 'auto-preview',
-            'show-toolbar', 'show-external-files', 'show-fullscreen',
-            'debounce-delay', 'default-code'
-        ];
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue !== newValue) {
-            this.handleAttributeChange(name, newValue);
-        }
-    }
-
-    // ==================== 初始化方法 ====================
     parseAttributes() {
-        // 解析所有属性并更新配置
-        const attrs = this.constructor.observedAttributes;
-        attrs.forEach(attr => {
-            if (this.hasAttribute(attr)) {
-                const value = this.getAttribute(attr);
-                const configKey = attr.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-                
-                // 类型转换
-                if (['show-line-numbers', 'editable', 'auto-preview', 'show-toolbar', 'show-external-files', 'show-fullscreen'].includes(attr)) {
-                    this.config[configKey] = value === 'true' || value === '';
-                } else if (attr === 'debounce-delay') {
-                    this.config[configKey] = parseInt(value) || 300;
-                } else {
-                    this.config[configKey] = value;
-                }
-            }
-        });
+        // 解析布尔属性的辅助函数
+        const parseBooleanAttr = (value) => value === 'true' || value === '';
+        
+        // 解析所有属性
+        if (this.hasAttribute('width')) this.config.width = this.getAttribute('width');
+        if (this.hasAttribute('height')) this.config.height = this.getAttribute('height');
+        if (this.hasAttribute('theme')) this.config.theme = this.getAttribute('theme');
+        if (this.hasAttribute('language')) this.config.language = this.getAttribute('language');
+        if (this.hasAttribute('show-line-numbers')) this.config.showLineNumbers = parseBooleanAttr(this.getAttribute('show-line-numbers'));
+        if (this.hasAttribute('editable')) this.config.editable = parseBooleanAttr(this.getAttribute('editable'));
+        if (this.hasAttribute('auto-preview')) this.config.autoPreview = parseBooleanAttr(this.getAttribute('auto-preview'));
+        if (this.hasAttribute('show-toolbar')) this.config.showToolbar = parseBooleanAttr(this.getAttribute('show-toolbar'));
+        if (this.hasAttribute('show-external-files')) this.config.showExternalFiles = parseBooleanAttr(this.getAttribute('show-external-files'));
+        if (this.hasAttribute('show-fullscreen')) this.config.showFullscreen = parseBooleanAttr(this.getAttribute('show-fullscreen'));
+        if (this.hasAttribute('trust-mode')) this.config.trustMode = parseBooleanAttr(this.getAttribute('trust-mode'));
+        if (this.hasAttribute('debounce-delay')) this.config.debounceDelay = parseInt(this.getAttribute('debounce-delay')) || 300;
     }
 
-    createTemplate() {
+    render() {
         this.innerHTML = `
             <div class="code-editor-preview-wrapper" style="width: ${this.config.width}; height: ${this.config.height};">
-                <!-- 样式 -->
-                ${this.getComponentStyles()}
-                
-                <!-- 工具栏 -->
-                ${this.config.showToolbar ? this.createToolbar() : ''}
-                
-                <!-- 主要内容区域 -->
+                ${this.getStyles()}
+                ${this.config.showToolbar ? this.renderToolbar() : ''}
                 <div class="code-editor-preview-main">
-                    <!-- 代码编辑区域 -->
                     <div class="code-editor-section">
                         <div class="section-header">
                             <h3>代码编辑器</h3>
@@ -113,39 +109,27 @@ class CodeEditorPreview extends HTMLElement {
                         </div>
                         <div class="code-editor-container" id="codeEditor"></div>
                     </div>
-                    
-                    <!-- 预览区域 -->
                     <div class="code-preview-section">
                         <div class="section-header">
                             <h3>实时预览</h3>
                             <div class="preview-controls">
-                                <button class="btn-icon" data-action="refresh" title="刷新预览">
-                                    🔄
-                                </button>
-                                ${this.config.showFullscreen ? `
-                                <button class="btn-icon" data-action="fullscreen" title="全屏预览">
-                                    🔍
-                                </button>
-                                ` : ''}
+                                <button class="btn-icon" data-action="refresh" title="刷新预览">🔄</button>
+                                ${this.config.showFullscreen ? '<button class="btn-icon" data-action="fullscreen" title="全屏预览">🔍</button>' : ''}
                             </div>
                         </div>
                         <div class="code-preview-container" id="codePreview"></div>
                     </div>
                 </div>
-                
-                <!-- 外部文件管理 -->
-                ${this.config.showExternalFiles ? this.createExternalFilesSection() : ''}
-                
-                <!-- 全屏预览覆盖层 -->
-                ${this.config.showFullscreen ? this.createFullscreenOverlay() : ''}
+                ${this.config.showExternalFiles ? this.renderExternalFiles() : ''}
+                ${this.config.showFullscreen ? this.renderFullscreenOverlay() : ''}
             </div>
         `;
         
-        // 缓存重要元素引用
-        this.cacheElementReferences();
+        this.cacheElements();
+        this.setupEventListeners();
     }
 
-    createToolbar() {
+    renderToolbar() {
         return `
             <div class="code-editor-toolbar">
                 <div class="toolbar-group">
@@ -157,21 +141,18 @@ class CodeEditorPreview extends HTMLElement {
                         <option value="prism-okaidia">Okaidia</option>
                     </select>
                 </div>
-                
                 <div class="toolbar-group">
                     <label>
                         <input type="checkbox" class="show-line-numbers" ${this.config.showLineNumbers ? 'checked' : ''}>
                         显示行号
                     </label>
                 </div>
-                
                 <div class="toolbar-group">
                     <label>
                         <input type="checkbox" class="enable-editing" ${this.config.editable ? 'checked' : ''}>
                         允许编辑
                     </label>
                 </div>
-                
                 <div class="toolbar-actions">
                     <button class="btn" data-action="copy">📋 复制代码</button>
                     <button class="btn" data-action="clear">🗑️ 清空</button>
@@ -180,39 +161,36 @@ class CodeEditorPreview extends HTMLElement {
         `;
     }
 
-    createExternalFilesSection() {
+    renderExternalFiles() {
         return `
             <div class="external-files-section">
                 <div class="section-header">
                     <h3>外部文件导入</h3>
                 </div>
                 <div class="file-input-group">
-                    <input type="text" class="file-path-input" placeholder="输入文件路径，如: ./utils.js 或 https://example.com/lib.js">
+                    <input type="text" class="file-path-input" placeholder="输入文件路径">
                     <button class="btn" data-action="add-file">添加文件</button>
                 </div>
-                <div class="imported-files-list">
-                    <p class="no-files-message">暂无导入的文件</p>
-                </div>
+                <div class="imported-files-list"></div>
             </div>
         `;
     }
 
-    createFullscreenOverlay() {
+    renderFullscreenOverlay() {
         return `
             <div class="fullscreen-overlay" style="display: none;">
                 <div class="fullscreen-header">
                     <h3>全屏预览</h3>
                     <button class="btn-close" data-action="close-fullscreen">✕</button>
                 </div>
-                <div class="fullscreen-preview-container" id="fullscreenPreview"></div>
+                <div class="fullscreen-preview-container"></div>
             </div>
         `;
     }
 
-    cacheElementReferences() {
+    cacheElements() {
         this.elements = {
             wrapper: this.querySelector('.code-editor-preview-wrapper'),
-            toolbar: this.querySelector('.code-editor-toolbar'),
             languageSelect: this.querySelector('.language-select'),
             themeSelect: this.querySelector('.theme-select'),
             showLineNumbers: this.querySelector('.show-line-numbers'),
@@ -221,16 +199,12 @@ class CodeEditorPreview extends HTMLElement {
             importedFilesList: this.querySelector('.imported-files-list'),
             fullscreenOverlay: this.querySelector('.fullscreen-overlay'),
             codeEditorContainer: this.querySelector('#codeEditor'),
-            codePreviewContainer: this.querySelector('#codePreview'),
-            fullscreenPreviewContainer: this.querySelector('#fullscreenPreview')
+            codePreviewContainer: this.querySelector('#codePreview')
         };
     }
 
     async initializeController() {
-        if (this.isInitialized) return;
-
         try {
-            // 准备控制器选项
             const controllerOptions = {
                 displayContainer: this.elements.codeEditorContainer,
                 previewContainer: this.elements.codePreviewContainer,
@@ -248,34 +222,42 @@ class CodeEditorPreview extends HTMLElement {
                     width: '100%',
                     height: '400px'
                 },
-                onCodeChange: (code, language) => this.handleCodeChange(code, language),
-                onPreviewUpdate: (code) => this.handlePreviewUpdate(code),
-                onError: (title, error) => this.handleError(title, error),
-                onConfigChange: (config) => this.handleConfigChange(config)
+                onCodeChange: (code, language) => {
+                    this.dispatchEvent(new CustomEvent('code-change', {
+                        detail: { code, language }
+                    }));
+                },
+                onPreviewUpdate: (code) => {
+                    this.dispatchEvent(new CustomEvent('preview-update', {
+                        detail: { code }
+                    }));
+                },
+                onError: this.config.trustMode ? null : (title, error) => {
+                    console.error(`${title}:`, error);
+                },
+                onConfigChange: (config) => {
+                    this.dispatchEvent(new CustomEvent('config-change', {
+                        detail: { config }
+                    }));
+                }
             };
 
-            // 创建控制器
             this.controller = await CodeEditorPreviewController.create(controllerOptions);
-            
-            // 更新UI状态
-            this.updateUIFromConfig();
-            
+            this.syncUIWithController();
             this.isInitialized = true;
             
-            // 触发初始化完成事件
             this.dispatchEvent(new CustomEvent('initialized', {
                 detail: { controller: this.controller }
             }));
             
         } catch (error) {
             console.error('CodeEditorPreview 初始化失败:', error);
-            this.handleError('初始化失败', error);
         }
     }
 
     // ==================== 事件处理 ====================
     setupEventListeners() {
-        // 委托事件监听
+        // 使用事件委托
         this.addEventListener('click', this.handleClick.bind(this));
         this.addEventListener('change', this.handleChange.bind(this));
         this.addEventListener('keydown', this.handleKeydown.bind(this));
@@ -283,19 +265,19 @@ class CodeEditorPreview extends HTMLElement {
 
     handleClick(event) {
         const action = event.target.dataset.action;
-        if (!action) return;
+        if (!action || !this.controller) return;
 
-        event.preventDefault();
-        
         switch (action) {
             case 'copy':
-                this.copyCode();
+                this.controller.copyCode();
                 break;
             case 'clear':
-                this.clearCode();
+                if (this.config.trustMode || confirm('确定要清空编辑器吗？')) {
+                    this.controller.clearCode();
+                }
                 break;
             case 'refresh':
-                this.refreshPreview();
+                this.controller.refreshPreview();
                 break;
             case 'fullscreen':
                 this.openFullscreen();
@@ -307,7 +289,11 @@ class CodeEditorPreview extends HTMLElement {
                 this.addExternalFile();
                 break;
             case 'remove-file':
-                this.removeExternalFile(event.target.dataset.filePath);
+                const filePath = event.target.dataset.filePath;
+                if (filePath) {
+                    this.controller.removeExternalFile(filePath);
+                    this.updateExternalFilesList();
+                }
                 break;
         }
     }
@@ -329,30 +315,17 @@ class CodeEditorPreview extends HTMLElement {
     }
 
     handleKeydown(event) {
-        // 处理键盘快捷键
-        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-            event.preventDefault();
-            this.refreshPreview();
-        } else if (event.key === 'F11') {
-            event.preventDefault();
-            this.openFullscreen();
-        } else if (event.key === 'Escape') {
-            if (this.elements.fullscreenOverlay && this.elements.fullscreenOverlay.style.display !== 'none') {
-                this.closeFullscreen();
-            }
-        } else if (event.key === 'Enter' && event.target.classList.contains('file-path-input')) {
+        if (event.key === 'Enter' && event.target.classList.contains('file-path-input')) {
             event.preventDefault();
             this.addExternalFile();
         }
     }
 
     handleAttributeChange(name, newValue) {
-        if (!this.isInitialized) return;
-
         const configKey = name.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
         
         // 更新配置
-        if (['show-line-numbers', 'editable', 'auto-preview', 'show-toolbar', 'show-external-files', 'show-fullscreen'].includes(name)) {
+        if (['show-line-numbers', 'editable', 'auto-preview', 'show-toolbar', 'show-external-files', 'show-fullscreen', 'trust-mode'].includes(name)) {
             this.config[configKey] = newValue === 'true' || newValue === '';
         } else if (name === 'debounce-delay') {
             this.config[configKey] = parseInt(newValue) || 300;
@@ -360,125 +333,52 @@ class CodeEditorPreview extends HTMLElement {
             this.config[configKey] = newValue;
         }
 
-        // 应用配置变更
-        this.applyConfigChange(name, newValue);
-    }
-
-    // ==================== 公共 API 方法 ====================
-    async setCode(code, language) {
+        // 应用变更
         if (this.controller) {
-            return await this.controller.setCode(code, language);
-        }
-        return false;
-    }
-
-    getCode() {
-        return this.controller ? this.controller.getCode() : '';
-    }
-
-    async setLanguage(language) {
-        if (this.controller) {
-            return await this.controller.setLanguage(language);
-        }
-        return false;
-    }
-
-    getLanguage() {
-        return this.controller ? this.controller.getLanguage() : this.config.language;
-    }
-
-    async copyCode() {
-        if (this.controller) {
-            const success = await this.controller.copyCode();
-            if (success) {
-                this.showTemporaryMessage('代码已复制到剪贴板');
-            }
-            return success;
-        }
-        return false;
-    }
-
-    clearCode() {
-        if (this.controller && confirm('确定要清空编辑器吗？')) {
-            return this.controller.clearCode();
-        }
-        return false;
-    }
-
-    async refreshPreview() {
-        if (this.controller) {
-            await this.controller.refreshPreview();
-            this.showTemporaryMessage('预览已刷新');
-        }
-    }
-
-    openFullscreen() {
-        if (this.elements.fullscreenOverlay) {
-            this.elements.fullscreenOverlay.style.display = 'flex';
-            
-            // 创建全屏预览控制器
-            if (this.controller && this.elements.fullscreenPreviewContainer) {
-                const fullscreenPreview = new CodePreview(this.elements.fullscreenPreviewContainer, {
-                    width: '100%',
-                    height: '100%'
-                });
-                
-                const code = this.controller.getCode();
-                if (code) {
-                    fullscreenPreview.render(code);
-                }
+            switch (name) {
+                case 'theme':
+                case 'show-line-numbers':
+                case 'editable':
+                    this.controller.updateDisplayConfig({ [configKey]: this.config[configKey] });
+                    break;
+                case 'language':
+                    this.controller.setLanguage(this.config.language);
+                    break;
+                case 'width':
+                case 'height':
+                    if (this.elements.wrapper) {
+                        this.elements.wrapper.style[configKey] = this.config[configKey];
+                    }
+                    break;
             }
         }
     }
 
-    closeFullscreen() {
-        if (this.elements.fullscreenOverlay) {
-            this.elements.fullscreenOverlay.style.display = 'none';
+    // ==================== 功能方法 ====================
+    syncUIWithController() {
+        if (!this.controller) return;
+        
+        // 同步语言选择
+        if (this.elements.languageSelect) {
+            this.elements.languageSelect.value = this.controller.getLanguage();
+        }
+        
+        // 同步主题等其他设置
+        if (this.elements.themeSelect) {
+            this.elements.themeSelect.value = this.config.theme;
         }
     }
 
     async addExternalFile() {
-        const input = this.elements.filePathInput;
-        const filePath = input.value.trim();
+        if (!this.controller || !this.elements.filePathInput) return;
         
-        if (!filePath) {
-            this.showTemporaryMessage('请输入文件路径', 'error');
-            return;
-        }
+        const filePath = this.elements.filePathInput.value.trim();
+        if (!filePath) return;
 
-        if (this.controller) {
-            const success = await this.controller.addExternalFile(filePath);
-            if (success) {
-                input.value = '';
-                this.updateExternalFilesList();
-                this.showTemporaryMessage('文件添加成功');
-            }
-        }
-    }
-
-    removeExternalFile(filePath) {
-        if (this.controller && filePath) {
-            const success = this.controller.removeExternalFile(filePath);
-            if (success) {
-                this.updateExternalFilesList();
-                this.showTemporaryMessage('文件已移除');
-            }
-        }
-    }
-
-    // ==================== 内部辅助方法 ====================
-    updateUIFromConfig() {
-        if (this.elements.languageSelect) {
-            this.elements.languageSelect.value = this.config.language;
-        }
-        if (this.elements.themeSelect) {
-            this.elements.themeSelect.value = this.config.theme;
-        }
-        if (this.elements.showLineNumbers) {
-            this.elements.showLineNumbers.checked = this.config.showLineNumbers;
-        }
-        if (this.elements.enableEditing) {
-            this.elements.enableEditing.checked = this.config.editable;
+        const success = await this.controller.addExternalFile(filePath);
+        if (success) {
+            this.elements.filePathInput.value = '';
+            this.updateExternalFilesList();
         }
     }
 
@@ -489,70 +389,58 @@ class CodeEditorPreview extends HTMLElement {
         
         if (files.length === 0) {
             this.elements.importedFilesList.innerHTML = '<p class="no-files-message">暂无导入的文件</p>';
-            return;
-        }
-
-        this.elements.importedFilesList.innerHTML = files.map(filePath => `
-            <div class="imported-file-item">
-                <div class="file-info">
+        } else {
+            this.elements.importedFilesList.innerHTML = files.map(filePath => `
+                <div class="imported-file-item">
                     <span class="file-icon">📄</span>
                     <span class="file-path">${filePath}</span>
-                    <span class="file-status">✅ 已加载</span>
+                    <button class="btn-remove" data-action="remove-file" data-file-path="${filePath}">移除</button>
                 </div>
-                <button class="btn-remove" data-action="remove-file" data-file-path="${filePath}">
-                    🗑️ 移除
-                </button>
-            </div>
-        `).join('');
-    }
-
-    applyConfigChange(attributeName, newValue) {
-        // 根据属性变更应用相应的配置
-        switch (attributeName) {
-            case 'width':
-            case 'height':
-                if (this.elements.wrapper) {
-                    this.elements.wrapper.style[attributeName] = newValue;
-                }
-                break;
-            case 'theme':
-                if (this.controller) {
-                    this.controller.updateDisplayConfig({ theme: newValue });
-                }
-                break;
-            case 'language':
-                if (this.controller) {
-                    this.controller.setLanguage(newValue);
-                }
-                break;
-            // 其他配置...
+            `).join('');
         }
     }
 
-    showTemporaryMessage(message, type = 'success') {
-        // 显示临时消息的方法
-        const messageEl = document.createElement('div');
-        messageEl.className = `temp-message temp-message-${type}`;
-        messageEl.textContent = message;
-        messageEl.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'error' ? '#ff4444' : '#44ff44'};
-            color: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-            z-index: 9999;
-            animation: fadeInOut 3s ease-in-out;
-        `;
+    openFullscreen() {
+        if (!this.elements.fullscreenOverlay) return;
         
-        document.body.appendChild(messageEl);
+        this.elements.fullscreenOverlay.style.display = 'flex';
         
-        setTimeout(() => {
-            if (messageEl.parentNode) {
-                messageEl.parentNode.removeChild(messageEl);
-            }
-        }, 3000);
+        // 创建全屏预览
+        const fullscreenContainer = this.elements.fullscreenOverlay.querySelector('.fullscreen-preview-container');
+        if (fullscreenContainer && this.controller) {
+            const fullscreenPreview = new CodePreview(fullscreenContainer, {
+                width: '100%',
+                height: '100%'
+            });
+            fullscreenPreview.render(this.controller.getCode());
+        }
+    }
+
+    closeFullscreen() {
+        if (this.elements.fullscreenOverlay) {
+            this.elements.fullscreenOverlay.style.display = 'none';
+        }
+    }
+
+    // ==================== 公共 API ====================
+    async setCode(code, language) {
+        return this.controller ? await this.controller.setCode(code, language) : false;
+    }
+
+    getCode() {
+        return this.controller ? this.controller.getCode() : '';
+    }
+
+    async setLanguage(language) {
+        return this.controller ? await this.controller.setLanguage(language) : false;
+    }
+
+    getLanguage() {
+        return this.controller ? this.controller.getLanguage() : this.config.language;
+    }
+
+    getController() {
+        return this.controller;
     }
 
     getDefaultCode() {
@@ -568,350 +456,274 @@ class CodeEditorPreview extends HTMLElement {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
         }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { text-align: center; margin-bottom: 30px; }
-        .feature { margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; }
+        h1 { text-align: center; color: #333; }
+        .demo { padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 代码编辑预览器</h1>
-        <div class="feature">
-            <h3>✨ 实时预览</h3>
-            <p>编辑代码时可以实时看到运行效果</p>
-        </div>
-        <div class="feature">
-            <h3>🎨 语法高亮</h3>
-            <p>支持多种编程语言的语法高亮显示</p>
-        </div>
-        <div class="feature">
-            <h3>📁 外部文件</h3>
-            <p>可以导入外部 JavaScript 文件</p>
-        </div>
-        <div class="feature">
-            <h3>🔧 可配置</h3>
-            <p>主题、行号、编辑模式等都可以自定义</p>
-        </div>
+    <h1>代码编辑预览器</h1>
+    <div class="demo">
+        <p>这是一个示例页面，你可以编辑代码并实时预览效果。</p>
     </div>
-    
-    <script>
-        console.log('代码编辑预览器已加载完成！');
-        
-        // 添加一些交互效果
-        document.querySelectorAll('.feature').forEach(feature => {
-            feature.addEventListener('click', () => {
-                feature.style.transform = feature.style.transform === 'scale(1.05)' ? 'scale(1)' : 'scale(1.05)';
-            });
-        });
-    </script>
 </body>
 </html>`;
     }
 
-    // ==================== 事件回调处理 ====================
-    handleCodeChange(code, language) {
-        this.dispatchEvent(new CustomEvent('code-change', {
-            detail: { code, language }
-        }));
-    }
-
-    handlePreviewUpdate(code) {
-        this.dispatchEvent(new CustomEvent('preview-update', {
-            detail: { code }
-        }));
-    }
-
-    handleError(title, error) {
-        this.dispatchEvent(new CustomEvent('error', {
-            detail: { title, error }
-        }));
-        
-        this.showTemporaryMessage(`${title}: ${error.message}`, 'error');
-    }
-
-    handleConfigChange(config) {
-        this.dispatchEvent(new CustomEvent('config-change', {
-            detail: { config }
-        }));
-    }
-
-    // ==================== 清理方法 ====================
-    cleanup() {
-        if (this.controller) {
-            this.controller.destroy();
-            this.controller = null;
-        }
-        
-        this.eventListeners.forEach((listener, element) => {
-            element.removeEventListener(...listener);
-        });
-        this.eventListeners.clear();
-        
-        this.isInitialized = false;
-    }
-
     // ==================== 样式定义 ====================
-    getComponentStyles() {
-        return `
-            <style>
-                .code-editor-preview-wrapper {
-                    display: flex;
+    getStyles() {
+        return `<style>
+            .code-editor-preview-wrapper {
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+                background: #fff;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .code-editor-toolbar {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                padding: 10px 15px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #ddd;
+                flex-wrap: wrap;
+            }
+            
+            .toolbar-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .toolbar-actions {
+                margin-left: auto;
+                display: flex;
+                gap: 8px;
+            }
+            
+            .code-editor-preview-main {
+                display: flex;
+                flex: 1;
+                min-height: 400px;
+            }
+            
+            .code-editor-section,
+            .code-preview-section {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                border-right: 1px solid #ddd;
+            }
+            
+            .code-preview-section {
+                border-right: none;
+            }
+            
+            .section-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 15px;
+                background: #f1f3f4;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .section-header h3 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: #333;
+            }
+            
+            .editor-controls,
+            .preview-controls {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .code-editor-container,
+            .code-preview-container {
+                flex: 1;
+                overflow: hidden;
+            }
+            
+            .external-files-section {
+                border-top: 1px solid #ddd;
+                background: #f8f9fa;
+            }
+            
+            .file-input-group {
+                display: flex;
+                gap: 8px;
+                padding: 10px 15px;
+            }
+            
+            .file-path-input {
+                flex: 1;
+                padding: 8px 12px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            
+            .imported-files-list {
+                max-height: 200px;
+                overflow-y: auto;
+                padding: 0 15px 15px;
+            }
+            
+            .imported-file-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-bottom: 8px;
+            }
+            
+            .file-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: 1;
+            }
+            
+            .file-path {
+                font-family: monospace;
+                font-size: 13px;
+            }
+            
+            .file-status {
+                font-size: 12px;
+                color: #28a745;
+            }
+            
+            .no-files-message {
+                text-align: center;
+                color: #6c757d;
+                font-style: italic;
+                margin: 20px 0;
+            }
+            
+            .fullscreen-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 9999;
+                flex-direction: column;
+            }
+            
+            .fullscreen-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px 20px;
+                background: #333;
+                color: white;
+            }
+            
+            .fullscreen-preview-container {
+                flex: 1;
+                background: white;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background: white;
+                cursor: pointer;
+                font-size: 13px;
+                transition: all 0.2s;
+            }
+            
+            .btn:hover {
+                background: #f8f9fa;
+                border-color: #adb5bd;
+            }
+            
+            .btn-icon {
+                padding: 4px 8px;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                font-size: 16px;
+                border-radius: 4px;
+                transition: background 0.2s;
+            }
+            
+            .btn-icon:hover {
+                background: rgba(0, 0, 0, 0.1);
+            }
+            
+            .btn-close {
+                padding: 4px 8px;
+                border: none;
+                background: #dc3545;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            
+            .btn-remove {
+                padding: 4px 8px;
+                border: none;
+                background: #dc3545;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+            
+            select, input[type="checkbox"] {
+                margin: 0 4px;
+            }
+            
+            label {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            
+            @keyframes fadeInOut {
+                0%, 100% { opacity: 0; transform: translateY(-10px); }
+                10%, 90% { opacity: 1; transform: translateY(0); }
+            }
+            
+            @media (max-width: 768px) {
+                .code-editor-preview-main {
                     flex-direction: column;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    overflow: hidden;
-                    background: #fff;
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
+                
+                .code-editor-section {
+                    border-right: none;
+                    border-bottom: 1px solid #ddd;
                 }
                 
                 .code-editor-toolbar {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                    padding: 10px 15px;
-                    background: #f8f9fa;
-                    border-bottom: 1px solid #ddd;
-                    flex-wrap: wrap;
-                }
-                
-                .toolbar-group {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    gap: 10px;
                 }
                 
                 .toolbar-actions {
-                    margin-left: auto;
-                    display: flex;
-                    gap: 8px;
+                    margin-left: 0;
+                    width: 100%;
+                    justify-content: flex-start;
                 }
-                
-                .code-editor-preview-main {
-                    display: flex;
-                    flex: 1;
-                    min-height: 400px;
-                }
-                
-                .code-editor-section,
-                .code-preview-section {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    border-right: 1px solid #ddd;
-                }
-                
-                .code-preview-section {
-                    border-right: none;
-                }
-                
-                .section-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 10px 15px;
-                    background: #f1f3f4;
-                    border-bottom: 1px solid #ddd;
-                }
-                
-                .section-header h3 {
-                    margin: 0;
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: #333;
-                }
-                
-                .editor-controls,
-                .preview-controls {
-                    display: flex;
-                    gap: 8px;
-                }
-                
-                .code-editor-container,
-                .code-preview-container {
-                    flex: 1;
-                    overflow: hidden;
-                }
-                
-                .external-files-section {
-                    border-top: 1px solid #ddd;
-                    background: #f8f9fa;
-                }
-                
-                .file-input-group {
-                    display: flex;
-                    gap: 8px;
-                    padding: 10px 15px;
-                }
-                
-                .file-path-input {
-                    flex: 1;
-                    padding: 8px 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    font-size: 14px;
-                }
-                
-                .imported-files-list {
-                    max-height: 200px;
-                    overflow-y: auto;
-                    padding: 0 15px 15px;
-                }
-                
-                .imported-file-item {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 8px 12px;
-                    background: white;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    margin-bottom: 8px;
-                }
-                
-                .file-info {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    flex: 1;
-                }
-                
-                .file-path {
-                    font-family: monospace;
-                    font-size: 13px;
-                }
-                
-                .file-status {
-                    font-size: 12px;
-                    color: #28a745;
-                }
-                
-                .no-files-message {
-                    text-align: center;
-                    color: #6c757d;
-                    font-style: italic;
-                    margin: 20px 0;
-                }
-                
-                .fullscreen-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0, 0, 0, 0.9);
-                    z-index: 9999;
-                    flex-direction: column;
-                }
-                
-                .fullscreen-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 15px 20px;
-                    background: #333;
-                    color: white;
-                }
-                
-                .fullscreen-preview-container {
-                    flex: 1;
-                    background: white;
-                }
-                
-                .btn {
-                    padding: 6px 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    background: white;
-                    cursor: pointer;
-                    font-size: 13px;
-                    transition: all 0.2s;
-                }
-                
-                .btn:hover {
-                    background: #f8f9fa;
-                    border-color: #adb5bd;
-                }
-                
-                .btn-icon {
-                    padding: 4px 8px;
-                    border: none;
-                    background: transparent;
-                    cursor: pointer;
-                    font-size: 16px;
-                    border-radius: 4px;
-                    transition: background 0.2s;
-                }
-                
-                .btn-icon:hover {
-                    background: rgba(0, 0, 0, 0.1);
-                }
-                
-                .btn-close {
-                    padding: 4px 8px;
-                    border: none;
-                    background: #dc3545;
-                    color: white;
-                    border-radius: 4px;
-                    cursor: pointer;
-                }
-                
-                .btn-remove {
-                    padding: 4px 8px;
-                    border: none;
-                    background: #dc3545;
-                    color: white;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 12px;
-                }
-                
-                select, input[type="checkbox"] {
-                    margin: 0 4px;
-                }
-                
-                label {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    font-size: 14px;
-                    cursor: pointer;
-                }
-                
-                @keyframes fadeInOut {
-                    0%, 100% { opacity: 0; transform: translateY(-10px); }
-                    10%, 90% { opacity: 1; transform: translateY(0); }
-                }
-                
-                @media (max-width: 768px) {
-                    .code-editor-preview-main {
-                        flex-direction: column;
-                    }
-                    
-                    .code-editor-section {
-                        border-right: none;
-                        border-bottom: 1px solid #ddd;
-                    }
-                    
-                    .code-editor-toolbar {
-                        gap: 10px;
-                    }
-                    
-                    .toolbar-actions {
-                        margin-left: 0;
-                        width: 100%;
-                        justify-content: flex-start;
-                    }
-                }
-            </style>
-        `;
+            }
+        </style>`;
     }
 }
 

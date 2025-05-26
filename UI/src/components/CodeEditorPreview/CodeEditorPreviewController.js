@@ -29,6 +29,7 @@ class CodeEditorPreviewController {
             debounceDelay: 300,
             defaultLanguage: 'html',
             autoPreview: true,
+            trustMode: true, // 默认开启信任模式
             ...options
         };
 
@@ -89,7 +90,7 @@ class CodeEditorPreviewController {
         // 初始化预览组件
         const previewOptions = {
             ...this.options.previewOptions,
-            onError: (error) => this.handleError('预览错误', error),
+            onError: this.options.trustMode ? null : (error) => this.handleError('预览错误', error),
             onLoad: () => this.handlePreviewLoad()
         };
         
@@ -111,7 +112,7 @@ class CodeEditorPreviewController {
     // ==================== 核心功能方法 ====================
     async setCode(code, language) {
         if (!this.isInitialized) {
-            throw new Error('控制器未初始化');
+            return false; // 未初始化，静默失败
         }
         
         try {
@@ -272,10 +273,14 @@ class CodeEditorPreviewController {
     }
 
     handleError(title, error) {
-        console.error(`${title}:`, error);
-        
-        if (this.callbacks.onError) {
-            this.callbacks.onError(title, error);
+        // 信任模式下只记录到控制台
+        if (this.options.trustMode) {
+            console.error(`${title}:`, error);
+        } else {
+            console.error(`${title}:`, error);
+            if (this.callbacks.onError) {
+                this.callbacks.onError(title, error);
+            }
         }
     }
 
@@ -326,12 +331,7 @@ class CodeEditorPreviewController {
     // ==================== 静态工厂方法 ====================
     static async create(options) {
         const controller = new CodeEditorPreviewController(options);
-        const success = await controller.initialize();
-        
-        if (!success) {
-            throw new Error('代码编辑预览器控制器初始化失败');
-        }
-        
+        await controller.initialize(); // 信任模式下，总是返回控制器实例
         return controller;
     }
 }
@@ -376,7 +376,7 @@ class FileManager {
 
     async addFile(filePath) {
         if (this.files.includes(filePath)) {
-            throw new Error('文件已存在');
+            return false; // 文件已存在，静默返回
         }
 
         try {
@@ -387,8 +387,10 @@ class FileManager {
                 status: 'loaded',
                 error: null
             });
+            return true;
         } catch (error) {
-            throw new Error(`加载文件失败: ${error.message}`);
+            console.error(`加载文件失败: ${filePath}`, error);
+            return false;
         }
     }
 
@@ -397,7 +399,9 @@ class FileManager {
         if (index > -1) {
             this.files.splice(index, 1);
             this.fileContents.delete(filePath);
+            return true;
         }
+        return false;
     }
 
     getFiles() {
@@ -448,6 +452,7 @@ ${fileContent}
     }
 
     processFileContent(content) {
+        // 简化导出语句处理
         return content
             .replace(/export\s+default\s+(\w+)/g, 'window.$1 = $1')
             .replace(/export\s+\{[^}]+\}/g, '')

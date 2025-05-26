@@ -501,15 +501,41 @@ class CodeDisplay {
         this.options.theme = theme;
         const themeLink = document.querySelector('#prism-theme-css');
         if (themeLink) {
+            const oldHref = themeLink.href;
             themeLink.href = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/${theme}.min.css`;
+            
+            // 等待主题加载完成后重新高亮
+            const checkThemeLoaded = () => {
+                if (themeLink.href !== oldHref) {
+                    setTimeout(() => {
+                        this.rehighlightCode();
+                    }, 200);
+                } else {
+                    setTimeout(checkThemeLoaded, 50);
+                }
+            };
+            checkThemeLoaded();
+        } else {
+            // 如果没有找到主题链接，创建一个新的
+            this.loadPrismResources();
+            setTimeout(() => {
+                this.rehighlightCode();
+            }, 300);
         }
+    }
+
+    // 重新高亮代码
+    rehighlightCode() {
+        if (!this.displayElement) return;
         
-        // 如果不在编辑模式，重新高亮代码以应用新主题
-        if (!this.isEditing && this.displayElement) {
-            const codeElement = this.displayElement.querySelector('code');
-            if (codeElement && this.options.autoHighlight && window.Prism) {
-                window.Prism.highlightElement(codeElement);
-            }
+        const codeElement = this.displayElement.querySelector('code');
+        if (codeElement && this.options.autoHighlight && window.Prism) {
+            // 清除之前的高亮类
+            codeElement.className = codeElement.className.replace(/language-\w+/g, '');
+            codeElement.className += ` language-${this.currentLanguage}`;
+            
+            // 重新高亮
+            window.Prism.highlightElement(codeElement);
         }
     }
 
