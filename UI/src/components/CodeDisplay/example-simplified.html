@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeDisplay示例 - 可编辑代码展示</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        select, button, input[type="checkbox"] {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            margin: 5px;
+        }
+
+        select:focus, button:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .input-section {
+            padding: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .output-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .demo-section {
+            padding: 30px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .demo-codes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .demo-item {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-title {
+            background: #495057;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status-bar {
+            background: #e9ecef;
+            padding: 10px 30px;
+            font-size: 14px;
+            color: #495057;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .status-item {
+            margin-right: 20px;
+        }
+
+        .status-item strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .demo-codes {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🎨 CodeDisplay</h1>
+            <p>可编辑的代码展示组件 - 支持实时编辑和语法高亮</p>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="languageSelect">编程语言：</label>
+                    <select id="languageSelect">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="css">CSS</option>
+                        <option value="html">HTML</option>
+                        <option value="json">JSON</option>
+                        <option value="sql">SQL</option>
+                        <option value="bash">Bash</option>
+                    </select>
+                </div>
+                
+                <div class="control-item">
+                    <label for="themeSelect">主题：</label>
+                    <select id="themeSelect">
+                        <option value="prism">Default</option>
+                        <option value="prism-dark">Dark</option>
+                        <option value="prism-funky">Funky</option>
+                        <option value="prism-okaidia">Okaidia</option>
+                        <option value="prism-tomorrow">Tomorrow</option>
+                        <option value="prism-coy">Coy</option>
+                        <option value="prism-solarizedlight">Solarized Light</option>
+                        <option value="prism-twilight">Twilight</option>
+                    </select>
+                </div>
+
+                <div class="control-item">
+                    <label>
+                        <input type="checkbox" id="showLineNumbers" checked> 显示行号
+                    </label>
+                </div>
+
+                <div class="control-item">
+                    <label>
+                        <input type="checkbox" id="enableEditing"> 启用编辑模式
+                    </label>
+                </div>
+                
+                <div class="control-item">
+                    <label>&nbsp;</label>
+                    <button onclick="generateCode()">生成代码展示</button>
+                </div>
+                
+                <div class="control-item">
+                    <label>&nbsp;</label>
+                    <button onclick="toggleEditing()">切换编辑模式</button>
+                </div>
+                
+                <div class="control-item">
+                    <label>&nbsp;</label>
+                    <button onclick="getCodeContent()">获取代码内容</button>
+                </div>
+                
+                <div class="control-item">
+                    <label>&nbsp;</label>
+                    <button onclick="clearAll()">清空所有</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-section">
+            <div class="input-group">
+                <label for="codeInput">请输入你的代码：</label>
+                <textarea id="codeInput" placeholder="在这里粘贴或输入你的代码...">// 可编辑的代码示例
+function createTodoApp() {
+    const todos = [];
+    
+    function addTodo(text) {
+        const todo = {
+            id: Date.now(),
+            text: text,
+            completed: false,
+            createdAt: new Date()
+        };
+        todos.push(todo);
+        renderTodos();
+    }
+    
+    function toggleTodo(id) {
+        const todo = todos.find(t => t.id === id);
+        if (todo) {
+            todo.completed = !todo.completed;
+            renderTodos();
+        }
+    }
+    
+    function deleteTodo(id) {
+        const index = todos.findIndex(t => t.id === id);
+        if (index > -1) {
+            todos.splice(index, 1);
+            renderTodos();
+        }
+    }
+    
+    function renderTodos() {
+        const container = document.getElementById('todo-list');
+        container.innerHTML = '';
+        
+        todos.forEach(todo => {
+            const item = document.createElement('div');
+            item.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = todo.completed ? '取消完成' : '完成';
+            toggleBtn.onclick = () => toggleTodo(todo.id);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '删除';
+            deleteBtn.onclick = () => deleteTodo(todo.id);
+            
+            item.innerHTML = `<span>${todo.text}</span>`;
+            item.appendChild(toggleBtn);
+            item.appendChild(deleteBtn);
+            
+            container.appendChild(item);
+        });
+    }
+    
+    return { addTodo, toggleTodo, deleteTodo };
+}</textarea>
+            </div>
+        </div>
+
+        <!-- 输出区域 -->
+        <div class="output-section">
+            <h3 style="margin-bottom: 20px; color: #495057;">代码展示效果：</h3>
+            <div id="codeOutput"></div>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <span class="status-item"><strong>状态:</strong> <span id="editStatus">只读模式</span></span>
+            <span class="status-item"><strong>行数:</strong> <span id="lineCount">0</span></span>
+            <span class="status-item"><strong>字符数:</strong> <span id="charCount">0</span></span>
+            <span class="status-item"><strong>语言:</strong> <span id="currentLanguage">javascript</span></span>
+        </div>
+
+        <!-- 示例代码 -->
+        <div class="demo-section">
+            <h3 style="margin-bottom: 20px; color: #495057;">预设示例（可编辑）：</h3>
+            <div class="demo-codes">
+                <div class="demo-item">
+                    <div class="demo-title">JavaScript 示例</div>
+                    <div id="demo-js"></div>
+                </div>
+
+                <div class="demo-item">
+                    <div class="demo-title">Python 示例</div>
+                    <div id="demo-python"></div>
+                </div>
+
+                <div class="demo-item">
+                    <div class="demo-title">CSS 示例</div>
+                    <div id="demo-css"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入重构后的 CodeDisplay 组件 -->
+    <script src="CodeDisplay.js"></script>
+    
+    <script>
+        // 全局 CodeDisplay 实例
+        let currentDisplay = null;
+
+        // 生成代码展示
+        async function generateCode() {
+            const codeInput = document.getElementById('codeInput').value.trim();
+            const language = document.getElementById('languageSelect').value;
+            const output = document.getElementById('codeOutput');
+
+            if (!codeInput) {
+                alert('请先输入代码！');
+                return;
+            }
+
+            // 获取选项
+            const options = {
+                theme: document.getElementById('themeSelect').value,
+                showLineNumbers: document.getElementById('showLineNumbers').checked,
+                editable: document.getElementById('enableEditing').checked,
+                onChange: function(code, lang) {
+                    console.log('代码已更改:', code);
+                    updateStatus(code, lang);
+                    // 同步更新输入框
+                    document.getElementById('codeInput').value = code;
+                }
+            };
+
+            // 如果已有实例且只是更新代码或语言，则复用实例
+            if (currentDisplay) {
+                // 更新选项
+                currentDisplay.options = { ...currentDisplay.options, ...options };
+                
+                // 更新代码和语言
+                currentDisplay.setCode(codeInput, language);
+                
+                // 更新其他设置
+                currentDisplay.setEditable(options.editable);
+                currentDisplay.toggleLineNumbers(options.showLineNumbers);
+                currentDisplay.changeTheme(options.theme);
+            } else {
+                // 创建新的 CodeDisplay 实例
+                currentDisplay = new CodeDisplay(output, options);
+                await currentDisplay.render(codeInput, language);
+            }
+            
+            // 更新状态
+            updateStatus(codeInput, language);
+        }
+
+        // 切换编辑模式
+        function toggleEditing() {
+            if (!currentDisplay) {
+                alert('请先生成代码展示！');
+                return;
+            }
+            
+            const checkbox = document.getElementById('enableEditing');
+            const newEditableState = !checkbox.checked;
+            checkbox.checked = newEditableState;
+            
+            currentDisplay.setEditable(newEditableState);
+            updateEditStatus(newEditableState);
+        }
+
+        // 获取代码内容
+        function getCodeContent() {
+            if (!currentDisplay) {
+                alert('请先生成代码展示！');
+                return;
+            }
+            
+            const code = currentDisplay.getCode();
+            const language = currentDisplay.getLanguage();
+            
+            const preview = code.length > 200 ? code.substring(0, 200) + '...' : code;
+            alert('当前代码内容:\n语言: ' + language + '\n行数: ' + code.split('\n').length + '\n字符数: ' + code.length + '\n\n' + preview);
+        }
+
+        // 切换主题
+        function changeTheme() {
+            if (currentDisplay) {
+                const theme = document.getElementById('themeSelect').value;
+                currentDisplay.changeTheme(theme);
+            }
+        }
+
+        // 切换行号
+        function toggleLineNumbers() {
+            if (currentDisplay) {
+                const showLineNumbers = document.getElementById('showLineNumbers').checked;
+                currentDisplay.toggleLineNumbers(showLineNumbers);
+            }
+        }
+
+        // 更新状态栏
+        function updateStatus(code, language) {
+            document.getElementById('lineCount').textContent = code.split('\n').length;
+            document.getElementById('charCount').textContent = code.length;
+            document.getElementById('currentLanguage').textContent = language;
+        }
+
+        // 更新编辑状态
+        function updateEditStatus(isEditable) {
+            document.getElementById('editStatus').textContent = isEditable ? '编辑模式' : '只读模式';
+        }
+
+        // 清空所有
+        function clearAll() {
+            document.getElementById('codeInput').value = '';
+            document.getElementById('codeOutput').innerHTML = '';
+            currentDisplay = null;
+            updateStatus('', 'javascript');
+            updateEditStatus(false);
+        }
+
+        // 事件监听器
+        document.getElementById('languageSelect').addEventListener('change', changeLanguage);
+        document.getElementById('themeSelect').addEventListener('change', changeTheme);
+        document.getElementById('showLineNumbers').addEventListener('change', toggleLineNumbers);
+        document.getElementById('enableEditing').addEventListener('change', function() {
+            if (currentDisplay) {
+                const isEditable = document.getElementById('enableEditing').checked;
+                currentDisplay.setEditable(isEditable);
+                updateEditStatus(isEditable);
+            }
+        });
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateCode();
+            }
+        });
+
+        // 页面加载完成后初始化示例
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待一段时间确保 Prism 加载完成
+            setTimeout(async function() {
+                await initDemoExamples();
+                await generateCode(); // 自动生成默认示例
+            }, 1000);
+        });
+
+        // 初始化示例代码
+        async function initDemoExamples() {
+            // JavaScript 示例
+            const jsCode = '// React Hook 示例\nfunction Counter() {\n    const [count, setCount] = useState(0);\n    \n    return (\n        <div>\n            <p>Count: {count}</p>\n            <button onClick={() => setCount(count + 1)}>\n                Increment\n            </button>\n        </div>\n    );\n}';
+
+            // Python 示例
+            const pythonCode = '# 数据处理示例\nimport pandas as pd\n\nclass DataProcessor:\n    def __init__(self):\n        self.data = None\n        \n    def load_data(self, data):\n        self.data = pd.DataFrame(data)\n        print(f"数据加载完成: {self.data.shape}")\n        \n    def analyze(self):\n        return self.data.describe()';
+
+            // CSS 示例
+            const cssCode = '/* 现代卡片样式 */\n.card {\n    background: white;\n    border-radius: 12px;\n    padding: 24px;\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n    transition: all 0.3s ease;\n}\n\n.card:hover {\n    transform: translateY(-8px);\n    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);\n}';
+
+            // 创建可编辑的示例
+            const demoOptions = {
+                theme: 'prism-okaidia',
+                showLineNumbers: true,
+                editable: true,
+                maxHeight: '400px',
+                onChange: function(code, language) {
+                    console.log(language + ' 代码已更改:', code.substring(0, 50) + '...');
+                }
+            };
+
+            // 使用异步方式创建示例
+            await CodeDisplay.create('#demo-js', jsCode, 'javascript', demoOptions);
+            await CodeDisplay.create('#demo-python', pythonCode, 'python', demoOptions);
+            await CodeDisplay.create('#demo-css', cssCode, 'css', demoOptions);
+        }
+
+        // 切换语言
+        function changeLanguage() {
+            if (currentDisplay) {
+                const language = document.getElementById('languageSelect').value;
+                currentDisplay.setLanguage(language);
+                updateStatus(currentDisplay.getCode(), language);
+            }
+        }
+    </script>
+</body>
+</html> 
