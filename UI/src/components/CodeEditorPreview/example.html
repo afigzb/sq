@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码编辑预览器 - 使用示例</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            padding: 15px 20px;
+            background: #007acc;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .demo-content {
+            padding: 20px;
+        }
+        
+        .demo-description {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007acc;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+        
+        .btn-primary {
+            background: #007acc;
+            color: white;
+            border-color: #007acc;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        input, select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .code-samples {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .code-sample-btn {
+            padding: 6px 12px;
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .code-sample-btn:hover {
+            background: #dee2e6;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .feature-item h4 {
+            margin: 0 0 8px 0;
+            color: #28a745;
+        }
+        
+        .feature-item p {
+            margin: 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🚀 代码编辑预览器</h1>
+            <p>基于 Web Components 的现代化代码编辑和实时预览工具</p>
+        </div>
+
+        <!-- 功能特性 -->
+        <div class="demo-section">
+            <div class="demo-header">✨ 主要功能特性</div>
+            <div class="demo-content">
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <h4>🎨 语法高亮</h4>
+                        <p>基于 Prism.js，支持多种编程语言和主题</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>⚡ 实时预览</h4>
+                        <p>编辑代码时实时更新预览，支持防抖优化</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📝 在线编辑</h4>
+                        <p>双击即可编辑，支持 Tab 缩进和快捷键</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📁 文件导入</h4>
+                        <p>支持外部 JavaScript 文件的动态导入</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔧 高度可配置</h4>
+                        <p>主题、行号、编辑模式等都可以自定义</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📱 响应式设计</h4>
+                        <p>支持移动端和桌面端，自适应布局</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 基础使用示例 -->
+        <div class="demo-section">
+            <div class="demo-header">📖 基础使用示例</div>
+            <div class="demo-content">
+                <div class="demo-description">
+                    <strong>简单使用：</strong>只需在 HTML 中添加 <code>&lt;code-editor-preview&gt;</code> 标签即可
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label>预设代码示例：</label>
+                        <div class="code-samples">
+                            <button class="code-sample-btn" data-sample="html">HTML 示例</button>
+                            <button class="code-sample-btn" data-sample="react">React 组件</button>
+                            <button class="code-sample-btn" data-sample="vue">Vue 组件</button>
+                            <button class="code-sample-btn" data-sample="css">CSS 动画</button>
+                            <button class="code-sample-btn" data-sample="js">JavaScript 交互</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 基础示例组件 -->
+                <code-editor-preview 
+                    id="basicExample"
+                    width="100%" 
+                    height="600px"
+                    theme="prism"
+                    language="html"
+                    editable="true"
+                    show-line-numbers="false"
+                    auto-preview="true">
+                </code-editor-preview>
+            </div>
+        </div>
+
+        <!-- 高级配置示例 -->
+        <div class="demo-section">
+            <div class="demo-header">⚙️ 高级配置示例</div>
+            <div class="demo-content">
+                <div class="demo-description">
+                    <strong>高级配置：</strong>支持多种属性配置，可以通过 JavaScript API 动态控制
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label>主题：</label>
+                        <select id="themeSelect">
+                            <option value="prism">默认</option>
+                            <option value="prism-dark">深色</option>
+                            <option value="prism-tomorrow">Tomorrow</option>
+                            <option value="prism-okaidia">Okaidia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>语言：</label>
+                        <select id="languageSelect">
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="lineNumbersCheck" checked> 显示行号
+                        </label>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="editableCheck" checked> 允许编辑
+                        </label>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="getCodeBtn">获取代码</button>
+                    <button class="btn" id="clearCodeBtn">清空代码</button>
+                </div>
+                
+                <!-- 高级配置示例组件 -->
+                <code-editor-preview 
+                    id="advancedExample"
+                    width="100%" 
+                    height="600px"
+                    theme="prism-dark"
+                    language="javascript"
+                    editable="true"
+                    show-line-numbers="true"
+                    show-toolbar="true"
+                    show-external-files="true"
+                    show-fullscreen="true"
+                    auto-preview="true"
+                    debounce-delay="300"
+                    default-code='<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>高级示例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🎉 高级代码编辑器</h1>
+        <p>这是一个带有高级配置的示例</p>
+        <button class="btn" onclick="showAlert()">点击我</button>
+        <button class="btn" onclick="changeColor()">改变颜色</button>
+        <div id="output"></div>
+    </div>
+    
+    <script>
+        function showAlert() {
+            document.getElementById("output").innerHTML = 
+                "<p>✨ 按钮被点击了！时间：" + new Date().toLocaleTimeString() + "</p>";
+        }
+        
+        function changeColor() {
+            const colors = ["#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe"];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            document.querySelector(".card").style.background = 
+                `linear-gradient(45deg, ${randomColor}, rgba(255, 255, 255, 0.1))`;
+        }
+        
+        // 初始化动画
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("高级示例已加载完成！");
+        });
+    </script>
+</body>
+</html>'>
+                </code-editor-preview>
+            </div>
+        </div>
+
+        <!-- API 使用示例 -->
+        <div class="demo-section">
+            <div class="demo-header">🔌 JavaScript API 使用</div>
+            <div class="demo-content">
+                <div class="demo-description">
+                    <strong>JavaScript API：</strong>可以通过 JavaScript 动态控制组件行为
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" id="setHtmlBtn">设置 HTML 代码</button>
+                    <button class="btn" id="setCssBtn">设置 CSS 代码</button>
+                    <button class="btn" id="setJsBtn">设置 JavaScript 代码</button>
+                    <button class="btn" id="addEventBtn">添加事件监听</button>
+                </div>
+                
+                <!-- API 示例组件 -->
+                <code-editor-preview 
+                    id="apiExample"
+                    width="100%" 
+                    height="500px"
+                    theme="prism-tomorrow"
+                    language="html"
+                    editable="true"
+                    show-line-numbers="true">
+                </code-editor-preview>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入依赖文件 -->
+    <script src="../CodeDisplay/CodeDisplay.js"></script>
+    <script src="../CodePreview/CodePreview.js"></script>
+    <script src="./CodeEditorPreviewController.js"></script>
+    <script src="./CodeEditorPreview.js"></script>
+
+    <script src="./example.js"></script>
+</body>
+</html> 
