@@ -3,7 +3,10 @@
  * 负责数据处理和核心功能实现，遵循数据驱动原则
  */
 
-class CodeEditorPreviewController {
+import { CodeDisplay } from '../CodeDisplay/CodeDisplay.js';
+import { CodePreview } from '../CodePreview/CodePreview.js';
+
+export class CodeEditorPreviewController {
     constructor(options = {}) {
         // 提取回调函数
         this.callbacks = {

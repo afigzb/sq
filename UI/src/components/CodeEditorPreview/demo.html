@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditorPreview Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="./CodeEditorPreview.js"></script>
+    <script src="..\Echarts\Utils/DataConversionFunction.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">CodeEditorPreview 组件演示</h1>
+        <div class="bg-white p-8 shadow-lg rounded-lg">
+            <div class="bg-white rounded-lg shadow-lg overflow-auto">
+                <!-- 基础用法 -->
+                <code-editor-preview
+                ></code-editor-preview>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // 等待组件加载完成
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = document.querySelector('code-editor-preview');
+            
+            // 监听代码变化事件
+            editor.addEventListener('code-change', (event) => {
+                console.log('代码已更新:', event.detail);
+            });
+        });
+    </script>
+</body>
+</html>

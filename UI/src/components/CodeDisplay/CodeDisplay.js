@@ -8,7 +8,7 @@
  * codeDisplay.render(code, language);
  */
 
-class CodeDisplay {
+export class CodeDisplay {
     constructor(container, options = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
@@ -492,7 +492,29 @@ class CodeDisplay {
             this.exitEditMode();
         }
         
-        this.render(this.currentCode, this.currentLanguage);
+        // 更新容器的可编辑状态，而不是重新渲染整个组件
+        const container = this.container.querySelector('.code-display-container');
+        if (container) {
+            if (editable) {
+                container.classList.add('editable');
+                // 如果还没有编辑元素，创建一个
+                if (!this.editElement) {
+                    this.editElement = this.createEditElement(this.currentCode);
+                    container.appendChild(this.editElement);
+                    this.setupEditableEvents(container);
+                }
+            } else {
+                container.classList.remove('editable');
+                // 移除编辑元素
+                if (this.editElement) {
+                    this.editElement.remove();
+                    this.editElement = null;
+                }
+            }
+        } else {
+            // 如果容器不存在，则重新渲染
+            this.render(this.currentCode, this.currentLanguage);
+        }
     }
 
     // 切换主题
@@ -527,8 +549,6 @@ class CodeDisplay {
         }
     }
 
-
-
     // 销毁组件
     destroy() {
         if (this.isEditing) {
@@ -549,17 +569,4 @@ class CodeDisplay {
         await display.render(code, language);
         return display;
     }
-}
-
-// 模块化支持
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CodeDisplay;
-}
-
-if (typeof define === 'function' && define.amd) {
-    define([], () => CodeDisplay);
-}
-
-if (typeof window !== 'undefined') {
-    window.CodeDisplay = CodeDisplay;
 } 

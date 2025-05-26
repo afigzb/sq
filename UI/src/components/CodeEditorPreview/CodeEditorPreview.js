@@ -3,6 +3,10 @@
  * 遵循数据驱动原则，只负责UI渲染和事件转发，所有计算逻辑由Controller处理
  */
 
+import { CodeEditorPreviewController } from './CodeEditorPreviewController.js';
+import { CodeDisplay } from '../CodeDisplay/CodeDisplay.js';
+import { CodePreview } from '../CodePreview/CodePreview.js';
+
 class CodeEditorPreview extends HTMLElement {
     constructor() {
         super();
@@ -28,7 +32,7 @@ class CodeEditorPreview extends HTMLElement {
 
     static get observedAttributes() {
         return [
-            'width', 'height', 'theme', 'language', 
+            'width', 'theme', 'language', 
             'editable', 'auto-preview',
             'show-toolbar', 'show-fullscreen',
             'debounce-delay', 'default-code', 'external-files'
@@ -56,7 +60,6 @@ class CodeEditorPreview extends HTMLElement {
         
         return {
             width: this.getAttribute('width') || '100%',
-            height: this.getAttribute('height') || 'auto',
             theme: this.getAttribute('theme') || 'prism',
             language: this.getAttribute('language') || 'html',
             editable: this.hasAttribute('editable') ? parseBooleanAttr(this.getAttribute('editable')) : true,
@@ -72,7 +75,7 @@ class CodeEditorPreview extends HTMLElement {
     // 初始渲染 - 纯UI结构
     render(config) {
         this.innerHTML = `
-            <div class="code-editor-preview-wrapper" style="width: ${config.width}; height: ${config.height};">
+            <div class="code-editor-preview-wrapper" style="width: ${config.width};">
                 ${this.getStyles()}
                 ${config.showToolbar ? `
                     <div class="code-editor-toolbar">

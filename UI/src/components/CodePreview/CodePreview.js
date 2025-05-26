@@ -8,7 +8,7 @@
  * codePreview.render(code);
  */
 
-class CodePreview {
+export class CodePreview {
     constructor(container, options = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
@@ -232,17 +232,4 @@ class CodePreview {
         }
         return preview;
     }
-}
-
-// 模块化支持
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CodePreview;
-}
-
-if (typeof define === 'function' && define.amd) {
-    define([], () => CodePreview);
-}
-
-if (typeof window !== 'undefined') {
-    window.CodePreview = CodePreview;
 } 
