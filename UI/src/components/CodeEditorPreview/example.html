@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>代码编辑预览器 - 使用示例</title>
+    <script src=""></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -31,7 +32,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            overflow: visible; /* 改为visible，避免截断内容 */
         }
         
         .demo-section:last-child {
@@ -47,6 +48,7 @@
         
         .demo-content {
             padding: 20px;
+            overflow: auto;
         }
         
         .demo-description {
@@ -67,6 +69,7 @@
         .control-group {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
         
@@ -103,7 +106,6 @@
         .code-samples {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
             flex-wrap: wrap;
         }
         
@@ -146,10 +148,7 @@
             color: #6c757d;
         }
         
-        /* 确保最后一个代码编辑器组件有足够的底部空间 */
-        #apiExample {
-            margin-bottom: 20px;
-        }
+
     </style>
 </head>
 <body>

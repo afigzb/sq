@@ -90,16 +90,13 @@ class CodeDisplay {
         }, Promise.resolve());
     }
 
-    // 检查 Prism 是否完全加载
+    // 检查 Prism 是否可用
     isPrismReady() {
-        return window.Prism && 
-               window.Prism.highlightElement && 
-               window.Prism.plugins && 
-               window.Prism.plugins.autoloader;
+        return window.Prism && window.Prism.highlightElement;
     }
 
     // 等待 Prism 加载完成
-    waitForPrism(timeout = 5000) {
+    waitForPrism(timeout = 3000) {
         return new Promise((resolve) => {
             if (this.isPrismReady()) {
                 resolve();
@@ -113,7 +110,6 @@ class CodeDisplay {
                     resolve();
                 } else if (Date.now() - startTime > timeout) {
                     clearInterval(checkInterval);
-                    console.warn('CodeDisplay: Prism 加载超时，将继续执行但可能无法正常高亮');
                     resolve();
                 }
             }, 100);
@@ -259,8 +255,7 @@ class CodeDisplay {
     // 渲染代码
     async render(code, language = 'javascript') {
         if (!code) {
-            console.warn('CodeDisplay: 代码内容为空');
-            return;
+            code = '';
         }
 
         this.currentCode = code;
@@ -505,22 +500,11 @@ class CodeDisplay {
         this.options.theme = theme;
         const themeLink = document.querySelector('#prism-theme-css');
         if (themeLink) {
-            const oldHref = themeLink.href;
             themeLink.href = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/${theme}.min.css`;
-            
-            // 等待主题加载完成后重新高亮
-            const checkThemeLoaded = () => {
-                if (themeLink.href !== oldHref) {
-                    setTimeout(() => {
-                        this.rehighlightCode();
-                    }, 200);
-                } else {
-                    setTimeout(checkThemeLoaded, 50);
-                }
-            };
-            checkThemeLoaded();
+            setTimeout(() => {
+                this.rehighlightCode();
+            }, 200);
         } else {
-            // 如果没有找到主题链接，创建一个新的
             this.loadPrismResources();
             setTimeout(() => {
                 this.rehighlightCode();

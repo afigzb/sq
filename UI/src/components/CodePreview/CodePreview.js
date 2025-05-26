@@ -15,15 +15,12 @@ class CodePreview {
             width: '100%',
             height: '400px',
             sandbox: 'allow-scripts allow-same-origin allow-forms',
-            errorDisplay: true, // 默认信任模式，不显示错误
-            onError: null,
             onLoad: null,
             ...options
         };
         
         this.currentCode = '';
         this.iframe = null;
-        this.errorElement = null;
         this.isLoading = true;
         
         this.init();
@@ -64,41 +61,6 @@ class CodePreview {
                 pointer-events: none;
             }
 
-            .code-preview-error {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: #f8d7da;
-                color: #721c24;
-                padding: 15px 20px;
-                border-bottom: 1px solid #f5c6cb;
-                display: none;
-                z-index: 10;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                font-size: 14px;
-                line-height: 1.4;
-            }
-
-            .code-preview-error.show {
-                display: block;
-            }
-
-            .code-preview-error-title {
-                font-weight: 600;
-                margin-bottom: 5px;
-            }
-
-            .code-preview-error-message {
-                font-family: monospace;
-                font-size: 12px;
-                background: rgba(0, 0, 0, 0.1);
-                padding: 8px;
-                border-radius: 4px;
-                margin-top: 8px;
-                word-break: break-all;
-            }
-
             .code-preview-iframe-container {
                 position: relative;
                 overflow: hidden;
@@ -114,13 +76,6 @@ class CodePreview {
         container.className = 'code-preview-container';
         container.style.width = this.options.width;
         container.style.height = this.options.height;
-
-        // 创建错误显示元素
-        if (this.options.errorDisplay) {
-            this.errorElement = document.createElement('div');
-            this.errorElement.className = 'code-preview-error';
-            container.appendChild(this.errorElement);
-        }
 
         // 创建iframe容器
         const iframeContainer = document.createElement('div');
@@ -152,81 +107,26 @@ class CodePreview {
         this.iframe.addEventListener('load', () => {
             this.isLoading = false;
             this.iframe.classList.remove('code-preview-loading');
-            this.hideError();
             
             if (this.options.onLoad && typeof this.options.onLoad === 'function') {
                 this.options.onLoad();
             }
-
-            // 监听iframe内部的错误
-            this.setupIframeErrorHandling();
         });
-
-        // iframe加载错误事件
-        this.iframe.addEventListener('error', (e) => {
-            this.isLoading = false;
-            this.iframe.classList.remove('code-preview-loading');
-            this.showError('预览加载失败', '无法加载预览内容，请检查代码是否正确');
-        });
-    }
-
-    // 设置iframe内部错误处理
-    setupIframeErrorHandling() {
-        try {
-            const iframeWindow = this.iframe.contentWindow;
-            const iframeDocument = this.iframe.contentDocument;
-
-            if (iframeWindow && iframeDocument) {
-                // 监听JavaScript错误
-                iframeWindow.addEventListener('error', (e) => {
-                    this.showError('JavaScript 执行错误', `${e.message}\n在第 ${e.lineno} 行`);
-                    
-                    if (this.options.onError && typeof this.options.onError === 'function') {
-                        this.options.onError(e);
-                    }
-                });
-
-                // 监听Promise rejection
-                iframeWindow.addEventListener('unhandledrejection', (e) => {
-                    this.showError('Promise 执行错误', e.reason.toString());
-                    
-                    if (this.options.onError && typeof this.options.onError === 'function') {
-                        this.options.onError(e);
-                    }
-                });
-            }
-        } catch (error) {
-            // 跨域限制，无法监听iframe内部错误
-            console.warn('CodePreview: 无法监听iframe内部错误（可能由于跨域限制）');
-        }
     }
 
     // 渲染代码预览
     render(code) {
         if (typeof code !== 'string') {
-            this.showError('无效的代码内容', '传入的代码必须是字符串类型');
-            return;
+            code = '';
         }
 
         this.currentCode = code;
         this.isLoading = true;
         this.iframe.classList.add('code-preview-loading');
-        this.hideError();
 
-        try {
-            // 注入滚动条样式到代码中
-            const processedCode = this.injectScrollbarStyles(code || this.getEmptyPageHtml());
-            this.iframe.srcdoc = processedCode;
-            
-        } catch (error) {
-            this.isLoading = false;
-            this.iframe.classList.remove('code-preview-loading');
-            this.showError('代码处理错误', error.message);
-            
-            if (this.options.onError && typeof this.options.onError === 'function') {
-                this.options.onError(error);
-            }
-        }
+        // 注入滚动条样式到代码中
+        const processedCode = this.injectScrollbarStyles(code || this.getEmptyPageHtml());
+        this.iframe.srcdoc = processedCode;
     }
 
     // 获取空页面HTML
@@ -266,22 +166,7 @@ class CodePreview {
             </style>
         `;
 
-        // 检查代码是否已经包含完整的HTML结构
-        if (code.toLowerCase().includes('<!doctype') || code.toLowerCase().includes('<html')) {
-            // 完整的HTML文档，在head中注入样式
-            if (code.toLowerCase().includes('<head>')) {
-                return code.replace(/<head>/i, `<head>${scrollbarStyles}`);
-            } else if (code.toLowerCase().includes('<html>')) {
-                return code.replace(/<html>/i, `<html><head>${scrollbarStyles}</head>`);
-            } else {
-                return code.replace(/<!doctype[^>]*>/i, `$&<head>${scrollbarStyles}</head>`);
-            }
-        } else if (code.toLowerCase().includes('<body>')) {
-            // 包含body标签但不是完整HTML，在body前添加样式
-            return code.replace(/<body>/i, `${scrollbarStyles}<body>`);
-        } else {
-            // 代码片段，包装在完整的HTML结构中
-            return `<!DOCTYPE html>
+        return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -292,32 +177,6 @@ class CodePreview {
     ${code}
 </body>
 </html>`;
-        }
-    }
-
-    // HTML转义
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // 显示错误信息
-    showError(title, message) {
-        if (!this.errorElement) return;
-
-        this.errorElement.innerHTML = `
-            <div class="code-preview-error-title">${title}</div>
-            ${message ? `<div class="code-preview-error-message">${this.escapeHtml(message)}</div>` : ''}
-        `;
-        this.errorElement.classList.add('show');
-    }
-
-    // 隐藏错误信息
-    hideError() {
-        if (this.errorElement) {
-            this.errorElement.classList.remove('show');
-        }
     }
 
     // 获取当前代码
@@ -363,7 +222,6 @@ class CodePreview {
         }
         
         this.iframe = null;
-        this.errorElement = null;
     }
 
     // 静态方法：快速创建预览组件

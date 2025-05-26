@@ -8,9 +8,6 @@ class CodeEditorPreviewController {
         // 提取回调函数
         this.callbacks = {
             onCodeChange: options.callbacks?.onCodeChange || options.onCodeChange || null,
-            onPreviewUpdate: options.callbacks?.onPreviewUpdate || options.onPreviewUpdate || null,
-            onError: options.callbacks?.onError || options.onError || null,
-            onConfigChange: options.callbacks?.onConfigChange || options.onConfigChange || null,
             onStateChange: options.callbacks?.onStateChange || options.onStateChange || null
         };
 
@@ -67,7 +64,6 @@ class CodeEditorPreviewController {
             await this.setCode(this.options.defaultCode, this.options.defaultLanguage);
         }
         
-        // 如果有预设的外部文件，导入它们
         if (this.options.initialConfig?.externalFiles && this.options.initialConfig.externalFiles.length > 0) {
             await this.setExternalFiles(this.options.initialConfig.externalFiles);
         }
@@ -76,19 +72,13 @@ class CodeEditorPreviewController {
     }
 
     async initializeComponents() {
-        // 初始化代码展示组件
         this.codeDisplay = new CodeDisplay(this.options.displayContainer, {
             ...this.options.displayOptions,
             onChange: (code, language) => this.handleCodeChange(code, language)
         });
         
-        // 初始化预览组件
-        this.codePreview = new CodePreview(this.options.previewContainer, {
-            ...this.options.previewOptions,
-            onLoad: () => this.handlePreviewLoad()
-        });
+        this.codePreview = new CodePreview(this.options.previewContainer, this.options.previewOptions);
         
-        // 渲染初始内容
         if (this.options.defaultCode) {
             await this.codeDisplay.render(this.options.defaultCode, this.options.defaultLanguage);
             this.state.currentCode = this.options.defaultCode;
@@ -100,7 +90,6 @@ class CodeEditorPreviewController {
         const oldState = {...this.state};
         this.state = {...this.state, ...newState};
         
-        // 触发状态变更回调
         if (this.callbacks.onStateChange) {
             this.callbacks.onStateChange(this.state, oldState);
         }
@@ -167,10 +156,6 @@ class CodeEditorPreviewController {
 
         const processedCode = this.fileManager.processCode(code);
         await this.codePreview.render(processedCode);
-        
-        if (this.callbacks.onPreviewUpdate) {
-            this.callbacks.onPreviewUpdate(processedCode);
-        }
     }
 
     async refreshPreview() {
@@ -194,10 +179,6 @@ class CodeEditorPreviewController {
         }
         
         this.updateState(newState);
-        
-        if (this.callbacks.onConfigChange) {
-            this.callbacks.onConfigChange(config);
-        }
         return true;
     }
 
@@ -206,10 +187,6 @@ class CodeEditorPreviewController {
 
         if (config.width !== undefined || config.height !== undefined) {
             this.codePreview.setSize(config.width, config.height);
-        }
-        
-        if (this.callbacks.onConfigChange) {
-            this.callbacks.onConfigChange(config);
         }
         return true;
     }
@@ -225,7 +202,7 @@ class CodeEditorPreviewController {
         return true;
     }
 
-    // 文件管理 - 保持原有逻辑不变，但更新状态
+    // 文件管理
     async addExternalFile(filePath) {
         if (!filePath || !filePath.trim()) return false;
         
@@ -259,19 +236,13 @@ class CodeEditorPreviewController {
     }
 
     async setExternalFiles(files) {
-        // 清除现有文件
         const currentFiles = this.getExternalFiles();
         for (const file of currentFiles) {
             this.fileManager.removeFile(file);
         }
         
-        // 添加新文件
-        let allSucceeded = true;
         for (const file of files) {
-            const success = await this.fileManager.addFile(file);
-            if (!success) {
-                allSucceeded = false;
-            }
+            await this.fileManager.addFile(file);
         }
         
         this.updateState({ externalFiles: this.fileManager.getFiles() });
@@ -280,7 +251,7 @@ class CodeEditorPreviewController {
             this.updatePreviewDebounced();
         }
         
-        return allSucceeded;
+        return true;
     }
 
     // 事件处理 - 简化
@@ -299,13 +270,8 @@ class CodeEditorPreviewController {
         }
     }
 
-    handlePreviewLoad() {
-        // 预览加载完成
-    }
-
-    // 新增: 处理来自组件的用户操作
+    // 处理来自组件的用户操作
     handleAction(action, params = {}) {
-        // 根据用户操作分发不同的处理逻辑
         switch (action) {
             case 'copy':
                 return this.copyCode();
@@ -336,24 +302,19 @@ class CodeEditorPreviewController {
         }
     }
 
-    // 新增: 处理组件属性变更
+    // 处理组件属性变更
     handleAttributeChange(key, newValue, oldValue) {
-        // 根据不同的属性类型进行处理
         const displayConfigAttrs = ['theme', 'editable'];
-        const controllerConfigAttrs = ['language', 'autoPreview', 'debounceDelay'];
         const uiConfigAttrs = ['showToolbar', 'showFullscreen'];
         
         if (displayConfigAttrs.includes(key)) {
-            // 处理显示配置相关的属性
             const parsedValue = key === 'editable' ? (newValue === 'true' || newValue === '') : newValue;
             this.updateDisplayConfig({ [key]: parsedValue });
         } 
         else if (key === 'language') {
-            // 处理语言变更
             this.setLanguage(newValue);
         }
         else if (key === 'autoPreview') {
-            // 处理自动预览
             const autoPreview = newValue === 'true' || newValue === '';
             this.options.autoPreview = autoPreview;
             if (autoPreview) {
@@ -361,12 +322,10 @@ class CodeEditorPreviewController {
             }
         }
         else if (uiConfigAttrs.includes(key)) {
-            // 处理UI显示相关的属性
             const show = newValue === 'true' || newValue === '';
             if (key === 'showToolbar') this.setShowToolbar(show);
             else if (key === 'showFullscreen') this.setShowFullscreen(show);
             
-            // 这些变更可能需要重新渲染UI
             if (this.componentRef && typeof this.componentRef.render === 'function') {
                 const config = {
                     ...this.state,
@@ -377,22 +336,16 @@ class CodeEditorPreviewController {
             }
         }
         else if (key === 'externalFiles') {
-            // 处理外部文件列表
             if (newValue) {
-                try {
-                    const files = typeof newValue === 'string' ? 
-                        (newValue.startsWith('[') ? JSON.parse(newValue) : newValue.split(',').map(f => f.trim()).filter(f => f)) : 
-                        newValue;
-                    this.setExternalFiles(files);
-                } catch (e) {
-                    console.error('Failed to parse external files:', e);
-                }
+                const files = typeof newValue === 'string' ? 
+                    (newValue.startsWith('[') ? JSON.parse(newValue) : newValue.split(',').map(f => f.trim()).filter(f => f)) : 
+                    newValue;
+                this.setExternalFiles(files);
             } else {
                 this.setExternalFiles([]);
             }
         }
         else if (key === 'debounceDelay') {
-            // 处理防抖延迟时间
             const delay = parseInt(newValue) || 300;
             this.options.debounceDelay = delay;
         }
@@ -425,15 +378,8 @@ class CodeEditorPreviewController {
     // 工具方法
     async copyCode() {
         const code = this.getCode();
-        try {
-            await navigator.clipboard.writeText(code);
-            return true;
-        } catch (error) {
-            if (this.callbacks.onError) {
-                this.callbacks.onError('复制失败', error);
-            }
-            return false;
-        }
+        await navigator.clipboard.writeText(code);
+        return true;
     }
 
     clearCode() {
@@ -480,8 +426,7 @@ class FileManager {
         this.files.push(filePath);
         this.fileContents.set(filePath, {
             content,
-            status: 'loaded',
-            error: null
+            status: 'loaded'
         });
         return true;
     }
@@ -512,11 +457,7 @@ class FileManager {
             const fileInfo = this.fileContents.get(filePath);
             if (fileInfo && fileInfo.status === 'loaded') {
                 let fileContent = this.processFileContent(fileInfo.content);
-                loadedScripts.push(`
-// ==================== ${filePath} ====================
-${fileContent}
-// ==================== End of ${filePath} ====================
-                `);
+                loadedScripts.push(`// ==================== ${filePath} ====================\n${fileContent}\n// ==================== End of ${filePath} ====================`);
             }
         });
 
@@ -563,12 +504,7 @@ ${fileContent}
     }
 
     embedScriptsInHtml(code, scripts) {
-        const scriptContent = `
-<script>
-// ==================== 外部导入的JavaScript文件 ====================
-${scripts.join('\n')}
-// ==================== 外部文件导入结束 ====================
-</script>`;
+        const scriptContent = `<script>\n// ==================== 外部导入的JavaScript文件 ====================\n${scripts.join('\n')}\n// ==================== 外部文件导入结束 ====================\n</script>`;
 
         if (/<\/head>/i.test(code)) {
             return code.replace(/<\/head>/i, `${scriptContent}\n</head>`);

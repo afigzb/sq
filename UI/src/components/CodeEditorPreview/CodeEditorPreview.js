@@ -31,7 +31,7 @@ class CodeEditorPreview extends HTMLElement {
             'width', 'height', 'theme', 'language', 
             'editable', 'auto-preview',
             'show-toolbar', 'show-fullscreen',
-            'debounce-delay', 'default-code', 'trust-mode', 'external-files'
+            'debounce-delay', 'default-code', 'external-files'
         ];
     }
 
@@ -50,11 +50,7 @@ class CodeEditorPreview extends HTMLElement {
         if (this.hasAttribute('external-files')) {
             const filesAttr = this.getAttribute('external-files');
             if (filesAttr) {
-                try {
-                    externalFiles = JSON.parse(filesAttr);
-                } catch (e) {
-                    externalFiles = filesAttr.split(',').map(f => f.trim()).filter(f => f);
-                }
+                externalFiles = JSON.parse(filesAttr) || filesAttr.split(',').map(f => f.trim()).filter(f => f);
             }
         }
         
@@ -68,7 +64,6 @@ class CodeEditorPreview extends HTMLElement {
             showToolbar: this.hasAttribute('show-toolbar') ? parseBooleanAttr(this.getAttribute('show-toolbar')) : true,
             showFullscreen: this.hasAttribute('show-fullscreen') ? parseBooleanAttr(this.getAttribute('show-fullscreen')) : true,
             debounceDelay: this.hasAttribute('debounce-delay') ? parseInt(this.getAttribute('debounce-delay')) : 300,
-            trustMode: this.hasAttribute('trust-mode') ? parseBooleanAttr(this.getAttribute('trust-mode')) : true,
             defaultCode: this.getAttribute('default-code') || this.getDefaultCode(),
             externalFiles
         };
@@ -100,6 +95,8 @@ class CodeEditorPreview extends HTMLElement {
                     </div>
                 ` : ''}
                 
+
+
                 <div class="code-editor-preview-main">
                     <div class="code-editor-section">
                         <div class="section-header">
@@ -128,17 +125,22 @@ class CodeEditorPreview extends HTMLElement {
                         <div class="code-preview-container" id="codePreview"></div>
                     </div>
                 </div>
-                
-                <div class="external-files-section">
+
+                                <div class="external-files-section">
                     <div class="section-header">
                         <h3>外部文件导入</h3>
+                        <div class="file-input-group">
+                            <input type="text" class="file-path-input" placeholder="输入文件路径或 URL">
+                            <button class="btn-add" data-action="add-file">
+                                <span class="icon">+</span>
+                                添加
+                            </button>
+                        </div>
                     </div>
-                    <div class="file-input-group">
-                        <input type="text" class="file-path-input" placeholder="输入文件路径">
-                        <button class="btn" data-action="add-file">添加文件</button>
-                    </div>
-                    <div class="imported-files-list">
-                        <p class="no-files-message">暂无导入的文件</p>
+                    <div class="imported-files-container">
+                        <div class="imported-files-list">
+                            <p class="no-files-message">暂无导入的文件</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -212,69 +214,37 @@ class CodeEditorPreview extends HTMLElement {
     // 初始化控制器
     async initializeController(config) {
         const controllerOptions = {
-            // 容器元素
             displayContainer: this.elements.codeEditorContainer,
             previewContainer: this.elements.codePreviewContainer,
-            
-            // 初始配置
             defaultCode: config.defaultCode,
             defaultLanguage: config.language,
             autoPreview: config.autoPreview,
             debounceDelay: config.debounceDelay,
             initialConfig: config,
-            
-            // 显示配置
             displayOptions: {
                 theme: config.theme,
-                showLineNumbers: true,
                 editable: config.editable,
                 maxHeight: '400px',
-                maxWidth: '100%',
                 wordWrap: true
             },
-            
-            // 预览配置
             previewOptions: {
                 width: '100%',
                 height: '400px'
             },
-            
-            // UI引用
             uiElements: this.elements,
             componentRef: this,
-            
-            // 回调函数
             callbacks: {
                 onCodeChange: (code, language) => {
-                    this.dispatchEvent(new CustomEvent('code-change', {
-                        detail: { code, language }
-                    }));
-                },
-                onPreviewUpdate: (code) => {
-                    this.dispatchEvent(new CustomEvent('preview-update', {
-                        detail: { code }
-                    }));
-                },
-                onConfigChange: (config) => {
-                    this.dispatchEvent(new CustomEvent('config-change', {
-                        detail: { config }
-                    }));
+                    this.dispatchEvent(new CustomEvent('code-change', { detail: { code, language } }));
                 },
                 onStateChange: (newState, oldState) => {
                     this.updateUI(newState, oldState);
-                    this.dispatchEvent(new CustomEvent('state-change', {
-                        detail: { state: newState, previousState: oldState }
-                    }));
                 }
             }
         };
 
         this.controller = await CodeEditorPreviewController.create(controllerOptions);
         this.isInitialized = true;
-        
-        this.dispatchEvent(new CustomEvent('initialized', {
-            detail: { controller: this.controller }
-        }));
     }
 
     // UI更新 - 响应状态变化
@@ -372,6 +342,7 @@ class CodeEditorPreview extends HTMLElement {
                 font-family: system-ui, sans-serif;
                 font-size: 14px;
                 min-height: 500px;
+                height: auto;
             }
             
             /* 工具栏 */
@@ -392,7 +363,6 @@ class CodeEditorPreview extends HTMLElement {
             .code-editor-preview-main {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                flex: 1;
             }
             
             /* 编辑器和预览区域 */
@@ -445,8 +415,6 @@ class CodeEditorPreview extends HTMLElement {
             }
             
             .imported-files-list {
-                max-height: 120px;
-                overflow-y: auto;
                 padding: 0 1rem 1rem;
             }
             
