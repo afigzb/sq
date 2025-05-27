@@ -1,73 +1,280 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeEditorPreview Demo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 确保以模块方式加载组件 -->
-    <script type="module" src="demo.js"></script>
+    <title>CodeEditorPreview - 主题切换示例</title>
+    
+    <!-- 引入CodeEditorPreview组件 -->
+    <script type="module" src="./CodeEditorPreview.js"></script>
+    
+    <style>
+        /* 全局样式重置和基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 容器和布局 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部样式 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        /* 控制面板样式 */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            border-radius: 50px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            transition: all 0.3s ease;
+        }
+
+        .controls:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .controls select, .controls button {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .controls select:focus, .controls button:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 组件卡片样式 */
+        .component-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            margin-bottom: 40px;
+        }
+
+        .component-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .component-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .component-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .component-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px 25px;
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* 组件容器 */
+        .component-container {
+            flex: 1;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        /* CodeEditorPreview组件样式 */
+        .component-container code-editor-preview {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .controls {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 12px 16px;
+                border-radius: 15px;
+            }
+
+            .controls label {
+                font-size: 0.8rem;
+            }
+
+            .controls select, .controls button {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .component-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">CodeEditorPreview 组件演示</h1>
-        
-        <!-- 测试按钮 -->
-        <div class="test-buttons mb-4" style="text-align: center; gap: 10px; display: flex; justify-content: center; flex-wrap: wrap;">
-            <button onclick="testSwitchToInstructions()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到使用说明</button>
-            <button onclick="testSwitchToEditor()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">切换到编辑器</button>
-            <button onclick="testUpdateInstructions()" style="padding: 8px 16px; background: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer;">更新使用说明</button>
-            <button onclick="testFullscreen()" style="padding: 8px 16px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer;">测试全屏预览</button>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>主题切换演示</h1>
+            <p>CodeEditorPreview 组件的主题切换功能展示</p>
         </div>
 
-        <div class="bg-white p-8 shadow-lg rounded-lg">
-            <div class="bg-white rounded-lg shadow-lg overflow-auto">
-                <!-- 基础用法 -->
-                <code-editor-preview
-                    instructions="这是一个代码编辑预览器组件的使用说明：
-
-1. 代码编辑功能：
-   - 支持多种编程语言语法高亮
-   - 可以实时编辑代码
-   - 支持主题切换
-
-2. 实时预览功能：
-   - 自动预览HTML代码效果
-   - 支持外部文件导入
-   - 支持全屏预览
-
-3. 使用方法：
-   - 在左侧编辑器中输入代码
-   - 右侧会实时显示预览效果
-   - 可以通过工具栏切换主题和设置
-
-4. 高级功能：
-   - 支持导入外部JavaScript/CSS文件
-   - 支持代码复制和清空
-   - 响应式设计，适配移动端
-
-5. 全屏预览：
-   - 点击预览区域右上角的🔍按钮
-   - 支持外部文件导入功能
-   - 按ESC键或点击✕按钮关闭
-
-6. 导入外部文件：
-   - 非常值得注意一点，需要代码提供导入功能只是为了凸显代码高级，基本问题是另外一个文件夹的相对路径在这个文件夹里面并非是正确的，如果你手动修改了相对路径，不需要导入功能也能正常运行，否则则需要使用导入功能导入依赖
-
-7. 关于页面卡顿问题:
-   - 原因之一是代码量过大，预览实现的原理是使用iframe加上我手动写了个节流这是正常卡顿。
-   - 原因之二是预览的js和预览逻辑有所冲突，这个是个很复杂的事情，自个看着办吧
-
-8. 关于代码编辑器：
-   - 如果你发现用户更改代码后使用说明没更新，这是个很正常的事情，使用说明需要手动更改传入，为了避免用户更改代码后需要刷新页面回档，我提供了个手动重置按钮
-   - 重置按钮会将代码还原至初始状态，便于测试和演示
-
-
-
-- 点击上方的'代码编辑器'按钮可以切换回编辑模式。"
-                ></code-editor-preview>
-            </div>
+        <div class="component-card">
+            <div class="component-header">🎨 主题切换演示 - 多种风格</div>
+            <div class="component-container" id="theme-demo"></div>
         </div>
     </div>
+
+    <script type="module">
+        import { 
+            createThemeDemo,
+            waitForComponents
+        } from './demo.js';
+
+        // 全局变量存储组件
+        window.component = null;
+
+        // 初始化示例
+        async function initExample() {
+            console.log('🚀 开始初始化主题切换示例...');
+            
+            try {
+                // 创建主题切换示例
+                window.component = createThemeDemo(document.getElementById('theme-demo'));
+
+                // 等待组件完全加载
+                await waitForComponents([window.component], 5000);
+                console.log('✅ 组件加载完成！');
+
+            } catch (error) {
+                console.error('❌ 初始化组件时出错:', error);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 页面DOM加载完成');
+            
+            // 初始化
+            initExample();
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditorPreview - 完整教学文档</title>
+    
+    <!-- 引入CodeEditorPreview组件 -->
+    <script type="module" src="../CodeEditorPreview.js"></script>
+    
+    <style>
+        /* 全局样式重置和基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        /* 容器和布局 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 头部样式 */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+
+        /* 导航菜单 */
+        .nav-menu {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .nav-menu h3 {
+            margin-bottom: 16px;
+            color: #1a202c;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .nav-link {
+            padding: 10px 18px;
+            background: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .nav-link:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.25);
+        }
+
+        /* 章节样式 */
+        .section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 40px;
+            scroll-margin-top: 120px;
+        }
+
+        .section-header {
+            background: #f7fafc;
+            padding: 32px 40px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            color: #4a5568;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .section-content {
+            padding: 40px;
+        }
+
+        .section-content h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 20px;
+            margin-top: 32px;
+        }
+
+        .section-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .section-content h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+
+        .section-content p {
+            margin-bottom: 16px;
+            color: #4a5568;
+            line-height: 1.7;
+        }
+
+        /* 代码块样式 */
+        .code-block {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .code-block code {
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+
+        /* 特性列表 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .feature-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: #4299e1;
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .feature-card h4 {
+            color: #1a202c;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0;
+        }
+
+        .feature-card p {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* 数据流转图 */
+        .flow-diagram {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .flow-step {
+            display: inline-block;
+            background: white;
+            border: 2px solid #4299e1;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .flow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -28px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+            font-size: 1.2rem;
+        }
+
+        .flow-row {
+            margin: 20px 0;
+        }
+
+        /* 优势列表 */
+        .advantages-list {
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+        }
+
+        .advantages-list li {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 16px 24px;
+            margin: 12px 0;
+            border-radius: 0 8px 8px 0;
+            color: #2d3748;
+        }
+
+        .advantages-list li strong {
+            color: #2f855a;
+        }
+
+        /* 组件演示区域 */
+        .demo-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+            min-height: 400px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .header {
+                padding: 40px 24px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-menu {
+                padding: 20px;
+                position: relative;
+                top: 0;
+                overflow-x: auto;
+            }
+            
+            .nav-links {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                gap: 10px;
+                padding-bottom: 8px;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .nav-link {
+                padding: 8px 16px;
+                white-space: nowrap;
+                font-size: 0.85rem;
+            }
+
+            .section-header {
+                padding: 24px;
+            }
+
+            .section-content {
+                padding: 24px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-step {
+                display: block;
+                margin: 12px 0;
+            }
+
+            .flow-step::after {
+                content: '↓';
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+            }
+        }
+
+        /* 更小屏幕的优化 */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .nav-menu {
+                margin-bottom: 30px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .section-content h3 {
+                font-size: 1.3rem;
+            }
+            
+            .section-content {
+                padding: 20px;
+            }
+        }
+
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 选中文本样式 */
+        ::selection {
+            background: #bee3f8;
+            color: #1a202c;
+        }
+    </style>
+</head>
+<body>
+   <div class="container">
+       <!-- 头部介绍 -->
+       <div class="header">
+           <h1>CodeEditorPreview</h1>
+           <p>专业级代码编辑预览组件 - 完整教学文档</p>
+       </div>
+
+               <!-- 导航菜单 -->
+        <div class="nav-menu">
+            <h3>教学目录</h3>
+            <div class="nav-links">
+                <a href="#overview" class="nav-link">项目概述</a>
+                <a href="#code-display" class="nav-link">CodeDisplay组件</a>
+                <a href="#code-preview" class="nav-link">CodePreview组件</a>
+                <a href="#component-connection" class="nav-link">组件数据联通</a>
+                <a href="#data-flow" class="nav-link">数据流转设计</a>
+                <a href="#architecture" class="nav-link">架构优势</a>
+                <a href="#usage-demo" class="nav-link">使用示例</a>
+            </div>
+        </div>
+
+       <!-- 项目概述 -->
+       <section id="overview" class="section">
+           <div class="section-header">
+               <h2>项目概述</h2>
+               <p>了解CodeEditorPreview组件的整体设计理念</p>
+           </div>
+           <div class="section-content">
+               <p>CodeEditorPreview是一个功能完整的代码编辑预览组件，采用模块化设计，包含代码高亮显示、实时预览、主题切换等核心功能。</p>
+               
+               <div class="features-grid">
+                   <div class="feature-card">
+                       <h4>代码高亮</h4>
+                       <p>基于Prism.js的专业代码高亮，支持多种编程语言和主题</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>实时预览</h4>
+                       <p>即时渲染HTML/CSS/JS代码，提供沙箱环境确保安全性</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>可编辑</h4>
+                       <p>双击编辑模式，支持Tab缩进、自动高度调整等编辑功能</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>主题系统</h4>
+                       <p>内置多种主题，支持动态切换和自定义主题配置</p>
+                   </div>
+               </div>
+           </div>
+       </section>
+
+       <!-- CodeDisplay组件介绍 -->
+       <section id="code-display" class="section">
+           <div class="section-header">
+               <h2>CodeDisplay组件</h2>
+               <p>基于Prism.js的代码高亮展示组件</p>
+           </div>
+           <div class="section-content">
+               <p>CodeDisplay是对Prism.js的高级封装，提供了更友好的API和增强功能。它遵循单一职责原则，专注于代码的展示、高亮和基础编辑。</p>
+               
+               <h3>🔧 核心特性</h3>
+               <div class="features-grid">
+                   <div class="feature-card">
+                       <h4>自动资源加载</h4>
+                       <p>智能加载Prism.js相关CSS和JS资源，无需手动引入</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>双击编辑</h4>
+                       <p>支持双击进入编辑模式，提供Tab缩进、自动高度调整</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>主题切换</h4>
+                       <p>动态切换Prism主题，无需重新渲染整个组件</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>实时更新</h4>
+                       <p>支持动态更新代码内容和语言类型</p>
+                   </div>
+               </div>
+
+                               <h3>💻 使用示例</h3>
+                <div id="code-display-usage-demo"></div>
+
+                <h3>🎮 实际演示</h3>
+                <div class="demo-area" id="code-display-demo"></div>
+           </div>
+       </section>
+
+               <!-- CodePreview组件介绍 -->
+        <section id="code-preview" class="section">
+            <div class="section-header">
+                <h2>CodePreview组件 - 核心预览引擎</h2>
+                <p>整个项目最核心的逻辑模块，负责代码的安全渲染和预览</p>
+            </div>
+            <div class="section-content">
+                <p><strong>CodePreview是整个组件系统的核心</strong>，它解决了在Web环境中安全执行用户代码的关键问题。通过iframe沙箱技术，实现了代码的隔离执行和实时预览。</p>
+                
+                <h3>📺 iframe技术详解</h3>
+                <p><strong>iframe（内联框架）</strong>是HTML的一个元素，用于在当前网页中嵌入另一个独立的HTML文档。它创建了一个完全隔离的浏览上下文。</p>
+                
+                <h4>🔧 iframe的基本用法</h4>
+                <div id="iframe-basic-demo"></div>
+
+                <h4>🏖️ sandbox沙箱属性详解</h4>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h4>allow-scripts</h4>
+                        <p>允许执行JavaScript代码</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>allow-same-origin</h4>
+                        <p>允许访问同源资源</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>allow-forms</h4>
+                        <p>允许表单提交</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>allow-modals</h4>
+                        <p>允许弹出模态对话框</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>allow-popups</h4>
+                        <p>允许打开新窗口</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>allow-top-navigation</h4>
+                        <p>允许导航到顶层浏览上下文</p>
+                    </div>
+                </div>
+
+                <h4>💡 iframe应用场景示例</h4>
+                <div id="iframe-usage-demo"></div>
+
+                <h4>🎮 iframe实际演示</h4>
+                <div class="demo-area" id="iframe-demo"></div>
+
+                <h3>🛡️ CodePreview的iframe应用</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h4>🏖️ 沙箱隔离</h4>
+                        <p>使用sandbox属性创建隔离环境，防止恶意代码影响主页面</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📄 srcdoc渲染</h4>
+                        <p>通过srcdoc属性直接渲染HTML内容，避免跨域问题</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🎨 样式注入</h4>
+                        <p>自动注入滚动条样式和安全脚本，确保良好的用户体验</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⚡ 性能优化</h4>
+                        <p>智能加载状态管理，防止频繁重渲染</p>
+                    </div>
+                </div>
+
+                <h3>🔒 安全机制实现</h3>
+                <div id="security-mechanism-demo"></div>
+
+                <h3>🎯 为什么是核心？</h3>
+                <ul class="advantages-list">
+                    <li><strong>安全执行：</strong>在iframe沙箱中执行用户代码，完全隔离危险操作</li>
+                    <li><strong>实时渲染：</strong>即时反映代码变化，提供所见即所得的体验</li>
+                    <li><strong>跨域解决：</strong>使用srcdoc避免了传统iframe的跨域安全限制</li>
+                    <li><strong>资源隔离：</strong>预览代码的CSS样式和JS脚本不会污染主页面</li>
+                    <li><strong>错误隔离：</strong>预览代码中的JavaScript错误不会导致主应用崩溃</li>
+                    <li><strong>DOM隔离：</strong>预览代码无法访问和修改主页面的DOM结构</li>
+                </ul>
+
+                <h3>🎮 实际演示</h3>
+                <div class="demo-area" id="code-preview-demo"></div>
+            </div>
+        </section>
+
+               <!-- 组件数据联通 -->
+        <section id="component-connection" class="section">
+            <div class="section-header">
+                <h2>组件数据联通机制</h2>
+                <p>深入理解CodeDisplay和CodePreview如何协同工作</p>
+            </div>
+            <div class="section-content">
+                <h3>🧩 组件协作原理</h3>
+                <p>CodeDisplay和CodePreview虽然是独立的组件，但在CodeEditorPreview中通过精心设计的数据流实现了完美协作。</p>
+                
+                <h4>📊 数据流向图</h4>
+                <div class="flow-diagram">
+                    <div class="flow-row">
+                        <div class="flow-step">用户编辑代码</div>
+                        <div class="flow-step">CodeDisplay onChange</div>
+                        <div class="flow-step">主控制器接收</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-step">防抖延迟处理</div>
+                        <div class="flow-step">CodePreview.render()</div>
+                        <div class="flow-step">实时预览更新</div>
+                    </div>
+                </div>
+
+                <h4>🔄 核心联通代码</h4>
+                <div id="connection-code-demo"></div>
+
+                <h4>⚡ 实时同步机制</h4>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h4>🎯 事件驱动</h4>
+                        <p>CodeDisplay的onChange事件驱动整个数据流</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⏱️ 防抖优化</h4>
+                        <p>通过debounce避免频繁的预览更新</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔄 状态同步</h4>
+                        <p>主控制器维护统一的代码状态</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🚀 异步渲染</h4>
+                        <p>非阻塞的预览更新机制</p>
+                    </div>
+                </div>
+
+                <h4>🎮 用户交互流程</h4>
+                <div id="interaction-flow-demo"></div>
+
+                <h4>🛡️ 错误处理机制</h4>
+                <ul class="advantages-list">
+                    <li><strong>编辑器错误：</strong>CodeDisplay的语法错误不影响预览功能</li>
+                    <li><strong>预览错误：</strong>CodePreview中的代码错误被iframe隔离</li>
+                    <li><strong>通信错误：</strong>组件间通信异常时的降级处理</li>
+                    <li><strong>资源错误：</strong>Prism.js或iframe加载失败的备用方案</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 数据流转设计 -->
+        <section id="data-flow" class="section">
+            <div class="section-header">
+                <h2>数据流转设计</h2>
+                <p>从数据管理到组件渲染的完整流程</p>
+            </div>
+            <div class="section-content">
+                <h3>📊 整体数据流转架构</h3>
+                <div class="flow-diagram">
+                    <div class="flow-row">
+                        <div class="flow-step">data.js 数据源</div>
+                        <div class="flow-step">usage-example.js 工厂</div>
+                        <div class="flow-step">TutorialPage.html 展示</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-step">CodeDisplay 高亮</div>
+                        <div class="flow-step">主控制器协调</div>
+                        <div class="flow-step">CodePreview 预览</div>
+                    </div>
+                </div>
+
+                <h3>📁 data.js - 数据配置层</h3>
+                <p>集中管理所有示例数据，包括代码内容、语言类型、说明文档等。采用对象结构化管理，便于维护和扩展。</p>
+                <div id="data-layer-demo"></div>
+
+                <h3>🏭 usage-example.js - 组件工厂</h3>
+                <p>提供组件创建的工厂函数，封装了组件初始化的复杂逻辑，提供简洁的API接口。</p>
+                <div id="factory-demo"></div>
+
+                <h3>🌐 TutorialPage.html - 展示层</h3>
+                <p>负责页面布局和用户交互，通过工厂函数创建组件，实现了UI与业务逻辑的分离。</p>
+            </div>
+        </section>
+
+       <!-- 架构优势 -->
+       <section id="architecture" class="section">
+           <div class="section-header">
+               <h2>架构设计优势</h2>
+               <p>模块化设计带来的开发和维护优势</p>
+           </div>
+           <div class="section-content">
+               <h3>✨ 设计优势分析</h3>
+               <ul class="advantages-list">
+                   <li><strong>单一职责：</strong>每个组件都有明确的职责边界，CodeDisplay负责展示，CodePreview负责预览</li>
+                   <li><strong>松耦合：</strong>组件间通过标准接口通信，可以独立开发和测试</li>
+                   <li><strong>可扩展：</strong>数据层分离使得添加新示例变得简单</li>
+                   <li><strong>可维护：</strong>模块化结构降低了代码维护成本</li>
+                   <li><strong>可复用：</strong>组件可以在不同项目中复用</li>
+                   <li><strong>安全性：</strong>iframe沙箱确保代码执行安全</li>
+                   <li><strong>性能：</strong>按需加载和智能缓存提升性能</li>
+               </ul>
+
+               <h3>🔄 数据流转优势</h3>
+               <div class="features-grid">
+                   <div class="feature-card">
+                       <h4>📦 数据集中管理</h4>
+                       <p>所有示例数据统一管理，便于维护和版本控制</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>🏭 工厂模式</h4>
+                       <p>隐藏创建复杂性，提供简洁的组件创建接口</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>🎭 配置驱动</h4>
+                       <p>通过配置而非代码控制组件行为，提高灵活性</p>
+                   </div>
+                   <div class="feature-card">
+                       <h4>🔧 易于扩展</h4>
+                       <p>添加新功能只需修改对应层，不影响其他模块</p>
+                   </div>
+               </div>
+           </div>
+       </section>
+
+       <!-- 使用示例 -->
+       <section id="usage-demo" class="section">
+           <div class="section-header">
+               <h2>实际使用示例</h2>
+               <p>体验完整的代码编辑预览功能</p>
+           </div>
+           <div class="section-content">
+               <p>下面是一个完整的主题切换示例，展示了组件的完整功能：</p>
+               <div class="demo-area" id="theme-demo"></div>
+           </div>
+       </section>
+   </div>
+
+   <script src="./utils.js" type="module"></script>
+</body>
+</html>

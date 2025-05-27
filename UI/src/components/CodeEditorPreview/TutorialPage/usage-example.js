@@ -3,7 +3,7 @@
  * 用于创建主题切换示例
  */
 
-import { themeDemo } from './demoData.js';
+import { themeDemo } from './data.js';
 
 // 工具函数：创建代码编辑预览器组件
 function createCodeEditorPreview(container, code, language = 'html', instructions = '', options = {}) {

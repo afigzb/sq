@@ -11,15 +11,12 @@ class CodeEditorPreview extends HTMLElement {
         this.controller = null;
         this.isInitialized = false;
         this.elements = {};
-        
+
         // 添加样式表
         if (!document.querySelector('link[href*="CodeEditorPreview.css"]')) {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            // 使用相对于当前脚本的路径
-            const scriptPath = document.currentScript?.src || '';
-            const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1);
-            link.href = basePath + 'CodeEditorPreview.css';
+            link.href = new URL('./CodeEditorPreview.css', import.meta.url).href;
             document.head.appendChild(link);
         }
     }
