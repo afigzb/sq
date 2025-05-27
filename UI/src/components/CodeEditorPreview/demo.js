@@ -98,6 +98,8 @@
             // 延迟设置代码，确保组件完全初始化
             setTimeout(() => {
                 editor.setCode(testCode);
+                // 设置默认代码，确保重置按钮重置到正确的代码
+                editor.setDefaultCode(testCode);
             }, 500);
             
             // 测试函数

@@ -141,7 +141,6 @@ class CodeEditorPreview extends HTMLElement {
                         <div class="section-header">
                             <h3>实时预览</h3>
                             <div class="preview-controls">
-                                <button class="btn-icon" data-action="refresh" title="刷新预览">🔄</button>
                                 ${config.showFullscreen ? '<button class="btn-icon" data-action="fullscreen" title="全屏预览">🔍</button>' : ''}
                             </div>
                         </div>
@@ -356,6 +355,7 @@ class CodeEditorPreview extends HTMLElement {
     switchToEditor() { return this.controller?.switchToEditor() || false; }
     switchToInstructions() { return this.controller?.switchToInstructions() || false; }
     getController() { return this.controller; }
+    setDefaultCode(code, language) { return this.controller?.setDefaultCode(code, language) || false; }
 
     // 默认示例代码
     getDefaultCode() {

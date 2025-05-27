@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodePreview 使用示例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+        }
+        .example-container {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #3a7bc8;
+        }
+        .size-controls {
+            margin: 15px 0;
+        }
+        .size-controls input {
+            padding: 6px;
+            width: 80px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CodePreview 使用示例</h1>
+    
+    <div class="example-container">
+        <h2>HTML 代码预览</h2>
+        <textarea id="codeInput"><!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        h1 {
+            color: #4a90e2;
+            text-align: center;
+        }
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>预览示例</h1>
+    <div class="content">
+        <p>这是一个简单的HTML预览示例。</p>
+        <button onclick="alert('按钮被点击了!')">点击我</button>
+    </div>
+    <script>
+        // 防止WebSocket连接错误
+        window.WebSocket = function(url) {
+            console.log('WebSocket连接已被沙箱环境拦截:', url);
+            return {
+                send: function() {},
+                close: function() {},
+                addEventListener: function() {},
+                removeEventListener: function() {}
+            };
+        };
+    </script>
+</body>
+</html></textarea>
+        
+        <button id="renderBtn">预览代码</button>
+        
+        <div class="size-controls">
+            <label>宽度:</label>
+            <input type="text" id="widthInput" value="100%" />
+            <label>高度:</label>
+            <input type="text" id="heightInput" value="300px" />
+            <button id="resizeBtn">调整大小</button>
+        </div>
+        
+        <div id="previewContainer"></div>
+    </div>
+
+    <script type="module">
+        import { CodePreview } from './CodePreview.js';
+        
+        // 初始化变量
+        let codePreview;
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 创建代码预览组件
+            codePreview = new CodePreview('#previewContainer', {
+                width: '100%',
+                height: '300px',
+                onLoad: () => {
+                    console.log('预览已加载完成');
+                }
+            });
+            
+            // 渲染按钮点击事件
+            document.getElementById('renderBtn').addEventListener('click', () => {
+                const code = document.getElementById('codeInput').value;
+                codePreview.render(code);
+            });
+            
+            // 调整大小按钮点击事件
+            document.getElementById('resizeBtn').addEventListener('click', () => {
+                const width = document.getElementById('widthInput').value;
+                const height = document.getElementById('heightInput').value;
+                codePreview.setSize(width, height);
+            });
+            
+            // 初始渲染
+            const initialCode = document.getElementById('codeInput').value;
+            codePreview.render(initialCode);
+        });
+    </script>
+</body>
+</html>

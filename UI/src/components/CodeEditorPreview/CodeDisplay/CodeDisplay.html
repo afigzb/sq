@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeDisplay 使用示例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+        }
+        .example-container {
+            margin-bottom: 20px;
+        }
+        .button-group {
+            margin: 15px 0;
+        }
+        button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #3a7bc8;
+        }
+        select {
+            padding: 8px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CodeDisplay 使用示例</h1>
+    
+    <div class="example-container">
+        <h2>基本代码展示</h2>
+        <div class="button-group">
+            <select id="languageSelect">
+                <option value="javascript">JavaScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+            </select>
+            <select id="themeSelect">
+                <option value="prism">默认主题</option>
+                <option value="prism-dark">深色主题</option>
+                <option value="prism-okaidia">Okaidia</option>
+                <option value="prism-tomorrow">Tomorrow</option>
+            </select>
+            <button id="toggleEdit">切换编辑模式</button>
+        </div>
+        <div id="codeDisplay"></div>
+    </div>
+
+    <script type="module">
+        import { CodeDisplay } from './CodeDisplay.js';
+        
+        // 示例代码
+        const sampleCode = `function greet(name) {
+    return "Hello, " + name + "!";
+}
+
+// 测试函数
+console.log(greet("World"));`;
+
+        // 初始化CodeDisplay
+        let codeDisplay;
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 创建代码显示组件
+            codeDisplay = await CodeDisplay.create('#codeDisplay', sampleCode, 'javascript', {
+                theme: 'prism',
+                editable: false,
+                maxHeight: '300px',
+                wordWrap: true,
+                onChange: (code, language) => {
+                    console.log('代码已更改:', code);
+                }
+            });
+            
+            // 语言选择器事件
+            document.getElementById('languageSelect').addEventListener('change', (e) => {
+                codeDisplay.setLanguage(e.target.value);
+            });
+            
+            // 主题选择器事件
+            document.getElementById('themeSelect').addEventListener('change', (e) => {
+                codeDisplay.changeTheme(e.target.value);
+            });
+            
+            // 编辑模式切换
+            document.getElementById('toggleEdit').addEventListener('click', () => {
+                const isCurrentlyEditable = codeDisplay.options.editable;
+                codeDisplay.setEditable(!isCurrentlyEditable);
+                document.getElementById('toggleEdit').textContent = 
+                    !isCurrentlyEditable ? '禁用编辑' : '启用编辑';
+            });
+        });
+    </script>
+</body>
+</html>

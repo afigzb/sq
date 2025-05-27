@@ -14,7 +14,7 @@ export class CodePreview {
         this.options = {
             width: '100%',
             height: '400px',
-            sandbox: 'allow-scripts allow-same-origin allow-forms',
+            sandbox: 'allow-scripts allow-same-origin allow-forms allow-modals',
             onLoad: null,
             ...options
         };
@@ -166,12 +166,28 @@ export class CodePreview {
             </style>
         `;
 
+        const webSocketScript = `
+            <script>
+                // 防止WebSocket连接错误
+                window.WebSocket = function(url) {
+                    console.log('WebSocket连接已被沙箱环境拦截:', url);
+                    return {
+                        send: function() {},
+                        close: function() {},
+                        addEventListener: function() {},
+                        removeEventListener: function() {}
+                    };
+                };
+            </script>
+        `;
+
         return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${scrollbarStyles}
+    ${webSocketScript}
 </head>
 <body>
     ${code}

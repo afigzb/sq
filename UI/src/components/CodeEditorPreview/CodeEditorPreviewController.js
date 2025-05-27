@@ -3,8 +3,8 @@
  * 负责数据处理和核心功能实现，遵循数据驱动原则
  */
 
-import { CodeDisplay } from '../CodeDisplay/CodeDisplay.js';
-import { CodePreview } from '../CodePreview/CodePreview.js';
+import { CodeDisplay } from './CodeDisplay/CodeDisplay.js';
+import { CodePreview } from './CodePreview/CodePreview.js';
 
 export class CodeEditorPreviewController {
     constructor(options = {}) {
@@ -163,10 +163,6 @@ export class CodeEditorPreviewController {
         await this.codePreview.render(processedCode);
     }
 
-    async refreshPreview() {
-        return this.updatePreview();
-    }
-
     // 配置管理 - 更新状态并反映到组件
     updateDisplayConfig(config) {
         if (!this.codeDisplay) return false;
@@ -284,8 +280,6 @@ export class CodeEditorPreviewController {
                 return this.resetCode();
             case 'clear':
                 return this.clearCode();
-            case 'refresh':
-                return this.refreshPreview();
             case 'fullscreen':
                 return await this.openFullscreen();
             case 'close-fullscreen':
@@ -380,6 +374,17 @@ export class CodeEditorPreviewController {
     setInstructions(instructions) {
         this.updateState({ instructions: instructions || '' });
         return true;
+    }
+
+    setDefaultCode(code, language) {
+        if (code) {
+            this.options.defaultCode = code;
+            if (language) {
+                this.options.defaultLanguage = language;
+            }
+            return true;
+        }
+        return false;
     }
 
     getInstructions() {

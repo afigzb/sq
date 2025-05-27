@@ -237,8 +237,8 @@ export class CodeDisplay {
             }
 
             .code-display-container.editing::after {
-                content: 'ESC退出编辑';
-                opacity: 1;
+                content: '';
+                opacity: 0;
             }
 
             .code-display-container.line-numbers pre {
@@ -327,10 +327,7 @@ export class CodeDisplay {
 
         // 键盘事件
         textarea.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                this.exitEditMode();
-            } else if (e.key === 'Tab') {
+            if (e.key === 'Tab') {
                 e.preventDefault();
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
@@ -343,7 +340,7 @@ export class CodeDisplay {
         });
 
         // 初始化高度
-        setTimeout(() => adjustHeight(), 0);
+        adjustHeight();
 
         return textarea;
     }
@@ -376,17 +373,15 @@ export class CodeDisplay {
         this.editElement.value = this.currentCode;
         
         // 同步高度 - 获取展示元素的高度并应用到编辑器
-        setTimeout(() => {
-            const displayHeight = this.displayElement.offsetHeight;
-            if (displayHeight > 0) {
-                this.editElement.style.height = displayHeight + 'px';
-            } else {
-                // 如果无法获取展示元素高度，则使用动态调整
-                this.editElement.style.height = 'auto';
-                this.editElement.style.height = Math.max(this.editElement.scrollHeight, 100) + 'px';
-            }
-            this.editElement.focus();
-        }, 0);
+        const displayHeight = this.displayElement.offsetHeight;
+        if (displayHeight > 0) {
+            this.editElement.style.height = displayHeight + 'px';
+        } else {
+            // 如果无法获取展示元素高度，则使用动态调整
+            this.editElement.style.height = 'auto';
+            this.editElement.style.height = Math.max(this.editElement.scrollHeight, 100) + 'px';
+        }
+        this.editElement.focus();
     }
 
     // 退出编辑模式
@@ -523,14 +518,10 @@ export class CodeDisplay {
         const themeLink = document.querySelector('#prism-theme-css');
         if (themeLink) {
             themeLink.href = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/${theme}.min.css`;
-            setTimeout(() => {
-                this.rehighlightCode();
-            }, 200);
+            this.rehighlightCode();
         } else {
             this.loadPrismResources();
-            setTimeout(() => {
-                this.rehighlightCode();
-            }, 300);
+            this.rehighlightCode();
         }
     }
 
