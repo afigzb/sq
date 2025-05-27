@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义播放列表</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .playlist-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .playlist-section h2 {
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .playlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .playlist-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s, background 0.3s;
+        }
+        
+        .playlist-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .playlist-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .playlist-songs {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        
+        .playlist-songs li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .playlist-songs li:last-child {
+            border-bottom: none;
+        }
+        
+        .playlist-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        .playlist-btn:hover {
+            background: #00c6fb;
+        }
+        
+        .player-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            color: #2d3748;
+            text-align: center;
+        }
+        
+        .player-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .current-info {
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .control-buttons {
+            margin: 20px 0;
+        }
+        
+        .control-buttons button {
+            background: #2d3748;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .control-buttons button:hover {
+            background: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 自定义播放列表演示</h1>
+            <p class="subtitle">选择不同的播放列表，体验动态切换音乐的乐趣</p>
+        </header>
+        
+        <section class="playlist-section">
+            <h2>📀 可选播放列表</h2>
+            
+            <div class="playlist-grid">
+                <div class="playlist-card">
+                    <div class="playlist-title">🎹 轻音乐精选</div>
+                    <ul class="playlist-songs">
+                        <li>🎵 July - Rhapsody</li>
+                        <li>🎵 yutaka hirasaka - eternal moment</li>
+                        <li>🎵 iwamizu - Love at First Sight</li>
+                    </ul>
+                    <button class="playlist-btn" onclick="loadDefaultPlaylist()">加载此播放列表</button>
+                </div>
+                
+                <div class="playlist-card">
+                    <div class="playlist-title">🌙 夜晚静谧</div>
+                    <ul class="playlist-songs">
+                        <li>🌙 yutaka hirasaka - eternal moment</li>
+                        <li>🌙 iwamizu - Love at First Sight</li>
+                    </ul>
+                    <button class="playlist-btn" onclick="loadNightPlaylist()">加载此播放列表</button>
+                </div>
+                
+                <div class="playlist-card">
+                    <div class="playlist-title">☀️ 清晨活力</div>
+                    <ul class="playlist-songs">
+                        <li>☀️ July - Rhapsody</li>
+                        <li>☀️ iwamizu - Love at First Sight</li>
+                    </ul>
+                    <button class="playlist-btn" onclick="loadMorningPlaylist()">加载此播放列表</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="player-section">
+            <h2>🎧 音乐播放器</h2>
+            
+            <div class="current-info" id="currentInfo">
+                <strong>当前播放列表：</strong>轻音乐精选（默认）<br>
+                <strong>播放模式：</strong>随机播放
+            </div>
+            
+            <div class="control-buttons">
+                <button onclick="showPlayer()">显示播放器</button>
+                <button onclick="hidePlayer()">隐藏播放器</button>
+                <button onclick="togglePlayMode()">切换播放模式</button>
+            </div>
+            
+            <!-- 自定义播放列表的播放器 -->
+            <audio-player 
+                id="customPlayer" 
+                hide-ball 
+                initial-play-mode="RANDOM">
+            </audio-player>
+        </section>
+    </div>
+    
+    <script type="module" src="./src/AudioPlayer.js"></script>
+    
+    <script>
+        const player = document.getElementById('customPlayer');
+        const currentInfo = document.getElementById('currentInfo');
+        
+        // 预定义的播放列表
+        const playlists = {
+            default: [
+                { id: 'light1', title: 'July - Rhapsody', filename: 'July - Rhapsody.mp3' },
+                { id: 'light2', title: 'yutaka hirasaka - eternal moment', filename: 'yutaka hirasaka - eternal moment.mp3' },
+                { id: 'light3', title: 'iwamizu - Love at First Sight', filename: 'iwamizu - Love at First Sight.mp3' }
+            ],
+            night: [
+                { id: 'night1', title: 'yutaka hirasaka - eternal moment', filename: 'yutaka hirasaka - eternal moment.mp3' },
+                { id: 'night2', title: 'iwamizu - Love at First Sight', filename: 'iwamizu - Love at First Sight.mp3' }
+            ],
+            morning: [
+                { id: 'morning1', title: 'July - Rhapsody', filename: 'July - Rhapsody.mp3' },
+                { id: 'morning2', title: 'iwamizu - Love at First Sight', filename: 'iwamizu - Love at First Sight.mp3' }
+            ]
+        };
+        
+        let currentPlayMode = 'RANDOM';
+        
+        function loadDefaultPlaylist() {
+            player.setPlaylist(playlists.default);
+            updateCurrentInfo('轻音乐精选');
+            showPlayer();
+        }
+        
+        function loadNightPlaylist() {
+            player.setPlaylist(playlists.night);
+            updateCurrentInfo('夜晚静谧');
+            showPlayer();
+        }
+        
+        function loadMorningPlaylist() {
+            player.setPlaylist(playlists.morning);
+            updateCurrentInfo('清晨活力');
+            showPlayer();
+        }
+        
+        function updateCurrentInfo(playlistName) {
+            currentInfo.innerHTML = `
+                <strong>当前播放列表：</strong>${playlistName}<br>
+                <strong>播放模式：</strong>${getModeText(currentPlayMode)}
+            `;
+        }
+        
+        function getModeText(mode) {
+            const modeTexts = {
+                'LIST_LOOP': '列表循环',
+                'SINGLE_LOOP': '单曲循环',
+                'SEQUENTIAL': '顺序播放',
+                'RANDOM': '随机播放'
+            };
+            return modeTexts[mode] || '未知模式';
+        }
+        
+        function showPlayer() {
+            player.playerData.setExpanded(true);
+        }
+        
+        function hidePlayer() {
+            player.playerData.setExpanded(false);
+        }
+        
+        function togglePlayMode() {
+            const modes = ['LIST_LOOP', 'SINGLE_LOOP', 'SEQUENTIAL', 'RANDOM'];
+            const currentIndex = modes.indexOf(currentPlayMode);
+            currentPlayMode = modes[(currentIndex + 1) % modes.length];
+            
+            player.setPlayMode(currentPlayMode);
+            updateCurrentInfo(getCurrentPlaylistName());
+        }
+        
+        function getCurrentPlaylistName() {
+            // 简单的状态跟踪，实际项目中可以更精确
+            return '当前选择';
+        }
+        
+        // 页面加载时设置默认播放列表
+        window.addEventListener('load', () => {
+            setTimeout(loadDefaultPlaylist, 1000);
+        });
+    </script>
+</body>
+</html> 

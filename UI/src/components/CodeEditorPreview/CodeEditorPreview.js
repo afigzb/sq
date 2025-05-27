@@ -5,7 +5,7 @@
 
 import { CodeEditorPreviewController } from './CodeEditorPreviewController.js';
 
-class CodeEditorPreview extends HTMLElement {
+export class CodeEditorPreview extends HTMLElement {
     constructor() {
         super();
         this.controller = null;

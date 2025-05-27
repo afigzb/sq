@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioPlayer 组件教程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            color: #4a5568;
+            margin-bottom: 25px;
+        }
+
+        .header .description {
+            font-size: 1.1rem;
+            color: #718096;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 删除了标签样式 */
+
+        .examples-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        .example-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            width: 100%;
+        }
+
+        .example-section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .example-section p {
+            color: #4a5568;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+
+        @media (max-width: 1200px) {
+            .examples-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题 -->
+        <header class="header">
+            <h1>AudioPlayer 组件教程</h1>
+            <p class="subtitle">音频播放器 Web 组件使用指南</p>
+            <p class="description">
+                AudioPlayer 是一个一点也不强大的音频播放器 Web 组件，他支持的功能很多，
+                例如支持自动播放、自定义播放列表、多种播放模式、浮动播放器界面等特性。
+                采用数据驱动分层式开发
+                但自动播放功能是有问题的，受限于浏览器的安全行为，自动播放功能实际上不好实现
+                我这里不过是在lit的updata里面循环开启播放的操作，直到浏览器判断用户有交互，允许AudioPlayer播放为止
+                本教程通过实际示例展示其主要用法。
+            </p>
+        </header>
+
+        <!-- 删除了标签切换 -->
+
+        <!-- 主要内容区域 -->
+        <div class="examples-container">
+            <!-- 自动播放示例 -->
+            <div class="example-section">
+                <h2>🎶 自动播放示例</h2>
+                <p>演示如何配置 AudioPlayer 组件实现页面加载时自动播放音乐</p>
+                
+                <code-editor-preview 
+                    id="editor-autoPlay"
+                    language="html"
+                    theme="prism"
+                    width="100%"
+                    show-toolbar="true"
+                    auto-preview="true"
+                    debounce-delay="500"
+                    default-code=""
+                    instructions="">
+                </code-editor-preview>
+            </div>
+
+            <!-- 自定义播放列表示例 -->
+            <div class="example-section">
+                <h2>📀 自定义播放列表示例</h2>
+                <p>展示如何通过 JavaScript API 动态管理播放列表和控制播放器</p>
+                
+                <code-editor-preview 
+                    id="editor-customPlaylist"
+                    language="html"
+                    theme="prism"
+                    width="100%"
+                    show-toolbar="true"
+                    auto-preview="true"
+                    debounce-delay="500"
+                    default-code=""
+                    instructions="">
+                </code-editor-preview>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入组件依赖 -->
+    <script type="module" src="../../CodeEditorPreview/CodeEditorPreview.js"></script>
+    <script type="module" src="./usage-example.js"></script>
+
+</body>
+</html>
