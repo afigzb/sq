@@ -454,6 +454,10 @@ export const EXAMPLE_CODES = {
 export const INSTRUCTIONS = {
     autoPlay: `# 🎵 AudioPlayer 自动播放示例
 
+    ## 注意事项
+- 由于现代浏览器对自动播放有限制
+- 组件内置了重试机制来处理自动播放策略
+
 ## 功能特点
 - **页面加载自动播放**：使用 \`auto-play\` 属性实现
 - **指定初始播放歌曲**：通过 \`initial-track-id\` 设置
@@ -470,10 +474,7 @@ export const INSTRUCTIONS = {
 ### \`initial-play-mode="LIST_LOOP"\`
 设置初始播放模式为列表循环
 
-## 注意事项
-- 现代浏览器对自动播放有限制
-- 组件内置了重试机制来处理自动播放策略
-- 建议在用户交互后启动播放以获得最佳体验
+
 
 ## 使用场景
 - 音乐网站首页

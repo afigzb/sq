@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音量设置演示</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .demo-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+        
+        .demo-description {
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .player-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🎵 音量设置演示</h1>
+        
+        <div class="demo-section">
+            <div class="demo-title">1. 默认音量（50%）</div>
+            <div class="demo-description">不设置 initial-volume 属性时，默认音量为 50%</div>
+            <div class="code-example">&lt;audio-player&gt;&lt;/audio-player&gt;</div>
+            <div class="player-container">
+                <audio-player></audio-player>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">2. 低音量（20%）</div>
+            <div class="demo-description">通过 initial-volume="20" 设置初始音量为 20%</div>
+            <div class="code-example">&lt;audio-player initial-volume="20"&gt;&lt;/audio-player&gt;</div>
+            <div class="player-container">
+                <audio-player initial-volume="20"></audio-player>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">3. 高音量（80%）</div>
+            <div class="demo-description">通过 initial-volume="80" 设置初始音量为 80%</div>
+            <div class="code-example">&lt;audio-player initial-volume="80"&gt;&lt;/audio-player&gt;</div>
+            <div class="player-container">
+                <audio-player initial-volume="80"></audio-player>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">4. 自动播放 + 自定义音量（60%）</div>
+            <div class="demo-description">结合自动播放和自定义音量的完整示例</div>
+            <div class="code-example">&lt;audio-player 
+    initial-track-id="track_2" 
+    auto-play 
+    initial-volume="60"
+    initial-play-mode="LIST_LOOP"&gt;
+&lt;/audio-player&gt;</div>
+            <div class="player-container">
+                <audio-player 
+                    initial-track-id="track_2" 
+                    auto-play 
+                    initial-volume="50"
+                    initial-play-mode="LIST_LOOP">
+                </audio-player>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">📝 使用说明</div>
+            <div class="demo-description">
+                <strong>initial-volume</strong> 属性接受 0-100 的数值：
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li><strong>0</strong>：静音</li>
+                    <li><strong>1-30</strong>：低音量</li>
+                    <li><strong>31-70</strong>：中等音量</li>
+                    <li><strong>71-100</strong>：高音量</li>
+                </ul>
+                <br>
+                <strong>注意：</strong>现在音量设置会同时更新显示值和实际音频元素的音量，解决了之前只更新显示的问题。
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="./src/AudioPlayer.js"></script>
+</body>
+</html> 

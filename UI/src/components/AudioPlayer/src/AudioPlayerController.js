@@ -6,7 +6,13 @@ export const AUDIO_CONFIG = {
     DEFAULT_FILES: [
         'July - Rhapsody.mp3',
         'yutaka hirasaka - eternal moment.mp3',
-        'iwamizu - Love at First Sight.mp3'
+        'iwamizu - Love at First Sight.mp3',
+        '能登麻美子 - 夕顔.mp3',
+        'July - 그 여름의 바다.mp3',
+        'Lucid fall - 구름으로 가자 (Inst.).mp3',
+        'Lulleaux,Giang Pham - Contact.mp3',
+        'Saiakoup - Afterglow.mp3',
+        'のぶなが,ゆうゆ - 深海少女.mp3',
     ],
     MODES: {
         LIST_LOOP: 'LIST_LOOP',
@@ -56,7 +62,7 @@ export class AudioPlayerData {
         this.currentTrackId = null;
         this.playMode = AUDIO_CONFIG.MODES.LIST_LOOP;
         this.state = AUDIO_CONFIG.STATES.STOPPED;
-        this.volume = 70;
+        this.volume = 30;
         this.isMuted = false;
         this.playHistory = [];
         this.currentTime = 0;
@@ -310,7 +316,10 @@ export class AudioPlayerController {
         }
         
         this.data.setTracks(tracks);
-        this.data.setVolume(70);
+        
+        // 设置初始音量 - 使用控制器的方法以确保同时更新数据和音频元素
+        const initialVolume = this.config.initialVolume !== undefined ? this.config.initialVolume : 30;
+        this.setVolume(initialVolume);
         
         // 设置初始播放歌曲
         if (tracks.length > 0) {

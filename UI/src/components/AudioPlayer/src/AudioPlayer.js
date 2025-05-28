@@ -22,7 +22,10 @@ export class AudioPlayer extends LitElement {
         autoPlay: { type: Boolean, attribute: 'auto-play' },
         
         // 音频文件基础路径
-        audioBasePath: { type: String, attribute: 'audio-base-path' }
+        audioBasePath: { type: String, attribute: 'audio-base-path' },
+        
+        // 初始音量（0-100）
+        initialVolume: { type: Number, attribute: 'initial-volume' }
     };
     
     constructor() {
@@ -37,6 +40,7 @@ export class AudioPlayer extends LitElement {
         this.initialTrackId = null;
         this.autoPlay = false;
         this.audioBasePath = 'audio/';
+        this.initialVolume = 50;
         
         // 自动播放重试机制
         this.autoPlayRetryTimer = null;
@@ -55,7 +59,8 @@ export class AudioPlayer extends LitElement {
                     playlist: this.playlist,
                     initialTrackId: this.initialTrackId,
                     autoPlay: this.autoPlay,
-                    audioBasePath: this.audioBasePath
+                    audioBasePath: this.audioBasePath,
+                    initialVolume: this.initialVolume
                 };
                 
                 this.controller = new AudioPlayerController(this.playerData, audioElement, config);
