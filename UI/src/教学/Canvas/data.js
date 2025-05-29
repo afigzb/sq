@@ -7,6 +7,7 @@ import { loadHtmlAsString, createExampleFromFile } from '../../components/Teachi
 
 // 在头部预加载所有HTML文件内容
 // 基础教学文件
+const overviewHtml = await loadHtmlAsString('../../教学/Canvas/概要.html');
 const basicShapesHtml = await loadHtmlAsString('../../教学/Canvas/基础教学/基础形状绘制.html');
 const transformHtml = await loadHtmlAsString('../../教学/Canvas/基础教学/变换操作.html');
 const pathsHtml = await loadHtmlAsString('../../教学/Canvas/基础教学/路径和曲线.html');
@@ -36,6 +37,47 @@ export const canvasTutorialData = {
     
     // 教学章节
     chapters: [
+        {
+            id: 'overview',
+            title: 'Canvas概述',
+            subtitle: '了解Canvas的基本概念和核心特性',
+            examples: [
+                {
+                    id: 'canvas-overview',
+                    title: '什么是Canvas',
+                    description: 'Canvas的基本概念、发展历程和核心特性介绍',
+                    code: overviewHtml,
+                    instructions: `# 🎨 Canvas概述
+
+## 核心概念
+- **Canvas元素**: HTML5引入的绘图元素
+- **绘图上下文**: 2D和WebGL两种渲染模式
+- **像素级控制**: 直接操作像素的绘图方式
+- **立即模式**: 无状态的绘图系统设计
+
+## 发展历程
+- 2004年: 苹果Safari首次引入
+- 2005-2009年: 主流浏览器支持
+- 2010年: HTML5标准纳入
+- 2010年至今: 技术持续演进
+
+## 核心特性
+- 丰富的绘图API
+- 硬件加速渲染
+- 像素级精确控制
+- 跨平台兼容性
+- Web生态深度集成
+- 移动设备优化
+
+## 应用场景
+- 数据可视化
+- Web游戏开发
+- 创意工具平台
+- 交互体验升级
+- 实时图像处理`
+                }
+            ]
+        },
         {
             id: 'basic-foundation',
             title: '基础图形绘制',
