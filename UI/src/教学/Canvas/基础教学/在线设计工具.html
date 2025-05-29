@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线设计工具</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 在线设计工具</h1>
+        <p>类似Figma的在线设计平台界面示例</p>
+        <canvas id="designCanvas" width="800" height="400"></canvas>
+        <p>这个示例展示了在线设计工具的界面布局，包括工具栏、设计元素、选择框和图层面板。</p>
+    </div>
+
+    <script>
+        // 在线设计工具示例
+        function initDesignTool() {
+            const canvas = document.getElementById('designCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制设计界面
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 工具栏
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(0, 0, canvas.width, 40);
+            
+            // 工具按钮
+            const tools = ['✏️', '🔲', '⭕', '📝', '🎨', '📐'];
+            tools.forEach((tool, i) => {
+                ctx.fillStyle = i === 0 ? '#3b82f6' : '#64748b';
+                ctx.fillRect(15 + i * 45, 8, 40, 24);
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(tool, 35 + i * 45, 24);
+            });
+            
+            // 主设计区域边框
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(200, 50, 400, 250);
+            
+            // 设计元素 - 矩形
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(250, 80, 120, 80);
+            
+            // 设计元素 - 圆形
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(450, 120, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 设计元素 - 三角形
+            ctx.fillStyle = '#8b5cf6';
+            ctx.beginPath();
+            ctx.moveTo(350, 200);
+            ctx.lineTo(400, 280);
+            ctx.lineTo(300, 280);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 选择框 (围绕矩形)
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(246, 76, 128, 88);
+            ctx.setLineDash([]);
+            
+            // 选择框控制点
+            const handles = [
+                {x: 246, y: 76}, {x: 310, y: 76}, {x: 374, y: 76},
+                {x: 246, y: 120}, {x: 374, y: 120},
+                {x: 246, y: 164}, {x: 310, y: 164}, {x: 374, y: 164}
+            ];
+            
+            handles.forEach(handle => {
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(handle.x - 3, handle.y - 3, 6, 6);
+            });
+            
+            // 左侧工具面板
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(20, 50, 160, 250);
+            
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('工具箱', 30, 75);
+            
+            // 工具选项
+            const toolOptions = ['选择工具', '画笔工具', '形状工具', '文字工具'];
+            toolOptions.forEach((option, i) => {
+                ctx.fillStyle = i === 0 ? '#e2e8f0' : 'transparent';
+                ctx.fillRect(30, 90 + i * 30, 140, 25);
+                
+                ctx.fillStyle = '#475569';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(option, 40, 107 + i * 30);
+            });
+            
+            // 右侧图层面板
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(620, 50, 160, 250);
+            
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('图层', 630, 75);
+            
+            // 图层列表
+            const layers = [
+                {name: '🔲 Rectangle', selected: true},
+                {name: '⭕ Circle', selected: false},
+                {name: '🔺 Triangle', selected: false},
+                {name: '📄 Background', selected: false}
+            ];
+            
+            layers.forEach((layer, i) => {
+                ctx.fillStyle = layer.selected ? '#e2e8f0' : 'transparent';
+                ctx.fillRect(630, 90 + i * 25, 140, 20);
+                
+                ctx.fillStyle = layer.selected ? '#1e293b' : '#64748b';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(layer.name, 640, 103 + i * 25);
+            });
+            
+            // 属性面板
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('属性', 630, 220);
+            
+            // 属性项
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('填充: #ef4444', 640, 240);
+            ctx.fillText('宽度: 120px', 640, 255);
+            ctx.fillText('高度: 80px', 640, 270);
+            ctx.fillText('旋转: 0°', 640, 285);
+            
+            // 底部状态栏
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(0, 320, canvas.width, 30);
+            
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 320);
+            ctx.lineTo(canvas.width, 320);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('选中: Rectangle | 位置: (250, 80) | 尺寸: 120×80', 20, 338);
+            ctx.textAlign = 'right';
+            ctx.fillText('缩放: 100%', canvas.width - 20, 338);
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initDesignTool();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .toolbar {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .tool-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    .tool-group label {
+        font-size: 12px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+        cursor: crosshair;
+        background: #ffffff;
+        max-width: 100%;
+        height: auto;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+        transition: all 0.3s ease;
+        min-width: 80px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    input[type="color"] {
+        width: 50px;
+        height: 35px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    input[type="range"] {
+        width: 100px;
+    }
+    select {
+        padding: 8px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        background: white;
+    }
+    .status {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 14px;
+        color: #2c3e50;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .toolbar {
+            padding: 15px;
+            gap: 10px;
+        }
+        .tool-group {
+            gap: 3px;
+        }
+        .tool-group label {
+            font-size: 11px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 12px;
+            min-width: 70px;
+        }
+        input[type="range"] {
+            width: 80px;
+        }
+        .status {
+            font-size: 12px;
+        }
+    }
+</style>
+</html> 

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粒子物理引擎</title>
+</head>
+<body>
+    <div class="container">
+        <h1>⚛️ 粒子物理引擎</h1>
+        <p>具有真实物理效果的粒子系统，支持重力、碰撞检测和相互作用</p>
+        <canvas id="particleCanvas" width="800" height="400"></canvas>
+        <div class="controls-panel">
+            <h4>粒子控制面板</h4>
+            <div class="control-row">
+                <div class="control-item">
+                    <label>重力</label>
+                    <input type="range" id="gravity" min="0" max="2" step="0.1" value="0.5">
+                </div>
+                <div class="control-item">
+                    <label>摩擦力</label>
+                    <input type="range" id="friction" min="0.8" max="1" step="0.01" value="0.99">
+                </div>
+                <div class="control-item">
+                    <label>粒子数量</label>
+                    <input type="range" id="particleCount" min="50" max="500" step="50" value="200">
+                </div>
+                <div class="control-item">
+                    <button onclick="resetParticles()">重置粒子</button>
+                </div>
+            </div>
+        </div>
+        <div class="stats-display" id="particleStats">粒子数: 200 | 碰撞次数: 0</div>
+        <p>这个示例展示了完整的粒子物理系统，包括重力模拟、弹性碰撞、摩擦力和边界检测。</p>
+    </div>
+
+    <script>
+        // 粒子物理引擎
+        function initParticleSystem() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let collisionCount = 0;
+            
+            class PhysicsParticle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 10;
+                    this.vy = (Math.random() - 0.5) * 10;
+                    this.radius = Math.random() * 3 + 2;
+                    this.mass = this.radius * 0.1;
+                    this.hue = Math.random() * 360;
+                    this.life = 1.0;
+                }
+                
+                update() {
+                    const gravity = parseFloat(document.getElementById('gravity').value);
+                    const friction = parseFloat(document.getElementById('friction').value);
+                    
+                    // 应用重力
+                    this.vy += gravity;
+                    
+                    // 应用摩擦
+                    this.vx *= friction;
+                    this.vy *= friction;
+                    
+                    // 更新位置
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    // 边界碰撞
+                    if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+                        this.vx *= -0.8;
+                        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                        collisionCount++;
+                    }
+                    if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) {
+                        this.vy *= -0.8;
+                        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                        collisionCount++;
+                    }
+                    
+                    // 粒子间碰撞
+                    particles.forEach(other => {
+                        if (other !== this) {
+                            const dx = other.x - this.x;
+                            const dy = other.y - this.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < this.radius + other.radius && distance > 0) {
+                                // 简单弹性碰撞
+                                const angle = Math.atan2(dy, dx);
+                                const sin = Math.sin(angle);
+                                const cos = Math.cos(angle);
+                                
+                                // 分离重叠的粒子
+                                const overlap = this.radius + other.radius - distance;
+                                this.x -= cos * overlap * 0.5;
+                                this.y -= sin * overlap * 0.5;
+                                other.x += cos * overlap * 0.5;
+                                other.y += sin * overlap * 0.5;
+                                
+                                // 交换速度分量
+                                const thisVelX = this.vx * cos + this.vy * sin;
+                                const thisVelY = this.vx * sin - this.vy * cos;
+                                const otherVelX = other.vx * cos + other.vy * sin;
+                                const otherVelY = other.vx * sin - other.vy * cos;
+                                
+                                this.vx = otherVelX * cos - thisVelY * sin;
+                                this.vy = otherVelX * sin + thisVelY * cos;
+                                other.vx = thisVelX * cos - otherVelY * sin;
+                                other.vy = thisVelX * sin + otherVelY * cos;
+                            }
+                        }
+                    });
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.life;
+                    
+                    // 发光效果
+                    const gradient = ctx.createRadialGradient(
+                        this.x, this.y, 0,
+                        this.x, this.y, this.radius * 2
+                    );
+                    gradient.addColorStop(0, `hsla(${this.hue}, 100%, 50%, 1)`);
+                    gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 核心粒子
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 70%)`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // 初始化粒子
+            function createParticles() {
+                const count = parseInt(document.getElementById('particleCount').value);
+                particles = [];
+                for (let i = 0; i < count; i++) {
+                    particles.push(new PhysicsParticle());
+                }
+            }
+            
+            createParticles();
+            
+            // 动画循环
+            function animate() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(particle => {
+                    particle.update();
+                    particle.draw();
+                });
+                
+                // 更新统计
+                document.getElementById('particleStats').textContent = 
+                    `粒子数: ${particles.length} | 碰撞次数: ${collisionCount}`;
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // 控件事件
+            document.getElementById('particleCount').addEventListener('change', createParticles);
+            
+            // 全局函数
+            window.resetParticles = () => {
+                collisionCount = 0;
+                createParticles();
+            };
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initParticleSystem();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .physics-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #74b9ff;
+    }
+    .physics-controls h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .control-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+    .control-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    .control-item label {
+        font-size: 12px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    .control-item input {
+        width: 100%;
+        max-width: 150px;
+    }
+    canvas {
+        border: 2px solid #34495e;
+        border-radius: 10px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        margin: 20px 0;
+        background: radial-gradient(circle, #0f0f23, #1a1a2e);
+        max-width: 100%;
+        height: auto;
+    }
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        min-width: 100px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    .stats {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+    .stats h4 {
+        color: #2c3e50;
+        margin-top: 0;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .stat-item {
+        font-size: 14px;
+        color: #666;
+    }
+    .stat-value {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .physics-controls {
+            padding: 15px;
+        }
+        .control-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .button-group {
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        button {
+            min-width: 150px;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</html> 

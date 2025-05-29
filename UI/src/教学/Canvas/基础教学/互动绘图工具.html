@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互动绘图工具</title>
+</head>
+<body>
+    <div class="container">
+        <h1>互动绘图工具</h1>
+        <p>尝试调整下面的参数，然后点击画布上的任意位置来绘制图形</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>填充颜色：</label>
+                <input type="color" id="fillColor" value="#ff6b6b">
+            </div>
+            <div class="control-group">
+                <label>描边颜色：</label>
+                <input type="color" id="strokeColor" value="#2d3436">
+            </div>
+            <div class="control-group">
+                <label>线条宽度：</label>
+                <input type="range" id="lineWidth" min="1" max="20" value="3">
+                <span id="lineWidthValue">3</span>
+            </div>
+            <div class="control-group">
+                <label>透明度：</label>
+                <input type="range" id="opacity" min="0" max="100" value="80">
+                <span id="opacityValue">80%</span>
+            </div>
+            <div class="control-group">
+                <label>形状类型：</label>
+                <select id="shapeType">
+                    <option value="rectangle">矩形</option>
+                    <option value="circle">圆形</option>
+                    <option value="triangle">三角形</option>
+                    <option value="star">星形</option>
+                </select>
+            </div>
+        </div>
+        
+        <canvas id="interactiveCanvas" width="800" height="400"></canvas>
+        <br>
+        <button onclick="clearInteractiveCanvas()">清除画布</button>
+        <button onclick="downloadCanvas()">保存图片</button>
+        
+        <p style="margin-top: 15px; font-size: 0.9em;">
+            💡 点击画布上的任意位置来绘制图形，每次点击都会根据当前设置绘制相应的形状
+        </p>
+    </div>
+
+    <script>
+        // 互动画布功能
+        function setupInteractiveCanvas() {
+            const canvas = document.getElementById('interactiveCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 控件事件监听
+            const lineWidthSlider = document.getElementById('lineWidth');
+            const lineWidthValue = document.getElementById('lineWidthValue');
+            const opacitySlider = document.getElementById('opacity');
+            const opacityValue = document.getElementById('opacityValue');
+            
+            lineWidthSlider.addEventListener('input', (e) => {
+                lineWidthValue.textContent = e.target.value;
+            });
+            
+            opacitySlider.addEventListener('input', (e) => {
+                opacityValue.textContent = e.target.value + '%';
+            });
+            
+            // 画布点击事件
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const fillColor = document.getElementById('fillColor').value;
+                const strokeColor = document.getElementById('strokeColor').value;
+                const lineWidth = document.getElementById('lineWidth').value;
+                const opacity = document.getElementById('opacity').value / 100;
+                const shapeType = document.getElementById('shapeType').value;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = lineWidth;
+                
+                drawShape(ctx, x, y, shapeType);
+                ctx.restore();
+            });
+        }
+        
+        function drawShape(ctx, x, y, type) {
+            const size = 40;
+            
+            switch(type) {
+                case 'rectangle':
+                    ctx.fillRect(x - size/2, y - size/2, size, size);
+                    ctx.strokeRect(x - size/2, y - size/2, size, size);
+                    break;
+                case 'circle':
+                    ctx.beginPath();
+                    ctx.arc(x, y, size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                case 'triangle':
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size/2);
+                    ctx.lineTo(x - size/2, y + size/2);
+                    ctx.lineTo(x + size/2, y + size/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                case 'star':
+                    drawStar(ctx, x, y, 5, size/2, size/4);
+                    break;
+            }
+        }
+        
+        function drawStar(ctx, x, y, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                let xOuter = x + Math.cos(rot) * outerRadius;
+                let yOuter = y + Math.sin(rot) * outerRadius;
+                ctx.lineTo(xOuter, yOuter);
+                rot += step;
+                
+                let xInner = x + Math.cos(rot) * innerRadius;
+                let yInner = y + Math.sin(rot) * innerRadius;
+                ctx.lineTo(xInner, yInner);
+                rot += step;
+            }
+            
+            ctx.lineTo(x, y - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+        
+        function clearInteractiveCanvas() {
+            const canvas = document.getElementById('interactiveCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        function downloadCanvas() {
+            const canvas = document.getElementById('interactiveCanvas');
+            const link = document.createElement('a');
+            link.download = 'my-drawing.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            setupInteractiveCanvas();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .controls {
+        margin: 20px 0;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .control-group label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    .control-group input, .control-group select {
+        padding: 8px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        cursor: crosshair;
+        max-width: 100%;
+        height: auto;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+        transition: background 0.3s ease;
+    }
+    button:hover {
+        background: #00a085;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .controls {
+            padding: 15px;
+            gap: 10px;
+        }
+    }
+</style>
+</html> 

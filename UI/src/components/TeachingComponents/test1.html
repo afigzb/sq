@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utils工具测试1 - 单个文件读取</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .demo-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .file-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Utils工具测试1 - 单个HTML文件读取</h1>
+        
+        <div class="demo-section">
+            <div class="demo-title">📁 基础示例 - 读取单个HTML文件</div>
+            <div class="file-info">
+                测试文件: ../../教学/Canvas/基础教学/基础形状绘制.html
+            </div>
+            <button onclick="loadBasicShapes()">加载基础形状绘制示例</button>
+            <div id="basic-status" class="status info">点击按钮开始测试...</div>
+            <pre id="basic-output">HTML内容将在这里显示...</pre>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">📁 深入示例 - 读取复杂HTML文件</div>
+            <div class="file-info">
+                测试文件: ../../教学/Canvas/深入教学/3D立方体旋转.html
+            </div>
+            <button onclick="load3DCube()">加载3D立方体旋转示例</button>
+            <div id="cube-status" class="status info">点击按钮开始测试...</div>
+            <pre id="cube-output">HTML内容将在这里显示...</pre>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🔧 工具函数演示</div>
+            <button onclick="demonstrateAllMethods()">演示所有工具方法</button>
+            <div id="tools-status" class="status info">点击按钮查看工具函数用法...</div>
+            <pre id="tools-output">工具函数演示结果将在这里显示...</pre>
+        </div>
+    </div>
+
+    <script type="module">
+        import { loadHtmlAsString, cleanHtmlContent, createExampleFromFile } from './utils.js';
+        
+        // 全局函数，供按钮调用
+        window.loadBasicShapes = async function() {
+            const statusEl = document.getElementById('basic-status');
+            const outputEl = document.getElementById('basic-output');
+            
+            statusEl.textContent = '⏳ 正在加载文件...';
+            statusEl.className = 'status info';
+            
+            try {
+                const htmlContent = await loadHtmlAsString('../../教学/Canvas/基础教学/基础形状绘制.html');
+                
+                if (htmlContent) {
+                    statusEl.textContent = '✅ 文件加载成功！';
+                    statusEl.className = 'status success';
+                    outputEl.textContent = htmlContent;
+                } else {
+                    statusEl.textContent = '❌ 文件加载失败或为空';
+                    statusEl.className = 'status error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ 加载出错: ${error.message}`;
+                statusEl.className = 'status error';
+                console.error('加载错误:', error);
+            }
+        };
+        
+        window.load3DCube = async function() {
+            const statusEl = document.getElementById('cube-status');
+            const outputEl = document.getElementById('cube-output');
+            
+            statusEl.textContent = '⏳ 正在加载复杂文件...';
+            statusEl.className = 'status info';
+            
+            try {
+                const htmlContent = await loadHtmlAsString('../../教学/Canvas/深入教学/3D立方体旋转.html');
+                
+                if (htmlContent) {
+                    statusEl.textContent = '✅ 复杂文件加载成功！';
+                    statusEl.className = 'status success';
+                    // 只显示前1000个字符，避免过长
+                    const preview = htmlContent.length > 1000 
+                        ? htmlContent.substring(0, 1000) + '\n\n... (内容过长，已截断)'
+                        : htmlContent;
+                    outputEl.textContent = preview;
+                } else {
+                    statusEl.textContent = '❌ 文件加载失败或为空';
+                    statusEl.className = 'status error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ 加载出错: ${error.message}`;
+                statusEl.className = 'status error';
+                console.error('加载错误:', error);
+            }
+        };
+        
+        window.demonstrateAllMethods = async function() {
+            const statusEl = document.getElementById('tools-status');
+            const outputEl = document.getElementById('tools-output');
+            
+            statusEl.textContent = '⏳ 正在演示工具函数...';
+            statusEl.className = 'status info';
+            
+            try {
+                let demo = '=== Utils工具函数演示 ===\n\n';
+                
+                // 1. 基础文件读取
+                demo += '1. 基础文件读取 loadHtmlAsString():\n';
+                const basicFile = await loadHtmlAsString('../../教学/Canvas/基础教学/渐变效果.html');
+                demo += `   文件长度: ${basicFile.length} 字符\n`;
+                demo += `   前100字符: ${basicFile.substring(0, 100)}...\n\n`;
+                
+                // 2. 内容清理
+                demo += '2. 内容清理 cleanHtmlContent():\n';
+                const cleanedContent = cleanHtmlContent(basicFile);
+                demo += `   清理前长度: ${basicFile.length}\n`;
+                demo += `   清理后长度: ${cleanedContent.length}\n\n`;
+                
+                // 3. 创建教学示例
+                demo += '3. 创建教学示例 createExampleFromFile():\n';
+                const example = await createExampleFromFile(
+                    '../../教学/Canvas/基础教学/渐变效果.html',
+                    '渐变效果演示',
+                    '学习Canvas渐变效果的实现方法'
+                );
+                demo += `   示例ID: ${example.id}\n`;
+                demo += `   示例标题: ${example.title}\n`;
+                demo += `   代码长度: ${example.code.length} 字符\n`;
+                
+                outputEl.textContent = demo;
+                statusEl.textContent = '✅ 工具函数演示完成！';
+                statusEl.className = 'status success';
+                
+            } catch (error) {
+                statusEl.textContent = `❌ 演示出错: ${error.message}`;
+                statusEl.className = 'status error';
+                console.error('演示错误:', error);
+            }
+        };
+    </script>
+</body>
+</html>

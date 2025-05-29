@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字渲染</title>
+</head>
+<body>
+    <div class="container">
+        <h1>文字渲染</h1>
+        <p>演示Canvas中的文字绘制和样式设置</p>
+        <canvas id="textCanvas" width="600" height="300"></canvas>
+        <p>展示了填充文字、描边文字、不同字体和对齐方式的使用技巧。</p>
+    </div>
+
+    <script>
+        // 文字渲染示例
+        function drawText() {
+            const canvas = document.getElementById('textCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 基础文字
+            ctx.font = '24px Arial';
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillText('Hello Canvas!', 50, 50);
+            
+            // 描边文字
+            ctx.font = 'bold 28px sans-serif';
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.strokeText('Stroke Text', 50, 100);
+            
+            // 渐变文字
+            const gradient = ctx.createLinearGradient(50, 130, 300, 130);
+            gradient.addColorStop(0, '#3498db');
+            gradient.addColorStop(1, '#9b59b6');
+            ctx.font = '32px serif';
+            ctx.fillStyle = gradient;
+            ctx.fillText('Gradient Text', 50, 150);
+            
+            // 对齐文字
+            ctx.font = '20px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#27ae60';
+            ctx.fillText('Center Aligned', 300, 200);
+            
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#f39c12';
+            ctx.fillText('Right Aligned', 550, 230);
+            
+            // 重置对齐
+            ctx.textAlign = 'left';
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            drawText();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 

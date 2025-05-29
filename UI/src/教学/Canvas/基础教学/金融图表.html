@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金融图表</title>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 金融图表</h1>
+        <p>股票价格趋势图和K线图示例</p>
+        <canvas id="chartCanvas" width="800" height="400"></canvas>
+        <p>这个示例展示了金融领域常用的价格走势图，包括网格线、价格曲线、填充区域和价格标签。</p>
+    </div>
+
+    <script>
+        // 金融图表示例
+        function initChart() {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 模拟股价数据
+            const data = [];
+            let price = 100;
+            for (let i = 0; i < 60; i++) {
+                price += (Math.random() - 0.5) * 8;
+                data.push(Math.max(70, Math.min(130, price)));
+            }
+            
+            function drawChart() {
+                // 背景
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 图表区域
+                const chartArea = {
+                    left: 60,
+                    top: 30,
+                    right: canvas.width - 60,
+                    bottom: canvas.height - 60
+                };
+                
+                // 网格线
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 1;
+                
+                // 水平网格线
+                for (let y = chartArea.top; y <= chartArea.bottom; y += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(chartArea.left, y);
+                    ctx.lineTo(chartArea.right, y);
+                    ctx.stroke();
+                }
+                
+                // 垂直网格线
+                for (let x = chartArea.left; x <= chartArea.right; x += 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, chartArea.top);
+                    ctx.lineTo(x, chartArea.bottom);
+                    ctx.stroke();
+                }
+                
+                // 价格线
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                const minPrice = Math.min(...data);
+                const maxPrice = Math.max(...data);
+                const priceRange = maxPrice - minPrice;
+                
+                data.forEach((price, i) => {
+                    const x = chartArea.left + (i / (data.length - 1)) * (chartArea.right - chartArea.left);
+                    const y = chartArea.bottom - ((price - minPrice) / priceRange) * (chartArea.bottom - chartArea.top);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+                
+                // 填充区域
+                ctx.fillStyle = 'rgba(34, 197, 94, 0.1)';
+                ctx.lineTo(chartArea.right, chartArea.bottom);
+                ctx.lineTo(chartArea.left, chartArea.bottom);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Y轴标签
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'right';
+                
+                for (let i = 0; i <= 5; i++) {
+                    const price = minPrice + (priceRange * i / 5);
+                    const y = chartArea.bottom - (i / 5) * (chartArea.bottom - chartArea.top);
+                    ctx.fillText(`$${price.toFixed(1)}`, chartArea.left - 10, y + 4);
+                }
+                
+                // X轴标签
+                ctx.textAlign = 'center';
+                const timeLabels = ['9:30', '10:30', '11:30', '12:30', '1:30', '2:30', '3:30'];
+                timeLabels.forEach((label, i) => {
+                    const x = chartArea.left + (i / (timeLabels.length - 1)) * (chartArea.right - chartArea.left);
+                    ctx.fillText(label, x, chartArea.bottom + 25);
+                });
+                
+                // 当前价格
+                const currentPrice = data[data.length - 1];
+                const currentY = chartArea.bottom - ((currentPrice - minPrice) / priceRange) * (chartArea.bottom - chartArea.top);
+                
+                // 价格线
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, currentY);
+                ctx.lineTo(chartArea.right, currentY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 价格标签
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(chartArea.right + 5, currentY - 12, 50, 24);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`$${currentPrice.toFixed(2)}`, chartArea.right + 30, currentY + 4);
+                
+                // 股票信息
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('AAPL - Apple Inc.', chartArea.left, 25);
+                
+                // 价格变化
+                const change = currentPrice - data[0];
+                const changePercent = (change / data[0]) * 100;
+                ctx.fillStyle = change >= 0 ? '#22c55e' : '#ef4444';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(`${change >= 0 ? '+' : ''}${change.toFixed(2)} (${change >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`, 
+                           chartArea.left + 200, 25);
+                
+                // 成交量柱状图
+                ctx.fillStyle = '#64748b';
+                const volumeHeight = 40;
+                const volumeBottom = chartArea.bottom + 50;
+                
+                data.forEach((_, i) => {
+                    const volume = 0.3 + Math.random() * 0.7;
+                    const x = chartArea.left + (i / (data.length - 1)) * (chartArea.right - chartArea.left);
+                    const height = volume * volumeHeight;
+                    
+                    ctx.fillRect(x - 2, volumeBottom - height, 4, height);
+                });
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('成交量', chartArea.left, volumeBottom + 15);
+            }
+            
+            drawChart();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initChart();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .chart-container {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 15px;
+        margin: 20px 0;
+        border-left: 5px solid #74b9ff;
+    }
+    .chart-container h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        background: #ffffff;
+        max-width: 100%;
+        height: auto;
+    }
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #2c3e50;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+    }
+    .data-info {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+        font-size: 14px;
+        color: #2c3e50;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .chart-container {
+            padding: 20px;
+        }
+        .legend {
+            gap: 15px;
+        }
+        .legend-item {
+            font-size: 12px;
+        }
+        .data-info {
+            font-size: 12px;
+        }
+    }
+</style>
+</html> 

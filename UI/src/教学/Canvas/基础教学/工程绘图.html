@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工程绘图</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 工程绘图</h1>
+        <p>CAD风格的技术图纸绘制示例</p>
+        <canvas id="engineeringCanvas" width="800" height="500"></canvas>
+        <p>这个示例展示了工程图纸的绘制方法，包括精确的几何图形、尺寸标注、中心线和技术注释。</p>
+    </div>
+
+    <script>
+        // 工程绘图示例
+        function initEngineering() {
+            const canvas = document.getElementById('engineeringCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 绘图背景
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 网格
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // 主要结构
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            
+            // 矩形结构
+            ctx.strokeRect(120, 80, 200, 120);
+            ctx.strokeRect(150, 110, 140, 60);
+            
+            // 圆形元素
+            ctx.beginPath();
+            ctx.arc(400, 140, 50, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // 中心线
+            ctx.strokeStyle = '#6b7280';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(350, 140);
+            ctx.lineTo(450, 140);
+            ctx.moveTo(400, 90);
+            ctx.lineTo(400, 190);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 尺寸标注
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1;
+            
+            // 水平标注
+            ctx.beginPath();
+            ctx.moveTo(120, 220);
+            ctx.lineTo(320, 220);
+            ctx.moveTo(120, 215);
+            ctx.lineTo(120, 225);
+            ctx.moveTo(320, 215);
+            ctx.lineTo(320, 225);
+            ctx.stroke();
+            
+            // 标注文字
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('200mm', 220, 240);
+            
+            // 直径标注
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('Ø100mm', 400, 250);
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initEngineering();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 

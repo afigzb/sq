@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>变换操作</title>
+</head>
+<body>
+    <div class="container">
+        <h1>变换操作</h1>
+        <p>演示Canvas中的平移、旋转和缩放变换</p>
+        <canvas id="transformCanvas" width="600" height="300"></canvas>
+        <p>展示了translate、rotate、scale变换的组合使用和状态保存技巧。</p>
+    </div>
+
+    <script>
+        // 变换操作示例
+        function drawTransforms() {
+            const canvas = document.getElementById('transformCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 原始矩形
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(50, 50, 60, 40);
+            
+            // 平移变换
+            ctx.save();
+            ctx.translate(100, 0);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(50, 120, 60, 40);
+            ctx.restore();
+            
+            // 旋转变换
+            ctx.save();
+            ctx.translate(250, 90);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(-30, -20, 60, 40);
+            ctx.restore();
+            
+            // 缩放变换
+            ctx.save();
+            ctx.translate(400, 90);
+            ctx.scale(1.5, 0.8);
+            ctx.fillStyle = '#f39c12';
+            ctx.fillRect(-30, -20, 60, 40);
+            ctx.restore();
+            
+            // 组合变换
+            ctx.save();
+            ctx.translate(500, 180);
+            ctx.rotate(Math.PI / 6);
+            ctx.scale(0.8, 1.2);
+            ctx.fillStyle = '#9b59b6';
+            ctx.fillRect(-30, -20, 60, 40);
+            ctx.restore();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            drawTransforms();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 

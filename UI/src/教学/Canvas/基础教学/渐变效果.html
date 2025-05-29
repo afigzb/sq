@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渐变效果</title>
+</head>
+<body>
+    <div class="container">
+        <h1>渐变效果</h1>
+        <p>演示线性渐变和径向渐变的创建和应用</p>
+        <canvas id="gradientCanvas" width="600" height="300"></canvas>
+        <p>展示了不同类型的渐变效果，包括线性渐变、径向渐变和多色渐变。</p>
+    </div>
+
+    <script>
+        // 渐变效果示例
+        function drawGradients() {
+            const canvas = document.getElementById('gradientCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 线性渐变
+            const linearGrad = ctx.createLinearGradient(0, 0, 200, 0);
+            linearGrad.addColorStop(0, '#ff7675');
+            linearGrad.addColorStop(1, '#74b9ff');
+            ctx.fillStyle = linearGrad;
+            ctx.fillRect(50, 50, 200, 80);
+            
+            // 径向渐变
+            const radialGrad = ctx.createRadialGradient(400, 90, 15, 400, 90, 60);
+            radialGrad.addColorStop(0, '#fdcb6e');
+            radialGrad.addColorStop(1, '#e84393');
+            ctx.fillStyle = radialGrad;
+            ctx.fillRect(330, 50, 140, 80);
+            
+            // 复杂渐变
+            const complexGrad = ctx.createLinearGradient(0, 150, 0, 250);
+            complexGrad.addColorStop(0, '#00b894');
+            complexGrad.addColorStop(0.5, '#00cec9');
+            complexGrad.addColorStop(1, '#55a3ff');
+            ctx.fillStyle = complexGrad;
+            ctx.fillRect(50, 150, 520, 100);
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            drawGradients();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 

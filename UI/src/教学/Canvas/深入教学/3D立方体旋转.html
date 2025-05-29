@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D立方体旋转</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 3D立方体旋转</h1>
+        <p>使用透视投影实现的3D立方体，支持实时旋转和透视调节</p>
+        <canvas id="cube3DCanvas" width="600" height="400"></canvas>
+        <div class="controls-panel">
+            <h4>3D控制</h4>
+            <div class="control-row">
+                <div class="control-item">
+                    <label>X轴旋转</label>
+                    <input type="range" id="rotationX" min="0" max="360" value="0">
+                </div>
+                <div class="control-item">
+                    <label>Y轴旋转</label>
+                    <input type="range" id="rotationY" min="0" max="360" value="0">
+                </div>
+                <div class="control-item">
+                    <label>透视距离</label>
+                    <input type="range" id="perspective" min="200" max="800" value="400">
+                </div>
+                <div class="control-item">
+                    <button onclick="autoRotate()">自动旋转</button>
+                </div>
+            </div>
+        </div>
+        <p>这个示例展示了在2D Canvas中实现3D效果的数学原理，包括3D坐标变换、透视投影和面的深度排序。</p>
+    </div>
+
+    <script>
+        // 3D立方体
+        let autoRotating = false;
+        
+        function init3DCube() {
+            const canvas = document.getElementById('cube3DCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 立方体顶点
+            const vertices = [
+                [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],  // 后面
+                [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]       // 前面
+            ];
+            
+            // 立方体面
+            const faces = [
+                [0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1],
+                [2, 6, 7, 3], [0, 3, 7, 4], [1, 5, 6, 2]
+            ];
+            
+            const faceColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#a55eea', '#26de81'];
+            
+            function project3D(x, y, z, perspective) {
+                const scale = perspective / (perspective + z);
+                return {
+                    x: canvas.width / 2 + x * scale * 100,
+                    y: canvas.height / 2 + y * scale * 100,
+                    z: z
+                };
+            }
+            
+            function rotateX(point, angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return [
+                    point[0],
+                    point[1] * cos - point[2] * sin,
+                    point[1] * sin + point[2] * cos
+                ];
+            }
+            
+            function rotateY(point, angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return [
+                    point[0] * cos + point[2] * sin,
+                    point[1],
+                    -point[0] * sin + point[2] * cos
+                ];
+            }
+            
+            function animate() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const rotX = parseFloat(document.getElementById('rotationX').value) * Math.PI / 180;
+                const rotY = parseFloat(document.getElementById('rotationY').value) * Math.PI / 180;
+                const perspective = parseFloat(document.getElementById('perspective').value);
+                
+                // 变换顶点
+                const transformedVertices = vertices.map(vertex => {
+                    let rotated = rotateX(vertex, rotX);
+                    rotated = rotateY(rotated, rotY);
+                    return project3D(rotated[0], rotated[1], rotated[2], perspective);
+                });
+                
+                // 按Z值排序面
+                const sortedFaces = faces.map((face, index) => {
+                    const avgZ = face.reduce((sum, vertexIndex) => 
+                        sum + transformedVertices[vertexIndex].z, 0) / 4;
+                    return { face, color: faceColors[index], avgZ };
+                }).sort((a, b) => a.avgZ - b.avgZ);
+                
+                // 绘制面
+                sortedFaces.forEach(({ face, color }) => {
+                    ctx.fillStyle = color;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    
+                    ctx.beginPath();
+                    face.forEach((vertexIndex, i) => {
+                        const vertex = transformedVertices[vertexIndex];
+                        if (i === 0) {
+                            ctx.moveTo(vertex.x, vertex.y);
+                        } else {
+                            ctx.lineTo(vertex.x, vertex.y);
+                        }
+                    });
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                });
+                
+                // 绘制顶点
+                transformedVertices.forEach(vertex => {
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(vertex.x, vertex.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // 自动旋转
+                if (autoRotating) {
+                    document.getElementById('rotationX').value = 
+                        (parseFloat(document.getElementById('rotationX').value) + 1) % 360;
+                    document.getElementById('rotationY').value = 
+                        (parseFloat(document.getElementById('rotationY').value) + 2) % 360;
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // 控件事件
+            document.getElementById('rotationX').addEventListener('input', () => {});
+            document.getElementById('rotationY').addEventListener('input', () => {});
+            document.getElementById('perspective').addEventListener('input', () => {});
+            
+            window.autoRotate = () => {
+                autoRotating = !autoRotating;
+                const btn = document.querySelector('button');
+                btn.textContent = autoRotating ? '停止旋转' : '自动旋转';
+            };
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            init3DCube();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .controls {
+        margin: 20px 0;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    .control-group label {
+        font-size: 12px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        margin: 20px 0;
+        background: radial-gradient(circle, #1a1a2e, #16213e);
+        max-width: 100%;
+        height: auto;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+        transition: all 0.3s ease;
+        min-width: 80px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    input[type="range"] {
+        width: 100px;
+    }
+    .info {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 14px;
+        color: #2c3e50;
+        text-align: left;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .controls {
+            padding: 15px;
+            gap: 10px;
+        }
+        .control-group {
+            gap: 3px;
+        }
+        .control-group label {
+            font-size: 11px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 12px;
+            min-width: 70px;
+        }
+        input[type="range"] {
+            width: 80px;
+        }
+        .info {
+            font-size: 12px;
+        }
+    }
+</style>
+</html> 

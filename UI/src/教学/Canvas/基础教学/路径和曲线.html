@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路径和曲线</title>
+</head>
+<body>
+    <div class="container">
+        <h1>路径和曲线</h1>
+        <p>演示复杂路径绘制和贝塞尔曲线的使用</p>
+        <canvas id="pathCanvas" width="600" height="300"></canvas>
+        <p>展示了直线路径、二次贝塞尔曲线和三次贝塞尔曲线的绘制技术。</p>
+    </div>
+
+    <script>
+        // 路径和曲线示例
+        function drawPaths() {
+            const canvas = document.getElementById('pathCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 直线路径
+            ctx.beginPath();
+            ctx.moveTo(50, 50);
+            ctx.lineTo(150, 100);
+            ctx.lineTo(200, 50);
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 二次贝塞尔曲线
+            ctx.beginPath();
+            ctx.moveTo(250, 50);
+            ctx.quadraticCurveTo(350, 20, 450, 80);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 三次贝塞尔曲线
+            ctx.beginPath();
+            ctx.moveTo(50, 150);
+            ctx.bezierCurveTo(100, 120, 200, 180, 250, 150);
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 复杂路径
+            ctx.beginPath();
+            ctx.moveTo(350, 150);
+            ctx.lineTo(400, 200);
+            ctx.quadraticCurveTo(450, 180, 500, 220);
+            ctx.lineTo(550, 180);
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            drawPaths();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 

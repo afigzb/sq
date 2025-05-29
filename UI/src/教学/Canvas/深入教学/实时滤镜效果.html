@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时滤镜效果</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 实时滤镜效果</h1>
+        <p>实时图像滤镜处理，展示像素操作的强大功能</p>
+        <canvas id="filterCanvas" width="600" height="300"></canvas>
+        <div class="controls-panel">
+            <h4>滤镜控制</h4>
+            <div class="control-row">
+                <div class="control-item">
+                    <label>滤镜类型</label>
+                    <select id="filterType">
+                        <option value="none">原图</option>
+                        <option value="grayscale">灰度</option>
+                        <option value="sepia">复古</option>
+                        <option value="negative">负片</option>
+                        <option value="blur">模糊</option>
+                        <option value="emboss">浮雕</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label>强度</label>
+                    <input type="range" id="filterIntensity" min="0" max="100" value="100">
+                </div>
+            </div>
+        </div>
+        <p>这个示例展示了各种图像滤镜算法，通过像素级操作实现不同的视觉效果。</p>
+    </div>
+
+    <script>
+        // 实时滤镜效果
+        function initImageFilter() {
+            const canvas = document.getElementById('filterCanvas');
+            const ctx = canvas.getContext('2d');
+            let originalImageData;
+            
+            // 创建测试图像
+            function createTestImage() {
+                // 绘制彩色渐变背景
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#ff6b6b');
+                gradient.addColorStop(0.3, '#4ecdc4');
+                gradient.addColorStop(0.6, '#45b7d1');
+                gradient.addColorStop(1, '#f9ca24');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制一些几何形状
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(150, 100, 50, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(250, 50, 100, 100);
+                
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(420, 80);
+                ctx.lineTo(470, 160);
+                ctx.lineTo(370, 160);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 添加文字
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 24px sans-serif';
+                ctx.fillText('滤镜测试', 450, 50);
+                
+                originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            }
+            
+            createTestImage();
+            
+            // 滤镜函数
+            function applyFilter() {
+                const filterType = document.getElementById('filterType').value;
+                const intensity = parseInt(document.getElementById('filterIntensity').value) / 100;
+                
+                const imageData = ctx.createImageData(originalImageData);
+                const data = imageData.data;
+                const originalData = originalImageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = originalData[i];
+                    let g = originalData[i + 1];
+                    let b = originalData[i + 2];
+                    let a = originalData[i + 3];
+                    
+                    switch (filterType) {
+                        case 'grayscale':
+                            const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                            r = r + (gray - r) * intensity;
+                            g = g + (gray - g) * intensity;
+                            b = b + (gray - b) * intensity;
+                            break;
+                            
+                        case 'sepia':
+                            const sr = (r * 0.393 + g * 0.769 + b * 0.189);
+                            const sg = (r * 0.349 + g * 0.686 + b * 0.168);
+                            const sb = (r * 0.272 + g * 0.534 + b * 0.131);
+                            r = r + (sr - r) * intensity;
+                            g = g + (sg - g) * intensity;
+                            b = b + (sb - b) * intensity;
+                            break;
+                            
+                        case 'negative':
+                            r = r + (255 - r) * intensity;
+                            g = g + (255 - g) * intensity;
+                            b = b + (255 - b) * intensity;
+                            break;
+                            
+                        case 'blur':
+                            // 简单模糊效果
+                            const blurAmount = intensity * 0.3;
+                            r = r * (1 - blurAmount) + 128 * blurAmount;
+                            g = g * (1 - blurAmount) + 128 * blurAmount;
+                            b = b * (1 - blurAmount) + 128 * blurAmount;
+                            break;
+                            
+                        case 'emboss':
+                            // 浮雕效果
+                            const embossR = Math.min(255, Math.max(0, r + (128 - g) * intensity));
+                            const embossG = Math.min(255, Math.max(0, g + (128 - b) * intensity));
+                            const embossB = Math.min(255, Math.max(0, b + (128 - r) * intensity));
+                            r = embossR;
+                            g = embossG;
+                            b = embossB;
+                            break;
+                    }
+                    
+                    data[i] = Math.min(255, Math.max(0, r));
+                    data[i + 1] = Math.min(255, Math.max(0, g));
+                    data[i + 2] = Math.min(255, Math.max(0, b));
+                    data[i + 3] = a;
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+            }
+            
+            // 事件监听
+            document.getElementById('filterType').addEventListener('change', applyFilter);
+            document.getElementById('filterIntensity').addEventListener('input', applyFilter);
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initImageFilter();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .filter-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #74b9ff;
+    }
+    .filter-controls h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+    .filter-item label {
+        font-size: 12px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    .filter-item input[type="range"] {
+        width: 100%;
+        max-width: 150px;
+    }
+    .filter-item .value-display {
+        font-size: 12px;
+        color: #666;
+        min-height: 16px;
+    }
+    canvas {
+        border: 2px solid #34495e;
+        border-radius: 10px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+        background: #ffffff;
+        max-width: 100%;
+        height: auto;
+    }
+    .preset-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        min-width: 100px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    .status {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 14px;
+        color: #2c3e50;
+        text-align: left;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .filter-controls {
+            padding: 15px;
+        }
+        .filter-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .filter-item {
+            padding: 12px;
+        }
+        .preset-buttons {
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        button {
+            min-width: 150px;
+        }
+        .status {
+            font-size: 12px;
+        }
+    }
+</style>
+</html> 

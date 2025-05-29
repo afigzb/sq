@@ -13,21 +13,11 @@
     </style>
 </head>
 <body>
-    <!-- 使用data-source属性自动加载数据 -->
     <tutorial-component 
         title="🎨 Canvas 基础教学"
         description="交互式学习平台，掌握Canvas绘图技能"
         theme="prism"
-        data-source="../../教学/Canvas/data.js"
-        initial-chapter="basics">
+        data-source="../../教学/Canvas/data.js">
     </tutorial-component>
-    <script type="module">
-        // 监听章节切换事件
-        document.addEventListener('chapter-changed', (event) => {
-            const { chapterId, chapter } = event.detail;
-            console.log('章节已切换:', chapterId, chapter.title);
-            console.log('包含示例数量:', chapter.examples.length);
-        });
-    </script>
 </body>
 </html> 

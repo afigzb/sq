@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空穿梭效果</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🌌 星空穿梭效果</h1>
+        <p>模拟星空穿梭的视觉效果，展示Z轴深度和运动模糊</p>
+        <canvas id="starfieldCanvas" width="600" height="400"></canvas>
+        <div class="controls-panel">
+            <h4>星空控制</h4>
+            <div class="control-row">
+                <div class="control-item">
+                    <label>速度</label>
+                    <input type="range" id="starSpeed" min="1" max="20" value="5">
+                </div>
+                <div class="control-item">
+                    <label>星星数量</label>
+                    <input type="range" id="starCount" min="100" max="1000" step="100" value="300">
+                </div>
+                <div class="control-item">
+                    <button onclick="toggleWarp()">超空间跳跃</button>
+                </div>
+            </div>
+        </div>
+        <p>这个示例展示了3D空间中的星空穿梭效果，包括透视变换、运动轨迹和超空间跳跃模式。</p>
+    </div>
+
+    <script>
+        // 星空穿梭
+        let isWarpMode = false;
+        
+        function initStarfield() {
+            const canvas = document.getElementById('starfieldCanvas');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            
+            class Star {
+                constructor() {
+                    this.x = (Math.random() - 0.5) * 2000;
+                    this.y = (Math.random() - 0.5) * 2000;
+                    this.z = Math.random() * 1000;
+                    this.prevX = 0;
+                    this.prevY = 0;
+                    this.color = Math.random() > 0.7 ? 
+                        `hsl(${Math.random() * 60 + 180}, 100%, 80%)` : // 蓝白色星星
+                        'white';
+                }
+                
+                update() {
+                    const speed = parseFloat(document.getElementById('starSpeed').value);
+                    this.z -= speed * (isWarpMode ? 5 : 1);
+                    
+                    if (this.z <= 0) {
+                        this.x = (Math.random() - 0.5) * 2000;
+                        this.y = (Math.random() - 0.5) * 2000;
+                        this.z = 1000;
+                        this.color = Math.random() > 0.7 ? 
+                            `hsl(${Math.random() * 60 + 180}, 100%, 80%)` : 
+                            'white';
+                    }
+                }
+                
+                draw() {
+                    const x = (this.x / this.z) * canvas.width / 2 + canvas.width / 2;
+                    const y = (this.y / this.z) * canvas.height / 2 + canvas.height / 2;
+                    
+                    if (x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height) {
+                        const size = (1 - this.z / 1000) * 3;
+                        const opacity = 1 - this.z / 1000;
+                        
+                        // 星星本体
+                        ctx.save();
+                        ctx.globalAlpha = opacity;
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.arc(x, y, Math.max(size, 0.5), 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // 星星闪烁效果
+                        if (size > 1 && Math.random() > 0.8) {
+                            ctx.strokeStyle = this.color;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(x - size * 2, y);
+                            ctx.lineTo(x + size * 2, y);
+                            ctx.moveTo(x, y - size * 2);
+                            ctx.lineTo(x, y + size * 2);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                        
+                        // 运动轨迹（超空间模式）
+                        if (isWarpMode && this.prevX && this.prevY) {
+                            const distance = Math.sqrt((x - this.prevX) ** 2 + (y - this.prevY) ** 2);
+                            if (distance > 10) { // 只有运动距离足够大才绘制轨迹
+                                ctx.save();
+                                ctx.globalAlpha = opacity * 0.6;
+                                ctx.strokeStyle = this.color;
+                                ctx.lineWidth = size * 0.5;
+                                ctx.beginPath();
+                                ctx.moveTo(this.prevX, this.prevY);
+                                ctx.lineTo(x, y);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                        }
+                        
+                        this.prevX = x;
+                        this.prevY = y;
+                    }
+                }
+            }
+            
+            function createStars() {
+                const count = parseInt(document.getElementById('starCount').value);
+                // 保留现有星星，只调整数量
+                if (stars.length < count) {
+                    for (let i = stars.length; i < count; i++) {
+                        stars.push(new Star());
+                    }
+                } else if (stars.length > count) {
+                    stars.splice(count);
+                }
+            }
+            
+            createStars();
+            
+            function animate() {
+                // 背景色根据模式变化
+                ctx.fillStyle = isWarpMode ? 
+                    'rgba(0, 0, 20, 0.2)' : // 深蓝色，轻微拖尾
+                    'rgba(0, 0, 0, 0.1)';   // 黑色，轻微拖尾
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 超空间特效背景
+                if (isWarpMode) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.1;
+                    const gradient = ctx.createRadialGradient(
+                        canvas.width/2, canvas.height/2, 0,
+                        canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2
+                    );
+                    gradient.addColorStop(0, 'transparent');
+                    gradient.addColorStop(1, '#0066ff');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                }
+                
+                stars.forEach(star => {
+                    star.update();
+                    star.draw();
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // 控件事件
+            document.getElementById('starCount').addEventListener('change', createStars);
+            
+            window.toggleWarp = () => {
+                isWarpMode = !isWarpMode;
+                const btn = document.querySelector('button');
+                btn.textContent = isWarpMode ? '退出超空间' : '超空间跳跃';
+                btn.style.background = isWarpMode ? '#e74c3c' : '#00b894';
+            };
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initStarfield();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .space-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #74b9ff;
+    }
+    .space-controls h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .control-row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        min-width: 150px;
+    }
+    .control-group label {
+        font-size: 12px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    .control-group input[type="range"] {
+        width: 100%;
+        max-width: 120px;
+    }
+    .control-group .value-display {
+        font-size: 12px;
+        color: #666;
+        min-height: 16px;
+    }
+    canvas {
+        border: 2px solid #1a1a2e;
+        border-radius: 10px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        margin: 20px 0;
+        background: radial-gradient(circle, #000428, #004e92);
+        max-width: 100%;
+        height: auto;
+    }
+    .speed-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        min-width: 100px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    button.active {
+        background: #3498db;
+    }
+    .stats {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+    .stats h4 {
+        color: #2c3e50;
+        margin-top: 0;
+    }
+    .stats-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 8px 0;
+        font-size: 14px;
+    }
+    .stats-label {
+        color: #666;
+    }
+    .stats-value {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .space-controls {
+            padding: 15px;
+        }
+        .control-row {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .control-group {
+            min-width: 200px;
+        }
+        .speed-controls {
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        button {
+            min-width: 150px;
+        }
+        .stats-row {
+            font-size: 12px;
+        }
+    }
+</style>
+</html> 

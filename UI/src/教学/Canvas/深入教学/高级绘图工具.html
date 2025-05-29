@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级绘图工具</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 高级绘图工具</h1>
+        <p>支持多种绘图工具的交互式画布，具有压感模拟和发光效果</p>
+        <canvas id="drawingCanvas" width="800" height="400"></canvas>
+        <div class="controls-panel">
+            <h4>绘图工具</h4>
+            <div class="control-row">
+                <div class="control-item">
+                    <label>工具</label>
+                    <select id="drawTool">
+                        <option value="brush">画笔</option>
+                        <option value="eraser">橡皮擦</option>
+                        <option value="spray">喷枪</option>
+                        <option value="glow">发光笔</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label>大小</label>
+                    <input type="range" id="brushSize" min="1" max="50" value="10">
+                </div>
+                <div class="control-item">
+                    <label>颜色</label>
+                    <input type="color" id="brushColor" value="#ff6b6b">
+                </div>
+                <div class="control-item">
+                    <button onclick="clearDrawing()">清空</button>
+                </div>
+            </div>
+        </div>
+        <p>这个示例展示了专业级绘图工具的实现，包括不同的笔刷效果、压感模拟和特殊效果。</p>
+    </div>
+
+    <script>
+        // 高级绘图工具
+        function initDrawingTool() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            
+            // 初始化画布
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            function startDrawing(e) {
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                lastX = e.clientX - rect.left;
+                lastY = e.clientY - rect.top;
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                
+                const tool = document.getElementById('drawTool').value;
+                const size = parseInt(document.getElementById('brushSize').value);
+                const color = document.getElementById('brushColor').value;
+                
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                
+                switch (tool) {
+                    case 'brush':
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = size;
+                        ctx.beginPath();
+                        ctx.moveTo(lastX, lastY);
+                        ctx.lineTo(currentX, currentY);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'eraser':
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.lineWidth = size;
+                        ctx.beginPath();
+                        ctx.moveTo(lastX, lastY);
+                        ctx.lineTo(currentX, currentY);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'spray':
+                        ctx.globalCompositeOperation = 'source-over';
+                        const density = 20;
+                        for (let i = 0; i < density; i++) {
+                            const offsetX = (Math.random() - 0.5) * size;
+                            const offsetY = (Math.random() - 0.5) * size;
+                            const alpha = Math.random() * 0.5 + 0.1;
+                            
+                            ctx.save();
+                            ctx.globalAlpha = alpha;
+                            ctx.fillStyle = color;
+                            ctx.beginPath();
+                            ctx.arc(currentX + offsetX, currentY + offsetY, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.restore();
+                        }
+                        break;
+                        
+                    case 'glow':
+                        ctx.globalCompositeOperation = 'source-over';
+                        
+                        // 外层发光
+                        for (let i = 0; i < 3; i++) {
+                            ctx.save();
+                            ctx.shadowColor = color;
+                            ctx.shadowBlur = size * (3 - i);
+                            ctx.globalAlpha = 0.3;
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = size / 4;
+                            ctx.beginPath();
+                            ctx.moveTo(lastX, lastY);
+                            ctx.lineTo(currentX, currentY);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                        
+                        // 内层实线
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = size / 6;
+                        ctx.beginPath();
+                        ctx.moveTo(lastX, lastY);
+                        ctx.lineTo(currentX, currentY);
+                        ctx.stroke();
+                        break;
+                }
+                
+                lastX = currentX;
+                lastY = currentY;
+            }
+            
+            function stopDrawing() {
+                isDrawing = false;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.shadowBlur = 0;
+            }
+            
+            // 鼠标事件
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // 触摸事件（移动设备支持）
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            window.clearDrawing = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            };
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initDrawingTool();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        min-height: 100vh;
+    }
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 3px solid #ddd;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        margin: 20px 0;
+        cursor: crosshair;
+    }
+    .controls-panel {
+        background: #2d3436;
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin: 20px 0;
+    }
+    .controls-panel h4 {
+        margin-top: 0;
+        color: #74b9ff;
+    }
+    .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 15px 0;
+        align-items: center;
+        justify-content: center;
+    }
+    .control-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 120px;
+    }
+    .control-item label {
+        font-size: 0.9em;
+        margin-bottom: 5px;
+        color: #ddd;
+    }
+    .control-item input, .control-item select {
+        padding: 8px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 100%;
+        max-width: 120px;
+    }
+    .control-item button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+    }
+    .control-item button:hover {
+        background: #00a085;
+    }
+</style>
+</html> 

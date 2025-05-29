@@ -713,7 +713,7 @@ iframe.srcdoc = \`
                     id: 'theme-demo',
                     title: '主题切换完整示例',
                     description: '展示组件的主题切换功能和完整的用户交互',
-                    code: `<!DOCTYPE html>
+    code: `<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">

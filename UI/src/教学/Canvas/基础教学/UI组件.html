@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI组件</title>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 UI组件</h1>
+        <p>自定义进度条、按钮和控件示例</p>
+        <canvas id="uiCanvas" width="800" height="400"></canvas>
+        <p>这个示例展示了如何使用Canvas创建各种自定义UI组件，包括圆形进度条、按钮、开关、评分组件等。</p>
+    </div>
+
+    <script>
+        // UI组件示例
+        function initUIComponents() {
+            const canvas = document.getElementById('uiCanvas');
+            const ctx = canvas.getContext('2d');
+            let progress = 0;
+            
+            function drawUIComponents() {
+                ctx.fillStyle = '#f1f5f9';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 圆形进度条
+                const centerX = 120;
+                const centerY = 120;
+                const radius = 50;
+                
+                // 背景圈
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 12;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // 进度圈
+                const progressAngle = (progress / 100) * Math.PI * 2;
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + progressAngle);
+                ctx.stroke();
+                
+                // 进度文字
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.round(progress)}%`, centerX, centerY + 6);
+                
+                // 自定义按钮
+                const gradient = ctx.createLinearGradient(300, 80, 300, 140);
+                gradient.addColorStop(0, '#4f46e5');
+                gradient.addColorStop(1, '#3730a3');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(300, 80, 140, 60);
+                
+                // 按钮文字
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Download', 370, 115);
+                
+                // 开关组件
+                ctx.fillStyle = progress > 50 ? '#10b981' : '#94a3b8';
+                ctx.fillRect(500, 100, 80, 40);
+                
+                ctx.fillStyle = '#fff';
+                const switchX = progress > 50 ? 540 : 505;
+                ctx.beginPath();
+                ctx.arc(switchX, 120, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 评分星星
+                for (let i = 0; i < 5; i++) {
+                    ctx.fillStyle = i < Math.floor(progress / 20) ? '#fbbf24' : '#d1d5db';
+                    drawStar(ctx, 650 + i * 25, 120, 10);
+                }
+                
+                // 进度条
+                ctx.fillStyle = '#e5e7eb';
+                ctx.fillRect(100, 250, 200, 20);
+                
+                ctx.fillStyle = '#059669';
+                ctx.fillRect(100, 250, (progress / 100) * 200, 20);
+                
+                // 更新进度
+                progress = (progress + 0.5) % 100;
+                
+                requestAnimationFrame(drawUIComponents);
+            }
+            
+            function drawStar(ctx, x, y, size) {
+                ctx.save();
+                ctx.translate(x, y);
+                
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 144 - 90) * Math.PI / 180;
+                    const starX = Math.cos(angle) * size;
+                    const starY = Math.sin(angle) * size;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(starX, starY);
+                    } else {
+                        ctx.lineTo(starX, starY);
+                    }
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            drawUIComponents();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            initUIComponents();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .demo-section {
+        margin: 30px 0;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 5px solid #74b9ff;
+    }
+    .demo-section h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    .controls {
+        margin: 15px 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    button {
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+        transition: all 0.3s ease;
+        min-width: 80px;
+    }
+    button:hover {
+        background: #00a085;
+        transform: translateY(-1px);
+    }
+    button:active {
+        background: #008f7a;
+        transform: translateY(0);
+    }
+    input[type="range"] {
+        width: 150px;
+        margin: 0 10px;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .demo-section {
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .controls {
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 200px;
+        }
+    }
+</style>
+</html> 

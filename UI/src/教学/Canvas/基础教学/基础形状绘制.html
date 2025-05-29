@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础形状绘制</title>
+</head>
+<body>
+    <div class="container">
+        <h1>基础形状绘制</h1>
+        <p>演示矩形、圆形和线条的基本绘制方法</p>
+        <canvas id="shapesCanvas" width="600" height="300"></canvas>
+        <p>这个示例展示了Canvas最基础的图形绘制功能，包括填充矩形、描边矩形、圆形和线条。</p>
+    </div>
+
+    <script>
+        // 基础形状绘制示例
+        function drawShapes() {
+            const canvas = document.getElementById('shapesCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 填充矩形
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(50, 50, 120, 80);
+            
+            // 描边矩形
+            ctx.strokeStyle = '#74b9ff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(200, 50, 120, 80);
+            
+            // 圆形
+            ctx.fillStyle = '#55a3ff';
+            ctx.beginPath();
+            ctx.arc(110, 180, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 描边圆形
+            ctx.strokeStyle = '#fd79a8';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(260, 180, 40, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // 线条
+            ctx.strokeStyle = '#00b894';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(400, 70);
+            ctx.lineTo(520, 70);
+            ctx.moveTo(400, 100);
+            ctx.lineTo(520, 120);
+            ctx.moveTo(400, 150);
+            ctx.lineTo(520, 180);
+            ctx.stroke();
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            drawShapes();
+        });
+    </script>
+</body>
+<style>
+    body {
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        min-height: 100vh;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    canvas {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        .container {
+            padding: 20px;
+        }
+    }
+</style>
+</html> 
