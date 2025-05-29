@@ -249,9 +249,9 @@ export class AudioPlayer extends LitElement {
                 ` : ''}
                 
                 <!-- 展开的播放器面板 -->
-                <div class="player-panel ${this.playerData.isExpanded ? 'show' : ''}">
+                <div class="player-panel ${this.playerData.isExpanded ? 'show' : ''}" draggable-ignore>
                     <!-- 头部 -->
-                    <div class="player-header">
+                    <div class="player-header" draggable-ignore>
                         <div class="track-info">
                             <div class="track-title">${this.playerData.getCurrentTrackTitle()}</div>
                             <div class="play-mode">${this.playerData.getPlayModeText()}</div>
@@ -262,9 +262,9 @@ export class AudioPlayer extends LitElement {
                     </div>
                 
                     <!-- 主控制区域 -->
-                    <div class="player-main">
+                    <div class="player-main" draggable-ignore>
                         <!-- 进度条 -->
-                        <div class="progress-container" @click="${this.handleProgressClick}">
+                        <div class="progress-container" @click="${this.handleProgressClick}" draggable-ignore>
                             <div class="progress-bar" style="width: ${this.playerData.progress}%"></div>
                         </div>
                         
@@ -275,7 +275,7 @@ export class AudioPlayer extends LitElement {
                         </div>
                         
                         <!-- 播放控制按钮 -->
-                        <div class="controls">
+                        <div class="controls" draggable-ignore>
                             <button class="control-btn" @click="${this.handlePrevClick}" 
                                     .innerHTML="${IconService.previous}"></button>
                             <button class="play-btn" @click="${this.handlePlayClick}">
@@ -286,40 +286,40 @@ export class AudioPlayer extends LitElement {
                         </div>
                         
                         <!-- 底部控制 -->
-                        <div class="bottom-controls">
+                        <div class="bottom-controls" draggable-ignore>
                             <!-- 播放模式 -->
                             <button class="mode-btn" @click="${this.handleModeClick}"
                                     title="${this.playerData.getPlayModeText()}"
                                     .innerHTML="${IconService.modes[this.playerData.playMode]}"></button>
                             
                             <!-- 音量控制 -->
-                            <div class="volume-controls">
+                            <div class="volume-controls" draggable-ignore>
                                 <button class="volume-btn" @click="${this.handleVolumeClick}"
                                         .innerHTML="${this.playerData.getVolumeIcon()}"></button>
                                 <div class="volume-slider-wrapper">
-                                    <div class="volume-slider-container">
+                                    <div class="volume-slider-container" draggable-ignore>
                                         <div class="volume-slider-fill" style="width: ${displayVolume}%"></div>
                                         <input type="range" min="0" max="100" step="1" 
                                                .value="${String(this.playerData.volume)}"
-                                               @input="${this.handleVolumeChange}">
+                                               @input="${this.handleVolumeChange}" draggable-ignore>
                                     </div>
                                 </div>
                                 <span class="volume-display">${displayVolume}</span>
                             </div>
                             
                             <!-- 播放列表按钮 -->
-                            <div class="playlist-container">
+                            <div class="playlist-container" draggable-ignore>
                                 <button class="playlist-btn ${this.playerData.showPlaylist ? 'active' : ''}" 
                                         @click="${this.handlePlaylistClick}"
                                         .innerHTML="${IconService.list}"></button>
                                 
                                 <!-- 播放列表弹出框 -->
-                                <div class="playlist-popup ${this.playerData.showPlaylist ? 'show' : ''}">
+                                <div class="playlist-popup ${this.playerData.showPlaylist ? 'show' : ''}" draggable-ignore>
                                     <div class="playlist-header">播放列表</div>
-                                    <div class="playlist-content">
+                                    <div class="playlist-content" draggable-ignore>
                                         ${this.playerData.tracks.map((track, index) => html`
                                             <div class="playlist-item ${track.id === this.playerData.currentTrackId ? 'active' : ''}"
-                                                 @click="${() => this.handleTrackClick(track.id)}">
+                                                 @click="${() => this.handleTrackClick(track.id)}" draggable-ignore>
                                                 <span class="playlist-number">${index + 1}</span>
                                                 <span class="playlist-title">${track.title}</span>
                                                 ${track.id === this.playerData.currentTrackId ? 

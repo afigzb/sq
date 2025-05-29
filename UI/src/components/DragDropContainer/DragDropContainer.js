@@ -26,6 +26,15 @@ export class DraggableContainer extends LitElement {
             top: 0;
             left: 0;
         }
+        
+        /* 为交互元素设置指针样式 */
+        .content-wrapper ::slotted(button),
+        .content-wrapper ::slotted(input),
+        .content-wrapper ::slotted(select),
+        .content-wrapper ::slotted(a),
+        .content-wrapper ::slotted([draggable-ignore]) {
+            cursor: pointer !important;
+        }
     `;
 
     static properties = {
@@ -149,7 +158,77 @@ export class DraggableContainer extends LitElement {
         }
     }
 
+    // 检查是否为可交互元素或其子元素
+    isInteractiveElement(element) {
+        if (!element) return false;
+        
+        // 检查元素标签
+        const interactiveTags = ['BUTTON', 'INPUT', 'SELECT', 'A', 'TEXTAREA'];
+        if (interactiveTags.includes(element.tagName)) {
+            return true;
+        }
+        
+        // 检查是否有拖拽忽略属性
+        if (element.hasAttribute && element.hasAttribute('draggable-ignore')) {
+            return true;
+        }
+        
+        // 检查特定的类名
+        const interactiveClasses = [
+            'control-btn', 'play-btn', 'mode-btn', 'volume-btn', 'playlist-btn', 'close-btn',
+            'progress-container', 'volume-slider-container', 'playlist-popup', 'playlist-item',
+            'volume-controls', 'bottom-controls', 'playlist-container'
+        ];
+        
+        if (element.classList) {
+            for (const className of interactiveClasses) {
+                if (element.classList.contains(className)) {
+                    return true;
+                }
+            }
+        }
+        
+        // 检查是否为滑块或范围输入
+        if (element.type === 'range' || element.type === 'slider') {
+            return true;
+        }
+        
+        // 递归检查父元素（限制深度避免性能问题）
+        let parent = element.parentElement;
+        let depth = 0;
+        while (parent && depth < 5) {
+            if (parent.classList) {
+                for (const className of interactiveClasses) {
+                    if (parent.classList.contains(className)) {
+                        return true;
+                    }
+                }
+            }
+            if (parent.hasAttribute && parent.hasAttribute('draggable-ignore')) {
+                return true;
+            }
+            parent = parent.parentElement;
+            depth++;
+        }
+        
+        return false;
+    }
+
+    // 查找实际的目标元素（处理 Shadow DOM）
+    findActualTarget(e) {
+        // 使用 composedPath 来处理 Shadow DOM
+        const path = e.composedPath();
+        return path[0] || e.target;
+    }
+
     handleMouseDown(e) {
+        const actualTarget = this.findActualTarget(e);
+        
+        // 如果点击的是交互元素，不启动拖拽
+        if (this.isInteractiveElement(actualTarget)) {
+            return;
+        }
+        
         this.isDragging = true;
         this.isInertia = false;
         this.hasDragged = false;
