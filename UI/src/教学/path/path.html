@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Path 从入门到精通</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #34495e;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+        
+        .example {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .example-visual {
+            flex: 1;
+            min-height: 200px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+        
+        .example-code {
+            flex: 1;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .command-table th,
+        .command-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .command-table th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .command-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        @keyframes pathDraw {
+            from {
+                stroke-dashoffset: 1000;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .animated-path {
+            stroke-dasharray: 1000;
+            animation: pathDraw 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* 连续路径动画样式 */
+        .segment {
+            stroke-dasharray: 50;
+            stroke-dashoffset: 50;
+            animation: drawSegment 0.8s ease-out forwards;
+        }
+        
+        .segment:nth-child(2) { animation-delay: 0s; }
+        .segment:nth-child(3) { animation-delay: 0.8s; }
+        .segment:nth-child(4) { animation-delay: 1.6s; }
+        .segment:nth-child(5) { animation-delay: 2.4s; }
+        .segment:nth-child(6) { animation-delay: 3.2s; }
+        .segment:nth-child(7) { animation-delay: 4.0s; }
+        
+        @keyframes drawSegment {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        /* 整个动画组的循环 */
+        #pathNetwork {
+            animation: resetPaths 6s infinite;
+        }
+        
+        @keyframes resetPaths {
+            0%, 15% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            85%, 100% { 
+                transform: scale(1.05); 
+                opacity: 0.8; 
+            }
+        }
+        
+        /* A1→A2→A3 连续动画 */
+        #pathAnimation path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+        }
+        
+        #path1 { animation: drawPath 1s ease-out 0s forwards; }
+        #path2 { animation: drawPath 1s ease-out 1s forwards; }
+        #path3 { animation: drawPath 1s ease-out 2s forwards; }
+        #path4 { animation: drawPath 1s ease-out 3s forwards; }
+        #path5 { animation: drawPath 1s ease-out 4s forwards; }
+        #path6 { animation: drawPath 1s ease-out 5s forwards; }
+        
+        @keyframes drawPath {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        /* 整个路径动画循环 */
+        #pathAnimation {
+            animation: resetAnimation 7s infinite;
+        }
+        
+        @keyframes resetAnimation {
+            0% { opacity: 1; }
+            85% { opacity: 1; }
+            95% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        /* 科技感路径动画 */
+        .techPath {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            filter: drop-shadow(0 0 3px currentColor);
+        }
+        
+        .node {
+            animation: pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 0.8; 
+            }
+            50% { 
+                transform: scale(1.3); 
+                opacity: 1; 
+            }
+        }
+        
+        @keyframes drawTechPath {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        .pathGroup {
+            animation: drawTechPaths 4s infinite;
+        }
+        
+        @keyframes drawTechPaths {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .particle {
+            filter: drop-shadow(0 0 8px #fff);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 SVG Path 从入门到精通</h1>
+            <p>掌握前端最强大的图形绘制工具</p>
+        </div>
+        
+        <div class="content">
+            <!-- 第一部分：什么是Path -->
+            <div class="section">
+                <h2>📚 第一章：什么是SVG Path？</h2>
+                <p>SVG Path（路径）是SVG中最强大和灵活的元素，可以绘制任何形状。它使用一系列命令来定义如何绘制线条和曲线。</p>
+                
+                <div class="highlight">
+                    <strong>🎯 核心概念：</strong> Path就像用笔在纸上画画，你可以移动笔（不画线），画直线，画曲线，闭合图形等。
+                </div>
+                
+                <h3>基本语法</h3>
+                <div class="example-code">
+&lt;svg width="200" height="200"&gt;
+    &lt;path d="M 10 10 L 100 100" stroke="black" fill="none"/&gt;
+&lt;/svg&gt;
+                </div>
+            </div>
+
+            <!-- 第二部分：基本命令 -->
+            <div class="section">
+                <h2>🔧 第二章：Path命令大全</h2>
+                
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th>命令</th>
+                            <th>全称</th>
+                            <th>参数</th>
+                            <th>作用</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="code">M x y</span></td>
+                            <td>MoveTo</td>
+                            <td>x, y坐标</td>
+                            <td>移动到指定点（不画线）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">L x y</span></td>
+                            <td>LineTo</td>
+                            <td>x, y坐标</td>
+                            <td>画直线到指定点</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">H x</span></td>
+                            <td>Horizontal</td>
+                            <td>x坐标</td>
+                            <td>画水平线</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">V y</span></td>
+                            <td>Vertical</td>
+                            <td>y坐标</td>
+                            <td>画垂直线</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">C x1 y1, x2 y2, x y</span></td>
+                            <td>CurveTo</td>
+                            <td>两个控制点+终点</td>
+                            <td>三次贝塞尔曲线</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">Q x1 y1, x y</span></td>
+                            <td>Quadratic</td>
+                            <td>一个控制点+终点</td>
+                            <td>二次贝塞尔曲线</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">A rx ry rotation large-arc sweep x y</span></td>
+                            <td>Arc</td>
+                            <td>椭圆参数+终点</td>
+                            <td>椭圆弧</td>
+                        </tr>
+                        <tr>
+                            <td><span class="code">Z</span></td>
+                            <td>ClosePath</td>
+                            <td>无</td>
+                            <td>闭合路径</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="highlight">
+                    <strong>💡 提示：</strong> 大写字母表示绝对坐标，小写字母表示相对坐标（相对于当前位置）
+                </div>
+            </div>
+
+            <!-- 第三部分：基础示例 -->
+            <div class="section">
+                <h2>🌟 第三章：基础示例</h2>
+                
+                <h3>示例1：简单直线</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 20 20 L 180 130" stroke="#e74c3c" stroke-width="3" fill="none"/>
+                            <circle cx="20" cy="20" r="4" fill="#3498db"/>
+                            <circle cx="180" cy="130" r="4" fill="#2ecc71"/>
+                            <text x="25" y="15" font-size="12" fill="#3498db">起点(20,20)</text>
+                            <text x="120" y="145" font-size="12" fill="#2ecc71">终点(180,130)</text>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 20 20 L 180 130" 
+      stroke="#e74c3c" 
+      stroke-width="3" 
+      fill="none"/&gt;
+
+解释：
+M 20 20 - 移动到(20,20)
+L 180 130 - 画线到(180,130)
+                    </div>
+                </div>
+
+                <h3>示例2：多条线段（折线）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 20 120 L 60 40 L 100 80 L 140 20 L 180 100" 
+                                  stroke="#9b59b6" stroke-width="3" fill="none"/>
+                            <circle cx="20" cy="120" r="3" fill="#e74c3c"/>
+                            <circle cx="60" cy="40" r="3" fill="#e74c3c"/>
+                            <circle cx="100" cy="80" r="3" fill="#e74c3c"/>
+                            <circle cx="140" cy="20" r="3" fill="#e74c3c"/>
+                            <circle cx="180" cy="100" r="3" fill="#e74c3c"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 20 120 
+         L 60 40 
+         L 100 80 
+         L 140 20 
+         L 180 100" 
+      stroke="#9b59b6" 
+      stroke-width="3" 
+      fill="none"/&gt;
+
+解释：连续的直线段形成折线
+                    </div>
+                </div>
+
+                <h3>示例3：闭合图形（三角形）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 100 20 L 170 120 L 30 120 Z" 
+                                  stroke="#e67e22" stroke-width="3" fill="#f39c12" fill-opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 100 20 
+         L 170 120 
+         L 30 120 
+         Z" 
+      stroke="#e67e22" 
+      stroke-width="3" 
+      fill="#f39c12" 
+      fill-opacity="0.3"/&gt;
+
+解释：
+Z - 自动连接到起点，闭合图形
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第四部分：曲线 -->
+            <div class="section">
+                <h2>🎭 第四章：曲线的艺术</h2>
+                
+                <h3>示例4：二次贝塞尔曲线（Q命令）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 20 120 Q 100 20 180 120" 
+                                  stroke="#e91e63" stroke-width="3" fill="none"/>
+                            <circle cx="20" cy="120" r="3" fill="#e74c3c"/>
+                            <circle cx="100" cy="20" r="3" fill="#f39c12"/>
+                            <circle cx="180" cy="120" r="3" fill="#2ecc71"/>
+                            <line x1="20" y1="120" x2="100" y2="20" stroke="#bdc3c7" stroke-dasharray="2,2"/>
+                            <line x1="100" y1="20" x2="180" y2="120" stroke="#bdc3c7" stroke-dasharray="2,2"/>
+                            <text x="95" y="15" font-size="10" fill="#f39c12">控制点</text>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 20 120 Q 100 20 180 120" 
+      stroke="#e91e63" 
+      stroke-width="3" 
+      fill="none"/&gt;
+
+解释：
+M 20 120 - 起点
+Q 100 20 180 120 - 二次贝塞尔曲线
+  控制点(100,20) 终点(180,120)
+                    </div>
+                </div>
+
+                <h3>示例5：三次贝塞尔曲线（C命令）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 20 120 C 20 20, 180 20, 180 120" 
+                                  stroke="#673ab7" stroke-width="3" fill="none"/>
+                            <circle cx="20" cy="120" r="3" fill="#e74c3c"/>
+                            <circle cx="20" cy="20" r="3" fill="#f39c12"/>
+                            <circle cx="180" cy="20" r="3" fill="#f39c12"/>
+                            <circle cx="180" cy="120" r="3" fill="#2ecc71"/>
+                            <line x1="20" y1="120" x2="20" y2="20" stroke="#bdc3c7" stroke-dasharray="2,2"/>
+                            <line x1="180" y1="20" x2="180" y2="120" stroke="#bdc3c7" stroke-dasharray="2,2"/>
+                            <text x="5" y="15" font-size="10" fill="#f39c12">控制点1</text>
+                            <text x="155" y="15" font-size="10" fill="#f39c12">控制点2</text>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 20 120 
+         C 20 20, 180 20, 180 120" 
+      stroke="#673ab7" 
+      stroke-width="3" 
+      fill="none"/&gt;
+
+解释：
+C 20 20, 180 20, 180 120
+  控制点1 控制点2 终点
+三次贝塞尔曲线更平滑
+                    </div>
+                </div>
+
+                <h3>示例6：圆弧（A命令）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 50 100 A 50 30 0 0 1 150 100" 
+                                  stroke="#00bcd4" stroke-width="3" fill="none"/>
+                            <path d="M 50 100 A 50 30 0 1 0 150 100" 
+                                  stroke="#ff5722" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                            <circle cx="50" cy="100" r="3" fill="#e74c3c"/>
+                            <circle cx="150" cy="100" r="3" fill="#2ecc71"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;!-- 小弧 --&gt;
+&lt;path d="M 50 100 A 50 30 0 0 1 150 100" 
+      stroke="#00bcd4" stroke-width="3"/&gt;
+
+&lt;!-- 大弧（虚线） --&gt;
+&lt;path d="M 50 100 A 50 30 0 1 0 150 100" 
+      stroke="#ff5722" stroke-dasharray="5,5"/&gt;
+
+A rx ry rotation large-arc sweep x y
+  50 30 0(旋转)   0(小弧)   1(顺时针) 150 100
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第五部分：复杂示例 -->
+            <div class="section">
+                <h2>🚀 第五章：复杂图形</h2>
+                
+                <h3>示例7：心形（修复版）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 100 120 
+                                   C 100 120, 70 100, 70 75
+                                   C 70 50, 85 40, 100 55
+                                   C 115 40, 130 50, 130 75
+                                   C 130 100, 100 120, 100 120 Z" 
+                                  fill="#e74c3c" stroke="#c0392b" stroke-width="2" class="floating"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 100 120 
+         C 100 120, 70 100, 70 75
+         C 70 50, 85 40, 100 55
+         C 115 40, 130 50, 130 75
+         C 130 100, 100 120, 100 120 Z" 
+      fill="#e74c3c" 
+      stroke="#c0392b"/&gt;
+
+💖 心形路径 - 更宽更自然的心形
+                    </div>
+                </div>
+
+                <h3>示例8：星形</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 100 10 
+                                   L 110 40 
+                                   L 140 40 
+                                   L 120 60 
+                                   L 130 90 
+                                   L 100 75 
+                                   L 70 90 
+                                   L 80 60 
+                                   L 60 40 
+                                   L 90 40 Z" 
+                                  fill="#f1c40f" stroke="#f39c12" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 100 10 
+         L 110 40 L 140 40 L 120 60 
+         L 130 90 L 100 75 L 70 90 
+         L 80 60 L 60 40 L 90 40 Z" 
+      fill="#f1c40f" 
+      stroke="#f39c12"/&gt;
+
+⭐ 连续直线段组成五角星
+                    </div>
+                </div>
+
+                <h3>示例9：波浪线</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <path d="M 10 75 
+                                   Q 30 25, 50 75 
+                                   Q 70 125, 90 75
+                                   Q 110 25, 130 75
+                                   Q 150 125, 170 75
+                                   Q 190 25, 210 75" 
+                                  stroke="#3498db" stroke-width="4" fill="none" class="animated-path"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;path d="M 10 75 
+         Q 30 25, 50 75 
+         Q 70 125, 90 75
+         Q 110 25, 130 75
+         Q 150 125, 170 75
+         Q 190 25, 210 75" 
+      stroke="#3498db" 
+      stroke-width="4" 
+      fill="none"/&gt;
+
+🌊 连续二次贝塞尔曲线创建波浪
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第六部分：动画 -->
+            <div class="section">
+                <h2>✨ 第六章：Path动画</h2>
+                
+                <h3>示例10：连续路径绘制动画（A1→A2→A3→...）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150" id="pathAnimation">
+                            <!-- 背景点位 -->
+                            <circle cx="30" cy="50" r="4" fill="#3498db" opacity="0.3"/>
+                            <circle cx="90" cy="30" r="4" fill="#3498db" opacity="0.3"/>
+                            <circle cx="150" cy="80" r="4" fill="#3498db" opacity="0.3"/>
+                            <circle cx="170" cy="120" r="4" fill="#3498db" opacity="0.3"/>
+                            <circle cx="100" cy="130" r="4" fill="#3498db" opacity="0.3"/>
+                            <circle cx="40" cy="110" r="4" fill="#3498db" opacity="0.3"/>
+                            
+                            <!-- 路径段1: A1→A2 -->
+                            <path id="path1" d="M 30 50 Q 60 20 90 30" 
+                                  stroke="#e91e63" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 路径段2: A2→A3 -->
+                            <path id="path2" d="M 90 30 C 120 40, 140 60, 150 80" 
+                                  stroke="#9c27b0" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 路径段3: A3→A4 -->
+                            <path id="path3" d="M 150 80 Q 160 100 170 120" 
+                                  stroke="#673ab7" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 路径段4: A4→A5 -->
+                            <path id="path4" d="M 170 120 C 140 125, 120 130, 100 130" 
+                                  stroke="#3f51b5" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 路径段5: A5→A6 -->
+                            <path id="path5" d="M 100 130 Q 70 120 40 110" 
+                                  stroke="#2196f3" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 路径段6: A6→A1 (闭合) -->
+                            <path id="path6" d="M 40 110 C 35 80, 32 65, 30 50" 
+                                  stroke="#03a9f4" stroke-width="3" fill="none"
+                                  stroke-dasharray="100" stroke-dashoffset="100"/>
+                            
+                            <!-- 动态点（跟随动画） -->
+                            <circle id="movingDot" cx="30" cy="50" r="5" fill="#ff5722" opacity="0">
+                                <animate attributeName="opacity" values="0;1;1;0" dur="6s" repeatCount="indefinite"/>
+                            </circle>
+                            
+                            <!-- 标签 -->
+                            <text x="25" y="45" font-size="10" fill="#3498db">A1</text>
+                            <text x="85" y="25" font-size="10" fill="#3498db">A2</text>
+                            <text x="155" y="75" font-size="10" fill="#3498db">A3</text>
+                            <text x="175" y="115" font-size="10" fill="#3498db">A4</text>
+                            <text x="95" y="145" font-size="10" fill="#3498db">A5</text>
+                            <text x="35" y="105" font-size="10" fill="#3498db">A6</text>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;!-- 每个路径段都有独立的动画延迟 --&gt;
+&lt;path id="path1" d="M 30 50 Q 60 20 90 30" 
+      stroke="#e91e63" stroke-dasharray="100" 
+      stroke-dashoffset="100"&gt;
+  &lt;animate attributeName="stroke-dashoffset" 
+           values="100;0" dur="1s" begin="0s"/&gt;
+&lt;/path&gt;
+
+&lt;path id="path2" d="M 90 30 C 120 40, 140 60, 150 80"
+      stroke="#9c27b0" stroke-dasharray="100" 
+      stroke-dashoffset="100"&gt;
+  &lt;animate attributeName="stroke-dashoffset" 
+           values="100;0" dur="1s" begin="1s"/&gt;
+&lt;/path&gt;
+
+💡 关键技巧：使用不同的begin延迟时间
+实现连续绘制效果
+                    </div>
+                </div>
+
+                <h3>示例11：高级连续动画（无限循环）</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150" id="advancedAnimation">
+                            <!-- 复杂路径网络 -->
+                            <g id="pathNetwork">
+                                <!-- 主路径 -->
+                                <path d="M 20 75 Q 50 30, 80 75 Q 110 120, 140 75 Q 170 30, 200 75" 
+                                      stroke="#e74c3c" stroke-width="2" fill="none" opacity="0.2"/>
+                                
+                                <!-- 动画路径段 -->
+                                <path class="segment" d="M 20 75 Q 35 52, 50 75" 
+                                      stroke="#e74c3c" stroke-width="3" fill="none"/>
+                                <path class="segment" d="M 50 75 Q 65 97, 80 75" 
+                                      stroke="#f39c12" stroke-width="3" fill="none"/>
+                                <path class="segment" d="M 80 75 Q 95 52, 110 75" 
+                                      stroke="#2ecc71" stroke-width="3" fill="none"/>
+                                <path class="segment" d="M 110 75 Q 125 97, 140 75" 
+                                      stroke="#3498db" stroke-width="3" fill="none"/>
+                                <path class="segment" d="M 140 75 Q 155 52, 170 75" 
+                                      stroke="#9b59b6" stroke-width="3" fill="none"/>
+                                <path class="segment" d="M 170 75 Q 185 97, 200 75" 
+                                      stroke="#e91e63" stroke-width="3" fill="none"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;style&gt;
+.segment {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: drawSegment 0.8s ease-out forwards;
+}
+
+.segment:nth-child(2) { animation-delay: 0s; }
+.segment:nth-child(3) { animation-delay: 0.8s; }
+.segment:nth-child(4) { animation-delay: 1.6s; }
+.segment:nth-child(5) { animation-delay: 2.4s; }
+.segment:nth-child(6) { animation-delay: 3.2s; }
+.segment:nth-child(7) { animation-delay: 4.0s; }
+
+@keyframes drawSegment {
+  to { stroke-dashoffset: 0; }
+}
+
+/* 整个动画组的循环 */
+#pathNetwork {
+  animation: resetPaths 6s infinite;
+}
+
+@keyframes resetPaths {
+  0%, 15% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+  85%, 100% { 
+    transform: scale(1.05); 
+    opacity: 0.8; 
+  }
+}
+&lt;/style&gt;
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第七部分：实用技巧 -->
+            <div class="section">
+                <h2>🎓 第七章：实用技巧</h2>
+                
+                <div class="highlight">
+                    <h3>💡 Path优化技巧</h3>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>使用相对坐标（小写字母）减少代码量</li>
+                        <li>合理使用H、V命令简化水平垂直线</li>
+                        <li>复杂图形考虑分解为多个简单path</li>
+                        <li>使用path编辑工具（如Adobe Illustrator）生成复杂路径</li>
+                    </ul>
+                </div>
+
+                <h3>示例12：相对坐标对比</h3>
+                <div class="example">
+                    <div class="example-visual">
+                        <svg width="200" height="150">
+                            <!-- 绝对坐标 -->
+                            <path d="M 20 30 L 50 30 L 50 60 L 80 60 L 80 90" 
+                                  stroke="#e74c3c" stroke-width="3" fill="none"/>
+                            <!-- 相对坐标 -->
+                            <path d="M 120 30 l 30 0 l 0 30 l 30 0 l 0 30" 
+                                  stroke="#2ecc71" stroke-width="3" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="example-code">
+&lt;!-- 绝对坐标（大写）--&gt;
+&lt;path d="M 20 30 L 50 30 L 50 60 L 80 60 L 80 90"/&gt;
+
+&lt;!-- 相对坐标（小写）更简洁 --&gt;
+&lt;path d="M 120 30 l 30 0 l 0 30 l 30 0 l 0 30"/&gt;
+
+&lt;!-- 进一步简化 --&gt;
+&lt;path d="M 120 30 h 30 v 30 h 30 v 30"/&gt;
+                    </div>
+                </div>
+
+                <h3>工具推荐</h3>
+                <ul style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>在线工具：</strong> <a href="https://editor.method.ac/" target="_blank">Method Draw</a> - 在线SVG编辑器</li>
+                    <li><strong>调试工具：</strong> 浏览器开发者工具可以实时编辑path属性</li>
+                    <li><strong>生成工具：</strong> Adobe Illustrator, Inkscape 可以导出SVG path</li>
+                    <li><strong>学习工具：</strong> <a href="https://cubic-bezier.com/" target="_blank">cubic-bezier.com</a> - 贝塞尔曲线可视化</li>
+                </ul>
+            </div>
+
+            <!-- 第八部分：总结 -->
+            <div class="section">
+                <h2>🎯 第八章：学习总结</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div style="background: #e8f5e8; padding: 20px; border-radius: 8px;">
+                        <h4 style="color: #27ae60; margin-bottom: 10px;">✅ 基础命令</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li>M - 移动笔触</li>
+                            <li>L - 画直线</li>
+                            <li>H/V - 水平/垂直线</li>
+                            <li>Z - 闭合路径</li>
+                        </ul>
+                    </div>
+                    <div style="background: #fff3e0; padding: 20px; border-radius: 8px;">
+                        <h4 style="color: #f57c00; margin-bottom: 10px;">🎨 曲线命令</h4>
+                        <ul style="padding-left: 20px; line-height: 1.8;">
+                            <li>Q - 二次贝塞尔曲线</li>
+                            <li>C - 三次贝塞尔曲线</li>
+                            <li>A - 椭圆弧</li>
+                            <li>S/T - 平滑曲线</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="highlight">
+                    <h3>🚀 下一步学习建议</h3>
+                    <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                        <li>练习手写简单的几何图形path</li>
+                        <li>学习使用工具生成复杂path</li>
+                        <li>掌握path动画技巧</li>
+                        <li>结合CSS和JavaScript创建交互效果</li>
+                        <li>探索path在图标设计中的应用</li>
+                    </ol>
+                </div>
+
+                <div style="text-align: center; margin-top: 40px; padding: 30px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border-radius: 15px;">
+                    <h3 style="margin-bottom: 15px;">🎉 恭喜！你已经掌握了SVG Path的基础知识</h3>
+                    <p>现在你可以创建各种复杂的图形和动画效果了！</p>
+                    <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">记住：熟能生巧，多练习才能精通 💪</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        
+        // 页面加载完成后启动动画
+        document.addEventListener('DOMContentLoaded', () => {
+            initTechAnimation();
+        });
+        
+        // 为A1→A2→A3动画添加重置功能
+        function resetPathAnimation() {
+            const paths = document.querySelectorAll('#pathAnimation path');
+            
+            paths.forEach(path => {
+                path.style.strokeDashoffset = '100';
+            });
+            
+            // 重新触发动画
+            setTimeout(() => {
+                paths.forEach((path, index) => {
+                    path.style.animation = `drawPath 1s ease-out ${index}s forwards`;
+                });
+            }, 100);
+        }
+        
+        // 每7秒重置一次A1→A2→A3动画
+        setInterval(resetPathAnimation, 7000);
+    </script>
+</body>
+</html>

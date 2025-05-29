@@ -1,5 +1,25 @@
-export const EXAMPLE_CODES = {
-    autoPlay: `<!DOCTYPE html>
+/**
+ * AudioPlayer教学数据模块
+ * 支持章节和多个示例的数据结构
+ */
+
+// 教学数据
+export const audioPlayerTutorialData = {
+    title: "🎵 AudioPlayer 组件教程",
+    description: "音频播放器 Web 组件使用指南 - 一个功能丰富的音频播放器解决方案",
+    
+    // 教学章节
+    chapters: [
+        {
+            id: 'auto-play',
+            title: '自动播放功能',
+            subtitle: '演示如何配置AudioPlayer组件实现页面加载时自动播放音乐',
+            examples: [
+                {
+                    id: 'auto-play-demo',
+                    title: '🎶 自动播放示例',
+                    description: '展示页面加载后自动播放指定歌曲的功能实现',
+                    code: `<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -140,8 +160,47 @@ export const EXAMPLE_CODES = {
     <script type="module" src="../src/AudioPlayer.js"></script>
 </body>
 </html>`,
+                    instructions: `# 🎵 AudioPlayer 自动播放详解
 
-    customPlaylist: `<!DOCTYPE html>
+## 核心功能
+- **页面加载自动播放**: 使用 \`auto-play\` 属性实现
+- **指定初始播放歌曲**: 通过 \`initial-track-id\` 设置
+- **浮动播放器界面**: 美观的渐变背景和浮动音符动画
+
+## 关键属性配置
+
+### \`initial-track-id="track_2"\`
+指定播放列表中第二首歌曲作为初始播放歌曲
+
+### \`auto-play\`
+启用自动播放功能，页面加载后自动开始播放
+
+### \`initial-play-mode="LIST_LOOP"\`
+设置初始播放模式为列表循环
+
+## ⚠️ 浏览器限制
+- **现代浏览器对自动播放有严格限制**
+- 组件内置了重试机制来处理自动播放策略
+- 在用户有交互之前，自动播放可能会被阻止
+
+## 使用场景
+- 音乐网站首页背景音乐
+- 艺术展示页面氛围营造
+- 游戏或应用的背景音效`
+                }
+            ]
+        },
+        
+        {
+            id: 'custom-playlist',
+            title: '自定义播放列表',
+            subtitle: '展示如何通过JavaScript API动态管理播放列表和控制播放器',
+            examples: [
+                {
+                    id: 'playlist-management',
+                    title: '📀 播放列表管理',
+                    description: '演示动态切换播放列表和播放器控制的完整功能',
+                    code: `<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -448,46 +507,14 @@ export const EXAMPLE_CODES = {
         });
     </script>
 </body>
-</html>`
-};
+</html>`,
+                    instructions: `# 🎵 AudioPlayer 自定义播放列表详解
 
-export const INSTRUCTIONS = {
-    autoPlay: `# 🎵 AudioPlayer 自动播放示例
-
-    ## 注意事项
-- 由于现代浏览器对自动播放有限制
-- 组件内置了重试机制来处理自动播放策略
-
-## 功能特点
-- **页面加载自动播放**：使用 \`auto-play\` 属性实现
-- **指定初始播放歌曲**：通过 \`initial-track-id\` 设置
-- **浮动播放器界面**：美观的渐变背景和浮动音符动画
-
-## 关键属性配置
-
-### \`initial-track-id="track_2"\`
-指定播放列表中第二首歌曲作为初始播放歌曲
-
-### \`auto-play\`
-启用自动播放功能，页面加载后自动开始播放
-
-### \`initial-play-mode="LIST_LOOP"\`
-设置初始播放模式为列表循环
-
-
-
-## 使用场景
-- 音乐网站首页
-- 背景音乐播放
-- 艺术展示页面`,
-
-    customPlaylist: `# 🎵 AudioPlayer 自定义播放列表示例
-
-## 功能特点
-- **动态播放列表切换**：支持运行时更换整个播放列表
-- **多种预设播放列表**：轻音乐、夜晚静谧、清晨活力
-- **隐藏浮动球模式**：使用 \`hide-ball\` 属性
-- **播放器控制API**：展示完整的JavaScript控制接口
+## 核心API功能
+- **动态播放列表切换**: 支持运行时更换整个播放列表
+- **多种预设播放列表**: 轻音乐、夜晚静谧、清晨活力
+- **隐藏浮动球模式**: 使用 \`hide-ball\` 属性
+- **播放器控制API**: 展示完整的JavaScript控制接口
 
 ## 核心API使用
 
@@ -502,16 +529,335 @@ export const INSTRUCTIONS = {
 
 ## 播放列表格式
 支持以下两种格式：
-- 简单字符串数组：\`['song1.mp3', 'song2.mp3']\`
-- 对象数组：\`[{ id: 'song1', title: '歌曲标题', filename: 'song1.mp3' }]\`
+- **简单字符串数组**: \`['song1.mp3', 'song2.mp3']\`
+- **对象数组**: \`[{ id: 'song1', title: '歌曲标题', filename: 'song1.mp3' }]\`
 
 ## 使用场景
 - 音乐应用的播放列表管理
 - 主题音乐切换
 - 动态内容音频播放
 
-## 注意事项
-- 值得注意的是不管你在干什么请时刻留意路径问题，代码的路径基本可以说是用js自动获取对应路径下匹配的文件，复杂环境下大概率会出问题
+## ⚠️ 注意事项
+- **路径问题**: 值得注意的是不管你在干什么请时刻留意路径问题
+- **自动获取**: 代码的路径基本可以说是用js自动获取对应路径下匹配的文件
+- **复杂环境**: 复杂环境下大概率会出问题，需要仔细配置路径`
+                }
+            ]
+        },
+        
+        {
+            id: 'advanced-features',
+            title: 'AudioPlayer 组件架构',
+            subtitle: '深入了解AudioPlayer的高级配置和特殊功能',
+            examples: [
+                {
+                    id: 'architecture-overview',
+                    title: '🏗️ 组件架构说明',
+                    description: 'AudioPlayer采用数据驱动分层式开发，了解其设计理念',
+                    code: `<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioPlayer 架构说明</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+        }
+        
+        .architecture-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .feature-card {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: #4299e1;
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .feature-desc {
+            color: #4a5568;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        .warning-box {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-left: 4px solid #f56565;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .warning-title {
+            color: #c53030;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .warning-text {
+            color: #742a2a;
+        }
+        
+        .tech-stack {
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+            border-left: 4px solid #48bb78;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .tech-title {
+            color: #2f855a;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .tech-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .tech-list li {
+            padding: 8px 0;
+            color: #2d3748;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .tech-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .tech-list li strong {
+            color: #2f855a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ AudioPlayer 组件架构</h1>
+        
+        <div class="architecture-section">
+            <div class="section-title">📋 组件概述</div>
+            <p>
+                AudioPlayer 是一个功能丰富的音频播放器 Web 组件，支持自动播放、
+                自定义播放列表、多种播放模式、浮动播放器界面等特性。
+                采用数据驱动分层式开发架构，确保代码的可维护性和扩展性。
+            </p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎵</div>
+                    <div class="feature-title">音频播放</div>
+                    <div class="feature-desc">支持MP3、WAV等多种音频格式，提供完整的播放控制</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-title">响应式UI</div>
+                    <div class="feature-desc">适配各种设备尺寸，提供一致的用户体验</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎛️</div>
+                    <div class="feature-title">丰富控制</div>
+                    <div class="feature-desc">播放、暂停、进度控制、音量调节、播放模式切换</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <div class="feature-title">高度配置</div>
+                    <div class="feature-desc">支持多种配置选项，可根据需求灵活定制</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="architecture-section">
+            <div class="section-title">🔧 技术架构</div>
+            
+            <div class="tech-stack">
+                <div class="tech-title">核心技术栈</div>
+                <ul class="tech-list">
+                    <li><strong>Web Components:</strong> 基于原生Web Components标准</li>
+                    <li><strong>Lit:</strong> 使用Lit框架进行组件开发</li>
+                    <li><strong>HTML5 Audio API:</strong> 底层音频播放能力</li>
+                    <li><strong>CSS3:</strong> 现代CSS特性实现UI效果</li>
+                    <li><strong>ES6+:</strong> 现代JavaScript语法和特性</li>
+                </ul>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">数据驱动</div>
+                    <div class="feature-desc">所有状态和配置通过数据模型管理，确保一致性</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🏗️</div>
+                    <div class="feature-title">分层架构</div>
+                    <div class="feature-desc">清晰的分层设计，数据层、逻辑层、表现层分离</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">响应式更新</div>
+                    <div class="feature-desc">基于Lit的响应式更新机制，高效渲染</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">事件驱动</div>
+                    <div class="feature-desc">完善的事件系统，支持外部监听和控制</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="architecture-section">
+            <div class="section-title">⚠️ 已知限制</div>
+            
+            <div class="warning-box">
+                <div class="warning-title">🚫 自动播放限制</div>
+                <div class="warning-text">
+                    受限于现代浏览器的安全策略，自动播放功能实际上不容易实现。
+                    组件通过在lit的update生命周期中循环尝试播放，
+                    直到浏览器检测到用户交互后允许播放为止。
+                    这种方式可能在某些环境下仍然无法工作。
+                </div>
+            </div>
+            
+            <div class="warning-box">
+                <div class="warning-title">📁 路径问题</div>
+                <div class="warning-text">
+                    音频文件路径配置需要特别注意。组件会自动获取指定路径下的匹配文件，
+                    在复杂的部署环境下可能会出现路径解析问题。
+                    建议在开发和生产环境中都进行充分测试。
+                </div>
+            </div>
+        </div>
+        
+        <div class="architecture-section">
+            <div class="section-title">🚀 最佳实践</div>
+            <ul style="color: #4a5568; padding-left: 20px;">
+                <li>在用户有明确交互意图时再启用自动播放</li>
+                <li>提供音频加载状态的用户反馈</li>
+                <li>确保音频文件路径的正确性</li>
+                <li>为不支持的浏览器提供降级方案</li>
+                <li>考虑移动设备的电量和流量消耗</li>
+                <li>提供音量控制和静音选项</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>`,
+                    instructions: `# 🏗️ AudioPlayer 架构深度解析
 
-`
+## 设计理念
+- **数据驱动**: 所有组件状态通过统一的数据模型管理
+- **分层架构**: 清晰分离数据层、业务逻辑层和表现层
+- **组件化**: 基于Web Components标准，具有良好的封装性
+- **响应式**: 利用Lit框架的响应式更新机制
+
+## 核心技术
+- **Web Components**: 原生浏览器组件化标准
+- **Lit Framework**: 轻量级的组件开发框架
+- **HTML5 Audio API**: 提供音频播放的底层能力
+- **ES6+ JavaScript**: 现代JavaScript语法和特性
+
+## 已知限制
+- **自动播放**: 现代浏览器的安全限制使得自动播放变得困难
+- **路径依赖**: 音频文件路径配置在复杂环境下可能出现问题
+- **兼容性**: 部分功能依赖较新的浏览器特性
+
+## 使用建议
+- 在真实用户交互后启用音频功能
+- 充分测试不同环境下的路径配置
+- 为功能受限的环境提供降级方案
+- 考虑移动设备的特殊性能要求`
+                }
+            ]
+        }
+    ],
+    
+    // 配置信息
+    config: {
+        theme: 'prism',
+        language: 'html',
+        editorConfig: {
+            editable: true,
+            autoPreview: true,
+            showToolbar: true,
+            showFullscreen: true,
+            debounceDelay: 300
+        }
+    }
 };
+
+// 兼容性导出 - 保持向后兼容
+export function getTutorialData() {
+    return audioPlayerTutorialData;
+}
+
+export default audioPlayerTutorialData;

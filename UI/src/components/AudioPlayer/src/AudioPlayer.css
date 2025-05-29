@@ -20,10 +20,6 @@ button {
 
 /* 播放器容器 */
 .player-container {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 50;
 }
 
 /* 浮动球 */

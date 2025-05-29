@@ -109,11 +109,11 @@
     
     <div class="welcome-container">
         <h1>🎧 欢迎来到音乐世界</h1>
-        <p class="subtitle">页面加载后自动开始播放第二首歌曲，享受美妙的音乐时光！</p>
+        <p class="subtitle">页面加载后自动开始播放第二首歌曲，享受美妙的音乐时光！播放器可以拖拽到任意位置。</p>
         
         <div class="music-info">
             <div class="current-song">🎵 当前播放：のぶなが,ゆうゆ - 深海少女</div>
-            <div class="song-details">自动循环播放模式 | 音质：高品质MP3</div>
+            <div class="song-details">自动循环播放模式 | 音质：高品质MP3 | 支持拖拽移动</div>
         </div>
         
         <div class="features">
@@ -121,6 +121,8 @@
             <ul>
                 <li>页面加载时自动播放指定歌曲</li>
                 <li>列表循环播放模式</li>
+                <li>🖱️ 拖拽播放器到任意位置</li>
+                <li>拖拽时支持惯性运动效果</li>
                 <li>浮动播放器控制</li>
                 <li>支持进度控制和音量调节</li>
                 <li>响应式设计，适配各种设备</li>
@@ -128,14 +130,19 @@
         </div>
     </div>
     
-    <!-- 自动播放第二首歌曲的播放器，设置音量为75% -->
-    <audio-player 
-        initial-track-id="track_9" 
-        auto-play 
-        initial-volume="33"
-        initial-play-mode="LIST_LOOP">
-    </audio-player>
+    <!-- 使用拖拽控件包裹自动播放播放器 -->
+    <draggable-container>
+        <audio-player 
+            initial-track-id="track_9" 
+            auto-play 
+            initial-volume="33"
+            initial-play-mode="LIST_LOOP">
+        </audio-player>
+    </draggable-container>
     
+    <!-- 导入拖拽控件 -->
+    <script type="module" src="../DragDropContainer/DragDropContainer.js"></script>
+    <!-- 导入播放器 -->
     <script type="module" src="./src/AudioPlayer.js"></script>
 </body>
 </html> 

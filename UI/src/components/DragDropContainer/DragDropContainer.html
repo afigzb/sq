@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖拽容器复杂测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2em;
+        }
+
+        /* 基础容器样式 */
+        .demo-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+
+        /* 1. 绝对布局容器 */
+        .absolute-layout {
+            width: 350px;
+            height: 250px;
+            position: relative;
+            padding: 20px;
+        }
+
+        .absolute-item {
+            position: absolute;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .absolute-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .item1 { background: #ff6b6b; top: 10px; left: 10px; }
+        .item2 { background: #4ecdc4; top: 10px; right: 10px; }
+        .item3 { background: #45b7d1; bottom: 10px; left: 10px; }
+        .item4 { background: #f9ca24; bottom: 10px; right: 10px; color: #333; }
+        .item5 { background: #6c5ce7; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        /* 2. Fixed布局容器 */
+        .fixed-layout {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .fixed-content {
+            margin-top: 60px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .fixed-button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .fixed-button:hover {
+            background: #ff5252;
+        }
+
+        /* 3. 网格布局容器 */
+        .grid-layout {
+            width: 400px;
+            height: 300px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .grid-item {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .grid-item:nth-child(odd) {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+
+        /* 4. 滚动容器 */
+        .scroll-container {
+            width: 320px;
+            height: 280px;
+            padding: 20px;
+        }
+
+        .scroll-content {
+            height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .scroll-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scroll-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        /* 5. 拖拽排序容器 */
+        .sortable-container {
+            width: 280px;
+            height: 320px;
+            padding: 20px;
+        }
+
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sortable-item {
+            background: white;
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4ecdc4;
+            cursor: grab;
+            user-select: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .sortable-item:hover {
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+
+        .sortable-item:active {
+            cursor: grabbing;
+            transform: rotate(2deg);
+        }
+
+        /* 6. 表单容器 */
+        .form-container {
+            width: 350px;
+            height: 400px;
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .form-button:hover {
+            background: #5a67d8;
+        }
+
+        /* 状态显示 */
+        .status-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10000;
+            min-width: 200px;
+        }
+
+        .status-item {
+            margin: 3px 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .demo-container {
+                max-width: 90vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🎯 拖拽容器复杂测试场景</h1>
+    <p class="subtitle">测试不同布局和事件交互下的拖拽功能</p>
+
+    <!-- 状态显示面板 -->
+    <div class="status-panel" id="statusPanel">
+        <div class="status-item">📊 测试状态面板</div>
+        <div class="status-item" id="mousePos">鼠标位置: (0, 0)</div>
+        <div class="status-item" id="dragStatus">拖拽状态: 空闲</div>
+        <div class="status-item" id="eventLog">最后事件: 无</div>
+    </div>
+
+    <!-- 1. 绝对定位布局测试 -->
+    <draggable-container id="container1">
+        <div class="demo-container absolute-layout">
+            <h3 style="margin: 0 0 15px 0; color: #333;">绝对定位布局</h3>
+            <div class="absolute-item item1" onclick="logEvent('点击绝对定位元素1')">元素1</div>
+            <div class="absolute-item item2" onclick="logEvent('点击绝对定位元素2')">元素2</div>
+            <div class="absolute-item item3" onclick="logEvent('点击绝对定位元素3')">元素3</div>
+            <div class="absolute-item item4" onclick="logEvent('点击绝对定位元素4')">元素4</div>
+            <div class="absolute-item item5" onclick="logEvent('点击中心元素')">中心</div>
+        </div>
+    </draggable-container>
+
+    <!-- 2. Fixed布局测试 -->
+    <draggable-container id="container2">
+        <div class="demo-container fixed-layout">
+            <div class="fixed-header">Fixed 头部</div>
+            <div class="fixed-content">
+                <h3 style="margin: 0 0 15px 0; color: #333;">Fixed布局测试</h3>
+                <button class="fixed-button" onclick="logEvent('点击Fixed按钮1')">按钮1</button>
+                <button class="fixed-button" onclick="logEvent('点击Fixed按钮2')">按钮2</button>
+                <p style="margin-top: 15px; color: #666;">测试Fixed定位元素与拖拽的交互</p>
+            </div>
+        </div>
+    </draggable-container>
+
+    <!-- 3. 网格布局测试 -->
+    <draggable-container id="container3">
+        <div class="demo-container grid-layout">
+            <div class="grid-item" onclick="logEvent('点击网格1')" onmouseover="logEvent('悬停网格1')">1</div>
+            <div class="grid-item" onclick="logEvent('点击网格2')" onmouseover="logEvent('悬停网格2')">2</div>
+            <div class="grid-item" onclick="logEvent('点击网格3')" onmouseover="logEvent('悬停网格3')">3</div>
+            <div class="grid-item" onclick="logEvent('点击网格4')" onmouseover="logEvent('悬停网格4')">4</div>
+            <div class="grid-item" onclick="logEvent('点击网格5')" onmouseover="logEvent('悬停网格5')">5</div>
+            <div class="grid-item" onclick="logEvent('点击网格6')" onmouseover="logEvent('悬停网格6')">6</div>
+            <div class="grid-item" onclick="logEvent('点击网格7')" onmouseover="logEvent('悬停网格7')">7</div>
+            <div class="grid-item" onclick="logEvent('点击网格8')" onmouseover="logEvent('悬停网格8')">8</div>
+            <div class="grid-item" onclick="logEvent('点击网格9')" onmouseover="logEvent('悬停网格9')">9</div>
+        </div>
+    </draggable-container>
+
+    <!-- 4. 滚动容器测试 -->
+    <draggable-container id="container4">
+        <div class="demo-container scroll-container">
+            <h3 style="margin: 0 0 15px 0; color: #333;">滚动容器测试</h3>
+            <div class="scroll-content" onscroll="logEvent('滚动容器')">
+                <div class="scroll-item" onclick="logEvent('点击滚动项目1')">📄 滚动项目 1</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目2')">📄 滚动项目 2</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目3')">📄 滚动项目 3</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目4')">📄 滚动项目 4</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目5')">📄 滚动项目 5</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目6')">📄 滚动项目 6</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目7')">📄 滚动项目 7</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目8')">📄 滚动项目 8</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目9')">📄 滚动项目 9</div>
+                <div class="scroll-item" onclick="logEvent('点击滚动项目10')">📄 滚动项目 10</div>
+            </div>
+        </div>
+    </draggable-container>
+
+    <!-- 5. 内部拖拽排序测试 -->
+    <draggable-container id="container5">
+        <div class="demo-container sortable-container">
+            <h3 style="margin: 0 0 15px 0; color: #333;">内部拖拽排序</h3>
+            <ul class="sortable-list" id="sortableList">
+                <li class="sortable-item" draggable="true">🎯 可拖拽项目 1</li>
+                <li class="sortable-item" draggable="true">🎯 可拖拽项目 2</li>
+                <li class="sortable-item" draggable="true">🎯 可拖拽项目 3</li>
+                <li class="sortable-item" draggable="true">🎯 可拖拽项目 4</li>
+                <li class="sortable-item" draggable="true">🎯 可拖拽项目 5</li>
+            </ul>
+        </div>
+    </draggable-container>
+
+    <!-- 6. 表单容器测试 -->
+    <draggable-container id="container6">
+        <div class="demo-container form-container">
+            <h3 style="margin: 0 0 20px 0; color: #333;">表单交互测试</h3>
+            <form onsubmit="logEvent('提交表单'); return false;">
+                <div class="form-group">
+                    <label class="form-label" for="username">用户名:</label>
+                    <input type="text" id="username" class="form-input" 
+                           onfocus="logEvent('聚焦用户名输入框')" 
+                           onblur="logEvent('失焦用户名输入框')"
+                           oninput="logEvent('输入用户名')" 
+                           placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">邮箱:</label>
+                    <input type="email" id="email" class="form-input" 
+                           onfocus="logEvent('聚焦邮箱输入框')" 
+                           onblur="logEvent('失焦邮箱输入框')"
+                           oninput="logEvent('输入邮箱')" 
+                           placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="message">消息:</label>
+                    <textarea id="message" class="form-input" rows="4" 
+                              onfocus="logEvent('聚焦消息输入框')" 
+                              onblur="logEvent('失焦消息输入框')"
+                              oninput="logEvent('输入消息')" 
+                              placeholder="请输入消息"></textarea>
+                </div>
+                <button type="submit" class="form-button">提交表单</button>
+            </form>
+        </div>
+    </draggable-container>
+
+    <script src="DragDropContainer.js" type="module"></script>
+    <script>
+        // 状态面板元素
+        const statusPanel = document.getElementById('statusPanel');
+        const mousePosElement = document.getElementById('mousePos');
+        const dragStatusElement = document.getElementById('dragStatus');
+        const eventLogElement = document.getElementById('eventLog');
+
+        // 事件日志函数
+        function logEvent(eventName) {
+            console.log(`事件触发: ${eventName}`);
+            eventLogElement.textContent = `最后事件: ${eventName}`;
+            
+            // 添加视觉反馈
+            eventLogElement.style.color = '#4ecdc4';
+            setTimeout(() => {
+                eventLogElement.style.color = 'white';
+            }, 500);
+        }
+
+        // 鼠标位置跟踪
+        document.addEventListener('mousemove', (e) => {
+            mousePosElement.textContent = `鼠标位置: (${e.clientX}, ${e.clientY})`;
+        });
+
+        // 监听拖拽状态变化
+        function setupDragStatusMonitoring() {
+            const containers = document.querySelectorAll('draggable-container');
+            containers.forEach((container, index) => {
+                container.addEventListener('mousedown', () => {
+                    dragStatusElement.textContent = `拖拽状态: 容器${index + 1} 开始拖拽`;
+                });
+                
+                container.addEventListener('mouseup', () => {
+                    dragStatusElement.textContent = `拖拽状态: 容器${index + 1} 结束拖拽`;
+                    setTimeout(() => {
+                        dragStatusElement.textContent = '拖拽状态: 空闲';
+                    }, 1000);
+                });
+            });
+        }
+
+        // 内部拖拽排序功能
+        function setupSortableDrag() {
+            const sortableList = document.getElementById('sortableList');
+            let draggedElement = null;
+
+            sortableList.addEventListener('dragstart', (e) => {
+                draggedElement = e.target;
+                e.target.style.opacity = '0.5';
+                logEvent('开始内部拖拽排序');
+            });
+
+            sortableList.addEventListener('dragend', (e) => {
+                e.target.style.opacity = '';
+                draggedElement = null;
+                logEvent('结束内部拖拽排序');
+            });
+
+            sortableList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            sortableList.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.target.classList.contains('sortable-item') && e.target !== draggedElement) {
+                    const rect = e.target.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    
+                    if (e.clientY < midpoint) {
+                        sortableList.insertBefore(draggedElement, e.target);
+                    } else {
+                        sortableList.insertBefore(draggedElement, e.target.nextSibling);
+                    }
+                    logEvent('重新排序项目');
+                }
+            });
+        }
+
+        // 等待组件加载完成后设置初始位置和监听器
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const container1 = document.getElementById('container1');
+                const container2 = document.getElementById('container2');
+                const container3 = document.getElementById('container3');
+                const container4 = document.getElementById('container4');
+                const container5 = document.getElementById('container5');
+                const container6 = document.getElementById('container6');
+                
+                // 设置初始位置，避免重叠
+                if (container1) container1.setPosition(50, 100);
+                if (container2) container2.setPosition(450, 100);
+                if (container3) container3.setPosition(850, 100);
+                if (container4) container4.setPosition(50, 400);
+                if (container5) container5.setPosition(400, 400);
+                if (container6) container6.setPosition(750, 400);
+
+                // 设置监听器
+                setupDragStatusMonitoring();
+                setupSortableDrag();
+                
+                logEvent('所有容器初始化完成');
+            }, 100);
+        });
+
+        // 键盘快捷键测试
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' && e.ctrlKey) {
+                e.preventDefault();
+                // 重置所有容器位置
+                const containers = document.querySelectorAll('draggable-container');
+                containers.forEach((container, index) => {
+                    const x = 50 + (index % 3) * 400;
+                    const y = 100 + Math.floor(index / 3) * 350;
+                    container.setPosition(x, y);
+                });
+                logEvent('重置所有容器位置 (Ctrl+R)');
+            }
+        });
+
+        // 窗口大小变化时的响应式处理
+        window.addEventListener('resize', () => {
+            logEvent('窗口大小改变');
+        });
+    </script>
+</body>
+</html>
